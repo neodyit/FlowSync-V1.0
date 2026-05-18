@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS leaderboard_points (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    total_points INT DEFAULT 0,
+    bonus_points INT DEFAULT 0,
+    tasks_completed INT DEFAULT 0,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

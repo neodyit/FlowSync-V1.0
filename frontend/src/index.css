@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Poppins", "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Poppins", sans-serif;
+}
+
+@layer base {
+  :root {
+    /* Lavender Solid Theme */
+    --bg-primary: #EDE9FE;
+    --bg-secondary: #F5F3FF;
+    --accent: #7C3AED;
+    --text-main: #1E184B;
+    --text-muted: #4C1D95;
+    --card-bg: #FFFFFF;
+    --card-border: #7C3AED;
+  }
+
+  /* Reset Dark Mode to match Light or disable if requested. 
+     User said "everywhere", so I'll make dark mode also look like a darker lavender theme or just solid.
+     But mostly, I'll ensure the default is the Light Lavender.
+  */
+  .dark {
+    --bg-primary: #EDE9FE;
+    --bg-secondary: #F5F3FF;
+    --accent: #7C3AED;
+    --text-main: #1E1B4B;
+    --text-muted: #4C1D95;
+    --card-bg: #FFFFFF;
+    --card-border: #7C3AED;
+  }
+
+  body {
+    @apply bg-[var(--bg-primary)] text-[var(--text-main)] font-sans antialiased;
+    min-height: 100vh;
+    background-color: #EDE9FE !important;
+  }
+}
+
+@layer components {
+  .glass-card {
+    /* Removed glass effect, made it solid */
+    @apply rounded-3xl border bg-[var(--card-bg)] transition-all duration-300;
+    border-color: rgba(124, 58, 237, 0.2); /* Using a softer version of accent for subtler borders by default */
+  }
+
+  .glass-card:hover {
+    @apply -translate-y-1;
+    border-color: var(--card-border);
+    box-shadow: 0 10px 25px rgba(124, 58, 237, 0.1);
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-semibold transition-all;
+  }
+
+  .sidebar-item-active {
+    @apply shadow-lg;
+    background: var(--accent);
+    color: white;
+  }
+
+  .sidebar-item-inactive {
+    @apply text-[var(--text-muted)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent)];
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 rounded-2xl text-sm font-bold transition-all active:scale-95 hover:brightness-110;
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.2);
+  }
+
+  .input-field {
+    @apply w-full px-5 py-3.5 rounded-2xl border bg-white outline-none text-sm transition-all focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] text-[var(--text-main)];
+    border-color: rgba(124, 58, 237, 0.1);
+  }
+
+  .pill {
+    @apply px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-[var(--accent)]/10 text-[var(--accent)];
+  }
+
+  .animate-shake {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  }
+
+  @keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-[var(--accent)]/20 hover:bg-[var(--accent)]/40 rounded-full transition-colors;
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrJJfecg.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/poppins/v20/pxiByp8kv8JHgFVrLEj6ZxlFQw.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/poppins/v20/pxiByp8kv8JHgFVrLCz7ZxlFQw.woff2) format('woff2');
+}

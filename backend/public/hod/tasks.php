@@ -1,0 +1,297 @@
+<?php
+
+try {
+    require_once __DIR__ . '/../bootstrap.php';
+
+    $session = FlowSync\Utils\HODMiddleware::check();
+    $db = FlowSync\Config\Database::getInstance()->getConnection();
+    $logger = new FlowSync\Utils\AuditLogger();
+    $notifier = new FlowSync\Utils\NotificationService();
+
+    // 1. Get HOD's department ID and college ID
+    $stmt = $db->prepare("SELECT id, college_id FROM departments WHERE hod_id = :hod_id LIMIT 1");
+    $stmt->execute(['hod_id' => $session['user_id']]);
+    $dept = $stmt->fetch();
+
+    if (!$dept) {
+        throw new Exception("Unauthorized. No department assigned.");
+    }
+    $deptId = $dept['id'];
+    $collegeId = $dept['college_id'];
+
+    $method = $_SERVER['REQUEST_METHOD'];
+
+    switch ($method) {
+        case 'GET':
+            // Fetch tasks for this department
+            $stmt = $db->prepare("
+                SELECT t.*, u.name as assigned_to_name, u.profile_pic as assigned_to_pic,
+                       (SELECT COALESCE(SUM(points), 0) FROM task_assignments WHERE task_id = t.id) as aggregated_points,
+                       (SELECT COALESCE(SUM(bonus_points), 0) FROM task_assignments WHERE task_id = t.id) as aggregated_bonus_points
+                FROM tasks t
+                LEFT JOIN users u ON t.assigned_to_id = u.id
+                WHERE t.department_id = :dept_id
+                ORDER BY t.created_at DESC
+            ");
+            $stmt->execute(['dept_id' => $deptId]);
+            $tasks = $stmt->fetchAll();
+
+            // Fetch assignments and attachments for each task
+            foreach ($tasks as &$task) {
+                // Fetch all assignments for this task
+                $assignStmt = $db->prepare("
+                    SELECT ta.*, u.name as faculty_name, u.email as faculty_email, u.profile_pic as faculty_pic,
+                           CASE WHEN ta.submitted_at IS NOT NULL AND DATE(ta.submitted_at) > t.deadline THEN 1 ELSE 0 END as is_delayed,
+                           (SELECT COUNT(*) FROM task_reminders WHERE task_id = ta.task_id AND user_id = ta.user_id) as reminder_count,
+                           (SELECT COUNT(*) FROM task_reminders WHERE task_id = ta.task_id AND user_id = ta.user_id AND type = 'Warning') as warning_count
+                    FROM task_assignments ta
+                    JOIN users u ON ta.user_id = u.id
+                    JOIN tasks t ON ta.task_id = t.id
+                    WHERE ta.task_id = :task_id
+                ");
+                $assignStmt->execute(['task_id' => $task['id']]);
+                $task['assignments'] = $assignStmt->fetchAll();
+                
+                // Fetch all attachments
+                $attStmt = $db->prepare("
+                    SELECT id, file_name, file_path, entity_type, created_at, CAST(uploader_id AS UNSIGNED) as uploader_id 
+                    FROM attachments 
+                    WHERE (entity_type = 'Task' OR entity_type = 'Task_Submission') 
+                    AND entity_id = :task_id
+                ");
+                $attStmt->execute(['task_id' => $task['id']]);
+                $task['attachments'] = $attStmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Ensure uploader_id is int
+                foreach ($task['attachments'] as &$att) {
+                    $att['uploader_id'] = (int)$att['uploader_id'];
+                }
+                
+                $task['attachment_count'] = count($task['attachments']);
+
+                // Fetch comments chain
+                $commentStmt = $db->prepare("
+                    SELECT tc.*, u.name as user_name, u.profile_pic as user_pic
+                    FROM task_comments tc
+                    JOIN users u ON tc.user_id = u.id
+                    WHERE tc.task_id = :task_id
+                    ORDER BY tc.created_at ASC
+                ");
+                $commentStmt->execute(['task_id' => $task['id']]);
+                $task['comments'] = $commentStmt->fetchAll();
+            }
+
+            echo json_encode(['status' => 'success', 'data' => $tasks]);
+            break;
+
+        case 'POST':
+            $isMultipart = strpos($_SERVER['CONTENT_TYPE'] ?? '', 'multipart/form-data') !== false;
+            $data = $isMultipart ? $_POST : json_decode(file_get_contents('php://input'), true);
+            
+            $taskId = $data['id'] ?? null;
+            if (empty($data['title']) || empty($data['deadline']) || empty($data['priority']) || empty($data['task_type'])) {
+                throw new Exception("Title, deadline, priority, and task type are required.");
+            }
+
+            $isBroadcast = ($data['assignment_mode'] ?? 'individual') === 'broadcast';
+            $assignedToId = $isBroadcast ? null : ($data['assigned_to_id'] ?? null);
+
+            if ($taskId) {
+                $statusUpdate = $isBroadcast ? ", status = 'Broadcasted'" : ($assignedToId ? ", status = 'Assigned'" : "");
+                $stmt = $db->prepare("
+                    UPDATE tasks 
+                    SET title = :title, description = :description, deadline = :deadline, 
+                        priority = :priority, task_type = :task_type, category = :category, assigned_to_id = :assigned_to
+                        $statusUpdate
+                    WHERE id = :id AND department_id = :dept_id
+                ");
+                $stmt->execute([
+                    'title' => $data['title'], 'description' => $data['description'] ?? '',
+                    'deadline' => $data['deadline'], 'priority' => $data['priority'],
+                    'task_type' => $data['task_type'], 'category' => $data['category'] ?? 'General', 
+                    'assigned_to' => $assignedToId,
+                    'id' => $taskId, 'dept_id' => $deptId
+                ]);
+            } else {
+                $status = $isBroadcast ? 'Broadcasted' : 'Assigned';
+                $stmt = $db->prepare("
+                    INSERT INTO tasks (college_id, department_id, assigned_by_id, assigned_to_id, title, description, deadline, priority, task_type, category, status, assigned_at)
+                    VALUES (:college_id, :dept_id, :assigned_by, :assigned_to, :title, :description, :deadline, :priority, :task_type, :category, :status, NOW())
+                ");
+                $stmt->execute([
+                    'college_id' => $collegeId, 'dept_id' => $deptId, 'assigned_by' => $session['user_id'],
+                    'assigned_to' => $assignedToId, 'title' => $data['title'], 'description' => $data['description'] ?? '',
+                    'deadline' => $data['deadline'], 'priority' => $data['priority'], 
+                    'task_type' => $data['task_type'], 'category' => $data['category'] ?? 'General',
+                    'status' => $status
+                ]);
+                $taskId = $db->lastInsertId();
+            }
+
+            // Create assignment record for individual tasks
+            if (!$isBroadcast && $assignedToId) {
+                $stmt = $db->prepare("INSERT INTO task_assignments (task_id, user_id, status) VALUES (:tid, :uid, 'Accepted') ON DUPLICATE KEY UPDATE status = 'Accepted'");
+                $stmt->execute(['tid' => $taskId, 'uid' => $assignedToId]);
+            }
+
+            // Handle File Uploads
+            if (!empty($_FILES['attachments'])) {
+                $files = $_FILES['attachments'];
+                foreach ($files['name'] as $key => $name) {
+                    if ($files['error'][$key] === UPLOAD_ERR_OK) {
+                        $newName = 'task_' . $taskId . '_' . uniqid() . '.' . pathinfo($name, PATHINFO_EXTENSION);
+                        if (move_uploaded_file($files['tmp_name'][$key], __DIR__ . '/../uploads/' . $newName)) {
+                            $db->prepare("INSERT INTO attachments (entity_type, entity_id, uploader_id, file_name, file_path, file_size, mime_type) VALUES ('Task', :tid, :uid, :name, :path, :size, :mime)")
+                               ->execute(['tid' => $taskId, 'uid' => $session['user_id'], 'name' => $name, 'path' => 'uploads/' . $newName, 'size' => $files['size'][$key], 'mime' => $files['type'][$key]]);
+                        }
+                    }
+                }
+            }
+
+            echo json_encode(['status' => 'success', 'message' => 'Task processed', 'id' => $taskId]);
+            break;
+
+        case 'PUT':
+            $data = json_decode(file_get_contents('php://input'), true);
+            $taskId = $data['id'] ?? null;
+            $assignmentUserId = $data['user_id'] ?? null; // Specific faculty to review
+            
+            if (!$taskId) throw new Exception("Task ID is required.");
+
+            $db->beginTransaction();
+
+            // Fetch task to verify ownership
+            $check = $db->prepare("SELECT id, title, assigned_to_id, status FROM tasks WHERE id = :id AND department_id = :dept_id");
+            $check->execute(['id' => $taskId, 'dept_id' => $deptId]);
+            $task = $check->fetch();
+            if (!$task) throw new Exception("Task not found or access denied.");
+
+            // If reviewing a specific assignment
+            if ($assignmentUserId) {
+                $stmt = $db->prepare("SELECT * FROM task_assignments WHERE task_id = :tid AND user_id = :uid");
+                $stmt->execute(['tid' => $taskId, 'uid' => $assignmentUserId]);
+                $assignment = $stmt->fetch();
+                if (!$assignment) throw new Exception("Assignment not found for this user.");
+
+                $newStatus = $data['status'] ?? $assignment['status'];
+                $newPoints = isset($data['points']) ? (int)$data['points'] : (int)($assignment['points'] ?? 0);
+                $newBonus = isset($data['bonus_points']) ? (int)$data['bonus_points'] : (int)($assignment['bonus_points'] ?? 0);
+                
+                if ($newStatus === 'Rework Required') {
+                    $newPoints = 0;
+                    $newBonus = 0; 
+                }
+                
+                $newRemarks = $data['remarks'] ?? $assignment['remarks'] ?? '';
+
+                // Update Assignment
+                $stmt = $db->prepare("
+                    UPDATE task_assignments 
+                    SET status = :status_val, 
+                        points = :pts, 
+                        bonus_points = :bn, 
+                        remarks = :rem,
+                        reviewed_at = NOW(),
+                        completed_at = CASE 
+                            WHEN :status_val_2 IN ('Approved') THEN NOW() 
+                            ELSE completed_at 
+                        END
+                    WHERE id = :id
+                ");
+                $stmt->execute([
+                    'status_val' => $newStatus, 
+                    'status_val_2' => $newStatus,
+                    'pts' => $newPoints, 
+                    'bn' => $newBonus, 
+                    'rem' => $newRemarks,
+                    'id' => $assignment['id']
+                ]);
+
+                // Update Leaderboard
+                $oldTotal = (int)($assignment['points'] ?? 0) + (int)($assignment['bonus_points'] ?? 0);
+                $newTotal = $newPoints + $newBonus;
+                
+                $wasCompleted = ($assignment['status'] === 'Approved');
+                $isCompleted = ($newStatus === 'Approved');
+
+                if (!$wasCompleted && $isCompleted) {
+                    $stmt = $db->prepare("
+                        INSERT INTO leaderboard_points (user_id, total_points, tasks_completed) 
+                        VALUES (:uid, :pts, 1) 
+                        ON DUPLICATE KEY UPDATE total_points = total_points + :pts_inc, tasks_completed = tasks_completed + 1
+                    ");
+                    $stmt->execute(['uid' => $assignmentUserId, 'pts' => $newTotal, 'pts_inc' => $newTotal]);
+                } else if ($wasCompleted && $isCompleted) {
+                    $delta = $newTotal - $oldTotal;
+                    if ($delta !== 0) {
+                        $stmt = $db->prepare("UPDATE leaderboard_points SET total_points = total_points + :delta WHERE user_id = :uid");
+                        $stmt->execute(['uid' => $assignmentUserId, 'delta' => $delta]);
+                    }
+                } else if ($wasCompleted && !$isCompleted) {
+                    $stmt = $db->prepare("UPDATE leaderboard_points SET total_points = GREATEST(0, total_points - :pts), tasks_completed = GREATEST(0, tasks_completed - 1) WHERE user_id = :uid");
+                    $stmt->execute(['uid' => $assignmentUserId, 'pts' => $oldTotal]);
+                }
+
+                // Log history
+                if ($isCompleted || $newStatus === 'Rework Required' || $newStatus === 'Rejected') {
+                    $stmt = $db->prepare("INSERT INTO task_reviews (task_id, reviewer_id, remarks, points, bonus_points, status) VALUES (:tid, :rid, :rem, :pts, :bn, :st)");
+                    $stmt->execute([
+                        'tid' => $taskId, 'rid' => $session['user_id'], 'rem' => $newRemarks, 
+                        'pts' => $newPoints, 'bn' => $newBonus, 'st' => $newStatus
+                    ]);
+                }
+
+                $notifier->send($assignmentUserId, 'TASK_REVIEWED', "Your contribution to '{$task['title']}' has been updated to {$newStatus}", $taskId);
+                
+                // Always sync the main task points and status
+                // For broadcast tasks, check if all faculty in department have completed it
+                $syncStmt = $db->prepare("
+                    UPDATE tasks t 
+                    SET 
+                        t.points = (SELECT COALESCE(SUM(points), 0) FROM task_assignments WHERE task_id = t.id),
+                        t.bonus_points = (SELECT COALESCE(SUM(bonus_points), 0) FROM task_assignments WHERE task_id = t.id),
+                        t.status = CASE 
+                            WHEN t.assigned_to_id IS NOT NULL THEN (SELECT status FROM task_assignments WHERE task_id = t.id LIMIT 1)
+                            ELSE (
+                                SELECT CASE 
+                                    WHEN (SELECT COUNT(*) FROM task_assignments WHERE task_id = t.id AND status = 'Approved') >= 
+                                         (SELECT COUNT(*) FROM users u JOIN faculty_departments fd ON u.id = fd.user_id WHERE fd.department_id = t.department_id AND u.role_id = 3 AND u.is_active = 1)
+                                    THEN 'Completed'
+                                    ELSE t.status 
+                                END
+                            )
+                        END
+                    WHERE t.id = :tid
+                ");
+                $syncStmt->execute(['tid' => $taskId]);
+
+            } else {
+                // Bulk update or non-specific review (e.g. updating task details or status)
+                if (isset($data['status'])) {
+                    $stmt = $db->prepare("UPDATE tasks SET status = :st WHERE id = :id");
+                    $stmt->execute(['st' => $data['status'], 'id' => $taskId]);
+                }
+                if (isset($data['flag_color'])) {
+                    $stmt = $db->prepare("UPDATE tasks SET flag_color = :flag WHERE id = :id");
+                    $stmt->execute(['flag' => $data['flag_color'], 'id' => $taskId]);
+                }
+            }
+
+            $logger->log($session['user_id'], 'HOD_UPDATE_TASK', 'TASK', $taskId, ['status' => $data['status'] ?? 'Updated']);
+            $db->commit();
+            echo json_encode(['status' => 'success', 'message' => 'Task review updated.']);
+            break;
+
+        case 'DELETE':
+            $taskId = $_GET['id'] ?? null;
+            $stmt = $db->prepare("DELETE FROM tasks WHERE id = :id AND department_id = :dept_id");
+            $stmt->execute(['id' => $taskId, 'dept_id' => $deptId]);
+            echo json_encode(['status' => 'success', 'message' => 'Task deleted']);
+            break;
+    }
+} catch (Exception $e) {
+    if ($db && $db->inTransaction()) $db->rollBack();
+    error_log("HOD Tasks API Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+}
