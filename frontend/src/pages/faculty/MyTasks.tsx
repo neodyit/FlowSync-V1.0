@@ -56,6 +56,7 @@ interface Task {
   progress: number;
   flag_color: string | null;
   task_link?: string | null;
+  submission_link?: string | null;
   public_remarks: string | null;
   private_remarks: string | null;
   my_remarks: string | null;
@@ -94,6 +95,7 @@ const FacultyMyTasks: React.FC = () => {
   const [publicRemarks, setPublicRemarks] = useState('');
   const [privateRemarks, setPrivateRemarks] = useState('');
   const [submissionFiles, setSubmissionFiles] = useState<File[]>([]);
+  const [submissionLink, setSubmissionLink] = useState('');
   
   // Preview State
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -244,6 +246,7 @@ const FacultyMyTasks: React.FC = () => {
 
     formData.append('public_remarks', publicRemarks);
     formData.append('private_remarks', privateRemarks);
+    formData.append('submission_link', submissionLink);
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/faculty/my_tasks.php`, {
@@ -255,17 +258,17 @@ const FacultyMyTasks: React.FC = () => {
       if (data.status === 'success') {
         Swal.fire({
           title: 'Mission Submitted!',
-          text: 'Your progress has been sent to the HOD for evaluation.',
+          text: 'The HOD has been notified. Stand by for review.',
           icon: 'success',
-          confirmButtonColor: '#7C3AED'
+          customClass: {
+            popup: 'rounded-[2rem]'
+          }
         });
-        // Trigger immediate notification refresh
-        window.dispatchEvent(new CustomEvent('refresh-notifications'));
         setIsSubmitModalOpen(false);
-        setSubmissionFiles([]);
         setPublicRemarks('');
         setPrivateRemarks('');
-        
+        setSubmissionFiles([]);
+        setSubmissionLink('');
         // Refresh all tasks and update the currently selected one
         const refreshResponse = await fetch(`${import.meta.env.VITE_API_URL}/faculty/my_tasks.php`, { credentials: 'include' });
         const refreshData = await refreshResponse.json();
@@ -966,6 +969,31 @@ const FacultyMyTasks: React.FC = () => {
                     {/* Your Submissions */}
                     <div>
                       <h3 className="text-xs font-black text-[#1E184B] uppercase tracking-widest mb-4">My Submissions</h3>
+                      <div className="space-y-2 mb-4">
+                        {selectedTask.submission_link && (
+                          <div className="p-4 bg-emerald-50/20 border border-emerald-100/50 rounded-2xl flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">My Submission URL</p>
+                              <a 
+                                href={selectedTask.submission_link} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-[11px] font-bold text-[#7C3AED] hover:underline truncate block max-w-[200px]"
+                              >
+                                {selectedTask.submission_link}
+                              </a>
+                            </div>
+                            <a 
+                              href={selectedTask.submission_link} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all whitespace-nowrap shadow-sm shadow-emerald-500/10"
+                            >
+                              Open Link
+                            </a>
+                          </div>
+                        )}
+                      </div>
                       <div className="space-y-2">
                         {selectedTask.attachments.filter(a => a.entity_type === 'Task_Submission' && a.uploader_id == userId).map(att => (
                           <div key={att.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 group">
@@ -976,8 +1004,8 @@ const FacultyMyTasks: React.FC = () => {
                             </div>
                           </div>
                         ))}
-                        {selectedTask.attachments.filter(a => a.entity_type === 'Task_Submission' && a.uploader_id == userId).length === 0 && (
-                          <p className="text-[9px] font-bold text-slate-400 italic">No files submitted yet.</p>
+                        {(selectedTask.attachments.filter(a => a.entity_type === 'Task_Submission' && a.uploader_id == userId).length === 0 && !selectedTask.submission_link) && (
+                          <p className="text-[9px] font-bold text-slate-400 italic">No files or link submitted yet.</p>
                         )}
                       </div>
                     </div>
@@ -1017,6 +1045,16 @@ const FacultyMyTasks: React.FC = () => {
                   </div>
 
                   <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] ml-2">Submission Link (Optional)</label>
+                      <input 
+                        type="url"
+                        value={submissionLink}
+                        onChange={(e) => setSubmissionLink(e.target.value)}
+                        placeholder="e.g., https://github.com/my-repo or demo url"
+                        className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:bg-white focus:border-emerald-500 transition-all"
+                      />
+                    </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-[0.2em] ml-2">Public Remarks (Team)</label>
                       <textarea 

@@ -69,6 +69,7 @@ interface Assignment {
   warning_count: number;
   public_remarks: string | null;
   private_remarks: string | null;
+  submission_link?: string | null;
 }
 
 interface ExtensionRequest {
@@ -1533,6 +1534,41 @@ const HODTasks: React.FC = () => {
                       <span className="text-[9px] font-bold text-slate-400 italic">Faculty Submissions</span>
                     </h3>
                     <div className="grid grid-cols-1 gap-3">
+                      {(() => {
+                        const currentAssign = selectedTask.assignments.find(a => a.user_id === selectedAssignmentId);
+                        if (currentAssign?.submission_link) {
+                          return (
+                            <div className="p-5 bg-emerald-50/30 border-2 border-emerald-100/50 rounded-3xl flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-10 h-10 bg-emerald-100/50 rounded-2xl flex items-center justify-center text-emerald-600 shrink-0">
+                                  <BookOpen className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Faculty Submission URL</p>
+                                  <a 
+                                    href={currentAssign.submission_link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-xs font-bold text-[#7C3AED] hover:underline break-all"
+                                  >
+                                    {currentAssign.submission_link}
+                                  </a>
+                                </div>
+                              </div>
+                              <a 
+                                href={currentAssign.submission_link} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all whitespace-nowrap shadow-md shadow-emerald-500/10"
+                              >
+                                Open Link
+                              </a>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+
                       {selectedTask.attachments.filter(a => a.entity_type === 'Task_Submission' && a.uploader_id === selectedAssignmentId).map(att => (
                         <div key={att.id} className="flex items-center justify-between p-4 bg-emerald-50/30 rounded-2xl border border-emerald-100 group">
                           <div className="flex items-center gap-3">
@@ -1548,8 +1584,9 @@ const HODTasks: React.FC = () => {
                           </div>
                         </div>
                       ))}
-                      {selectedTask.attachments.filter(a => a.entity_type === 'Task_Submission' && a.uploader_id === selectedAssignmentId).length === 0 && (
-                        <p className="text-[10px] font-bold text-slate-400 italic p-6 border-2 border-dashed rounded-3xl text-center">No evidence submitted by this faculty yet.</p>
+                      {(selectedTask.attachments.filter(a => a.entity_type === 'Task_Submission' && a.uploader_id === selectedAssignmentId).length === 0 &&
+                        !selectedTask.assignments.find(a => a.user_id === selectedAssignmentId)?.submission_link) && (
+                        <p className="text-[10px] font-bold text-slate-400 italic p-6 border-2 border-dashed rounded-3xl text-center">No evidence or link submitted by this faculty yet.</p>
                       )}
                     </div>
                   </div>
