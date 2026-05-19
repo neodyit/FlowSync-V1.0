@@ -1089,8 +1089,8 @@ const FacultyMyTasks: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-2">Proposed New Deadline</label>
                     <input 
-                      type="date" required
-                      min={new Date().toISOString().split('T')[0]}
+                      type="datetime-local" required
+                      min={new Date().toISOString().split('T')[0] + 'T00:00'}
                       value={extensionDate}
                       onChange={(e) => setExtensionDate(e.target.value)}
                       className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-rose-500/5 outline-none transition-all"

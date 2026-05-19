@@ -823,7 +823,7 @@ const HODTasks: React.FC = () => {
                                 id: task.id,
                                 title: task.title,
                                 description: task.description || '',
-                                deadline: task.deadline.split(' ')[0], // Get YYYY-MM-DD
+                                deadline: task.deadline ? task.deadline.replace(' ', 'T').substring(0, 16) : '',
                                 priority: task.priority,
                                 task_type: task.task_type,
                                 category: task.category || 'General',
@@ -952,7 +952,7 @@ const HODTasks: React.FC = () => {
                     <div className="space-y-1.5">
                       <label className="text-[9px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Deadline</label>
                       <input 
-                        type="date" required
+                        type="datetime-local" required
                         value={formData.deadline}
                         onChange={(e) => setFormData({...formData, deadline: e.target.value})}
                         className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"

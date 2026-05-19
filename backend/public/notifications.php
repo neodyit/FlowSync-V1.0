@@ -20,9 +20,10 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Fetch notifications: BOTH READ AND UNREAD and ONLY LATEST 3 DAYS
         $stmt = $db->prepare("
-            SELECT n.*, u.name as trigger_user_name
+            SELECT n.*, u.name as trigger_user_name, t.title as task_title
             FROM notifications n
             LEFT JOIN users u ON n.trigger_user_id = u.id
+            LEFT JOIN tasks t ON n.task_id = t.id
             WHERE n.user_id = :user_id 
             AND n.created_at >= DATE_SUB(NOW(), INTERVAL 3 DAY)
             ORDER BY n.created_at DESC
@@ -36,12 +37,14 @@ try {
         $stmt->execute(['user_id' => $userId]);
         $unreadCount = $stmt->fetch()['unread'];
 
-        // Fetch User Info for Role and Dept
+        // Fetch User Info for Role and Dept (supporting both faculty_departments and departments tables)
         $stmt = $db->prepare("
-            SELECT fd.department_id, u.role_id 
+            SELECT COALESCE(fd.department_id, d.id) as department_id, u.role_id 
             FROM users u 
             LEFT JOIN faculty_departments fd ON u.id = fd.user_id 
+            LEFT JOIN departments d ON u.id = d.hod_id
             WHERE u.id = :user_id
+            LIMIT 1
         ");
         $stmt->execute(['user_id' => $userId]);
         $user = $stmt->fetch();
@@ -81,12 +84,22 @@ try {
             }
         }
 
+        // Fetch User settings for notifications
+        $stmt = $db->prepare("
+            SELECT notification_settings, quiet_hours_start, quiet_hours_end
+            FROM users 
+            WHERE id = :user_id
+        ");
+        $stmt->execute(['user_id' => $userId]);
+        $userSettings = $stmt->fetch();
+
         echo json_encode([
             'status' => 'success',
             'data' => [
                 'notifications' => $notifications,
                 'unread_count' => (int)$unreadCount,
-                'active_task' => $activeTask
+                'active_task' => $activeTask,
+                'settings' => $userSettings
             ]
         ]);
     }

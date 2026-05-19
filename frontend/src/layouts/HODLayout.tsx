@@ -16,10 +16,15 @@ import {
   History,
   Trash2,
   MessageSquare,
-  BarChart3
+  BarChart3,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  ArrowRight
 } from 'lucide-react';
 import { checkSession } from '../utils/auth';
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
+import Swal from 'sweetalert2';
 
 export default function HODLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -88,9 +93,16 @@ export default function HODLayout() {
     validate();
   }, [navigate]);
 
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const prevUnreadCount = useRef(0);
+  const isFirstLoad = useRef(true);
   const [activeTask, setActiveTask] = useState<any>(null);
 
   const fetchNotifications = async () => {
@@ -102,10 +114,96 @@ export default function HODLayout() {
       if (result.status === 'success') {
         setNotifications(result.data.notifications);
         
-        // Play sound if unread count increases
-        if (result.data.unread_count > prevUnreadCount.current) {
-          const audio = new Audio('/pop.mp3');
-          audio.play().catch(e => console.log('Audio play failed:', e));
+        // Check notification settings and quiet hours
+        let playSound = true;
+        let showDesktopNotification = true;
+        
+        if (result.data.settings) {
+          const settingsObj = result.data.settings;
+          let notifSettings = settingsObj.notification_settings;
+          if (typeof notifSettings === 'string') {
+            try {
+              notifSettings = JSON.parse(notifSettings);
+            } catch (e) {}
+          }
+          
+          if (notifSettings) {
+            if (notifSettings.browser_alerts === false) {
+              playSound = false;
+              showDesktopNotification = false;
+            }
+          }
+          
+          // Quiet hours check
+          const start = settingsObj.quiet_hours_start;
+          const end = settingsObj.quiet_hours_end;
+          if (start && end) {
+            const now = new Date();
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            
+            const [sH, sM] = start.split(':').map(Number);
+            const [eH, eM] = end.split(':').map(Number);
+            const startTime = sH * 60 + sM;
+            const endTime = eH * 60 + eM;
+            
+            let isQuiet = false;
+            if (startTime > endTime) {
+              // Over midnight
+              if (currentTime >= startTime || currentTime <= endTime) {
+                isQuiet = true;
+              }
+            } else {
+              if (currentTime >= startTime && currentTime <= endTime) {
+                isQuiet = true;
+              }
+            }
+            
+            if (isQuiet) {
+              playSound = false;
+              showDesktopNotification = false;
+              console.log('Suppressing notification audio/alert due to Active Quiet Hours settings.');
+            }
+          }
+        }
+
+        const isFirst = isFirstLoad.current;
+        isFirstLoad.current = false;
+
+        // Play sound and show desktop notification if unread count increases
+        if (!isFirst && result.data.unread_count > prevUnreadCount.current) {
+          if (playSound) {
+            const audio = new Audio('/pop.mp3');
+            audio.play().catch(e => console.log('Audio play failed:', e));
+          }
+
+          const latestNotif = result.data.notifications && result.data.notifications[0];
+          if (latestNotif) {
+            // Show premium brand-themed toast notification inside the app (perfect secure/insecure local HTTP fallback)
+            Swal.fire({
+              title: 'FlowSync Alert',
+              text: latestNotif.message,
+              icon: 'info',
+              toast: true,
+              position: 'top-end',
+              showConfirmButton: false,
+              timer: 5000,
+              timerProgressBar: true,
+              background: '#ffffff',
+              color: '#1E184B',
+              iconColor: '#7C3AED',
+              customClass: {
+                popup: 'rounded-[20px] border border-[#7C3AED]/10 shadow-2xl animate-in slide-in-from-right-5 duration-300'
+              }
+            });
+
+            // Show native desktop notification if allowed and granted (HTTPS secure context required)
+            if (showDesktopNotification && 'Notification' in window && Notification.permission === 'granted') {
+              new Notification("FlowSync Alert", {
+                body: latestNotif.message,
+                icon: '/logo.png'
+              });
+            }
+          }
         }
         
         setUnreadCount(result.data.unread_count);
@@ -204,6 +302,18 @@ export default function HODLayout() {
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
 
+  const getTypeConfig = (type: string) => {
+    switch (type) {
+      case 'TASK_ACCEPTED': return { icon: CheckCircle2, color: 'text-emerald-500 bg-emerald-50 border-emerald-100' };
+      case 'TASK_SUBMITTED': return { icon: ArrowRight, color: 'text-blue-500 bg-blue-50 border-blue-100' };
+      case 'TASK_DECLINED': return { icon: AlertCircle, color: 'text-rose-500 bg-rose-50 border-rose-100' };
+      case 'TASK_UPDATED': return { icon: Clock, color: 'text-amber-500 bg-amber-50 border-amber-100' };
+      case 'TASK_COMMENT': return { icon: MessageSquare, color: 'text-indigo-500 bg-indigo-50 border-indigo-100' };
+      case 'EXTENSION_REQUESTED': return { icon: Clock, color: 'text-pink-500 bg-pink-50 border-pink-100' };
+      default: return { icon: Bell, color: 'text-[#7C3AED] bg-[#7C3AED]/10 border-[#7C3AED]/20' };
+    }
+  };
+
   return (
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden font-sans">
       {/* Sidebar Backdrop */}
@@ -271,7 +381,7 @@ export default function HODLayout() {
                   <p className="text-[10px] font-black text-[#1E184B] truncate">{activeTask.title}</p>
                   <div className="flex items-center justify-between">
                     <p className="text-[9px] font-bold text-[#7C3AED] uppercase tracking-tighter">{activeTask.status}</p>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Due: {new Date(activeTask.deadline).toLocaleDateString([], { month: 'short', day: 'numeric' })}</p>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Due: {formatDate(activeTask.deadline)}</p>
                   </div>
                 </div>
               ) : (
@@ -345,21 +455,24 @@ export default function HODLayout() {
                         <p className="text-xs font-bold text-slate-400">All caught up!</p>
                       </div>
                     ) : (
-                      notifications.map((notif) => (
-                        <div 
-                          key={notif.id} 
-                          onClick={(e) => { e.stopPropagation(); toggleReadStatus(notif.id, notif.is_read == 1); }}
-                          className={cn(
-                            "p-4 border-b border-[#7C3AED]/5 flex gap-3 hover:bg-slate-50 transition-colors cursor-pointer relative group",
-                            notif.is_read != 1 && "bg-[#7C3AED]/[0.02]"
-                          )}
-                        >
-                          <div className={cn(
-                            "w-8 h-8 rounded-full shrink-0 flex items-center justify-center",
-                            notif.is_read == 1 ? "bg-slate-100 text-slate-400" : "bg-[#7C3AED]/10 text-[#7C3AED]"
-                          )}>
-                            <Bell className="w-4 h-4" />
-                          </div>
+                      notifications.map((notif) => {
+                        const config = getTypeConfig(notif.type);
+                        const Icon = config.icon;
+                        return (
+                          <div 
+                            key={notif.id} 
+                            onClick={(e) => { e.stopPropagation(); toggleReadStatus(notif.id, notif.is_read == 1); }}
+                            className={cn(
+                              "p-4 border-b border-[#7C3AED]/5 flex gap-3 hover:bg-slate-50 transition-colors cursor-pointer relative group",
+                              notif.is_read != 1 && "bg-[#7C3AED]/[0.02]"
+                            )}
+                          >
+                            <div className={cn(
+                              "w-8 h-8 rounded-full shrink-0 flex items-center justify-center border shadow-sm",
+                              notif.is_read == 1 ? "bg-slate-100 text-slate-400 border-slate-200" : config.color
+                            )}>
+                              <Icon className="w-4 h-4" />
+                            </div>
                           <div className="flex-1 min-w-0">
                             <p className={cn("text-[11px] leading-relaxed line-clamp-2", notif.is_read == 1 ? "text-slate-500 font-medium" : "text-[#1E184B] font-bold")}>
                               {notif.message}
@@ -378,7 +491,8 @@ export default function HODLayout() {
                             </button>
                           </div>
                         </div>
-                      ))
+                      );
+                    })
                     )}
                   </div>
                   <button 

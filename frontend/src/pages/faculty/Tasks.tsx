@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
-import { cn, getDownloadUrl } from '@/lib/utils';
+import { cn, formatDate, getDownloadUrl } from '@/lib/utils';
 import Swal from 'sweetalert2';
 
 interface Task {
@@ -222,7 +222,7 @@ const FacultyTasks: React.FC = () => {
                       <div className="flex flex-col">
                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.1em]">Deadline</span>
                         <span className="text-[10px] font-black text-slate-700">
-                          {new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          {formatDate(task.deadline)}
                         </span>
                       </div>
                     </div>
