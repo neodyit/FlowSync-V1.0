@@ -22,7 +22,8 @@ import {
   Flag,
   MessageSquare,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
@@ -54,6 +55,7 @@ interface Task {
   bonus_points: number;
   progress: number;
   flag_color: string | null;
+  task_link?: string | null;
   public_remarks: string | null;
   private_remarks: string | null;
   my_remarks: string | null;
@@ -605,6 +607,40 @@ const FacultyMyTasks: React.FC = () => {
                           </div>
                         </div>
                       </div>
+
+                      {selectedTask.task_link && (
+                        <div className="space-y-4">
+                          <h3 className="text-xs font-black text-[#1E184B] uppercase tracking-widest flex items-center gap-2">
+                            <BookOpen className="w-4 h-4 text-emerald-500" /> Mission Resource Link
+                          </h3>
+                          <div className="p-5 bg-emerald-50/30 border-2 border-emerald-100/50 rounded-3xl flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-10 h-10 bg-emerald-100/50 rounded-2xl flex items-center justify-center text-emerald-600 shrink-0">
+                                <BookOpen className="w-5 h-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Reference URL</p>
+                                <a 
+                                  href={selectedTask.task_link} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-xs font-bold text-[#7C3AED] hover:underline break-all"
+                                >
+                                  {selectedTask.task_link}
+                                </a>
+                              </div>
+                            </div>
+                            <a 
+                              href={selectedTask.task_link} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all whitespace-nowrap shadow-md shadow-emerald-500/10"
+                            >
+                              Open Link
+                            </a>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="space-y-6">
                         <h3 className="text-xs font-black text-[#1E184B] uppercase tracking-widest flex items-center gap-2">

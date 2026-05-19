@@ -104,6 +104,7 @@ interface Task {
   aggregated_points?: number;
   aggregated_bonus_points?: number;
   flag_color: string | null;
+  task_link?: string | null;
   assignments: Assignment[];
   attachments: Attachment[];
   comments?: {
@@ -148,6 +149,7 @@ const HODTasks: React.FC = () => {
     category: 'General',
     assignment_mode: 'individual',
     assigned_to_id: '',
+    task_link: '',
     attachments: [] as File[]
   });
 
@@ -489,6 +491,7 @@ const HODTasks: React.FC = () => {
       category: 'General',
       assignment_mode: 'individual',
       assigned_to_id: '',
+      task_link: '',
       attachments: []
     });
   };
@@ -829,6 +832,7 @@ const HODTasks: React.FC = () => {
                                 category: task.category || 'General',
                                 assignment_mode: task.assigned_to_id ? 'individual' : 'broadcast',
                                 assigned_to_id: task.assigned_to_id?.toString() || '',
+                                task_link: task.task_link || '',
                                 attachments: []
                               }); 
                               setIsModalOpen(true); 
@@ -1165,6 +1169,17 @@ const HODTasks: React.FC = () => {
                     />
                   </div>
 
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Reference / Submission Link (Optional)</label>
+                    <input 
+                      type="url"
+                      placeholder="e.g., https://docs.google.com/spreadsheets/example"
+                      value={formData.task_link}
+                      onChange={(e) => setFormData({...formData, task_link: e.target.value})}
+                      className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
+                    />
+                  </div>
+
                   <div className="space-y-3">
                     <label className="text-[9px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Reference Materials</label>
                     <div className="relative group">
@@ -1450,6 +1465,42 @@ const HODTasks: React.FC = () => {
                 </div>
 
                 <div className="space-y-8">
+                  {/* Reference / Submission Link */}
+                  {selectedTask.task_link && (
+                    <div>
+                      <h3 className="text-xs font-black text-[#1E184B] uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-emerald-500" />
+                        Reference / Submission Link
+                      </h3>
+                      <div className="p-5 bg-emerald-50/30 border-2 border-emerald-100/50 rounded-3xl flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 bg-emerald-100/50 rounded-2xl flex items-center justify-center text-emerald-600 shrink-0">
+                            <BookOpen className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Reference URL</p>
+                            <a 
+                              href={selectedTask.task_link} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-xs font-bold text-[#7C3AED] hover:underline break-all"
+                            >
+                              {selectedTask.task_link}
+                            </a>
+                          </div>
+                        </div>
+                        <a 
+                          href={selectedTask.task_link} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all whitespace-nowrap shadow-md shadow-emerald-500/10"
+                        >
+                          Open Link
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Instructional Assets */}
                   <div>
                     <h3 className="text-xs font-black text-[#1E184B] uppercase tracking-widest mb-4 flex items-center gap-2">

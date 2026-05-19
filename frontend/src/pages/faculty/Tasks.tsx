@@ -32,6 +32,7 @@ interface Task {
   attachment_count: number;
   participant_count: number;
   attachments: any[];
+  task_link?: string | null;
   created_at: string;
 }
 
@@ -236,6 +237,21 @@ const FacultyTasks: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                  {task.task_link && (
+                    <a 
+                      href={task.task_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-between p-3.5 bg-emerald-50/50 border border-emerald-100/50 rounded-2xl hover:bg-emerald-50 transition-all group/link shadow-sm"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest truncate">Mission Link</span>
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-emerald-600 group-hover/link:translate-x-1 transition-transform" />
+                    </a>
+                  )}
 
                   <div className="flex items-center gap-2">
                     <button
