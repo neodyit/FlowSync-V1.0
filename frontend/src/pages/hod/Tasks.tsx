@@ -115,7 +115,6 @@ interface Task {
     comment: string;
     created_at: string;
   }[];
-  task_link?: string | null;
 }
 
 const HODTasks: React.FC = () => {
