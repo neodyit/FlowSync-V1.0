@@ -101,7 +101,8 @@ try {
                 $stmt = $db->prepare("
                     UPDATE tasks 
                     SET title = :title, description = :description, deadline = :deadline, 
-                        priority = :priority, task_type = :task_type, category = :category, assigned_to_id = :assigned_to
+                        priority = :priority, task_type = :task_type, category = :category, 
+                        assigned_to_id = :assigned_to, task_link = :task_link
                         $statusUpdate
                     WHERE id = :id AND department_id = :dept_id
                 ");
@@ -109,21 +110,21 @@ try {
                     'title' => $data['title'], 'description' => $data['description'] ?? '',
                     'deadline' => $data['deadline'], 'priority' => $data['priority'],
                     'task_type' => $data['task_type'], 'category' => $data['category'] ?? 'General', 
-                    'assigned_to' => $assignedToId,
+                    'assigned_to' => $assignedToId, 'task_link' => $data['task_link'] ?? null,
                     'id' => $taskId, 'dept_id' => $deptId
                 ]);
             } else {
                 $status = $isBroadcast ? 'Broadcasted' : 'Assigned';
                 $stmt = $db->prepare("
-                    INSERT INTO tasks (college_id, department_id, assigned_by_id, assigned_to_id, title, description, deadline, priority, task_type, category, status, assigned_at)
-                    VALUES (:college_id, :dept_id, :assigned_by, :assigned_to, :title, :description, :deadline, :priority, :task_type, :category, :status, NOW())
+                    INSERT INTO tasks (college_id, department_id, assigned_by_id, assigned_to_id, title, description, deadline, priority, task_type, category, status, task_link, assigned_at)
+                    VALUES (:college_id, :dept_id, :assigned_by, :assigned_to, :title, :description, :deadline, :priority, :task_type, :category, :status, :task_link, NOW())
                 ");
                 $stmt->execute([
                     'college_id' => $collegeId, 'dept_id' => $deptId, 'assigned_by' => $session['user_id'],
                     'assigned_to' => $assignedToId, 'title' => $data['title'], 'description' => $data['description'] ?? '',
                     'deadline' => $data['deadline'], 'priority' => $data['priority'], 
                     'task_type' => $data['task_type'], 'category' => $data['category'] ?? 'General',
-                    'status' => $status
+                    'status' => $status, 'task_link' => $data['task_link'] ?? null
                 ]);
                 $taskId = $db->lastInsertId();
             }

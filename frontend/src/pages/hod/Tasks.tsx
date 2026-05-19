@@ -113,6 +113,7 @@ interface Task {
     comment: string;
     created_at: string;
   }[];
+  task_link?: string | null;
 }
 
 const HODTasks: React.FC = () => {
@@ -148,7 +149,8 @@ const HODTasks: React.FC = () => {
     category: 'General',
     assignment_mode: 'individual',
     assigned_to_id: '',
-    attachments: [] as File[]
+    attachments: [] as File[],
+    task_link: ''
   });
 
   const fetchTasks = async (silent = false) => {
@@ -489,7 +491,8 @@ const HODTasks: React.FC = () => {
       category: 'General',
       assignment_mode: 'individual',
       assigned_to_id: '',
-      attachments: []
+      attachments: [],
+      task_link: ''
     });
   };
 
@@ -829,7 +832,8 @@ const HODTasks: React.FC = () => {
                                 category: task.category || 'General',
                                 assignment_mode: task.assigned_to_id ? 'individual' : 'broadcast',
                                 assigned_to_id: task.assigned_to_id?.toString() || '',
-                                attachments: []
+                                attachments: [],
+                                task_link: task.task_link || ''
                               }); 
                               setIsModalOpen(true); 
                             }}
@@ -1165,6 +1169,17 @@ const HODTasks: React.FC = () => {
                     />
                   </div>
 
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-[#7C3AED] uppercase tracking-widest ml-1">Reference URL / Task Link (Optional)</label>
+                    <input 
+                      type="url"
+                      placeholder="e.g., https://academic-portal.com/instructions"
+                      value={formData.task_link}
+                      onChange={(e) => setFormData({...formData, task_link: e.target.value})}
+                      className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
+                    />
+                  </div>
+
                   <div className="space-y-3">
                     <label className="text-[9px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Reference Materials</label>
                     <div className="relative group">
@@ -1457,6 +1472,35 @@ const HODTasks: React.FC = () => {
                       HOD Reference Files
                     </h3>
                     <div className="grid grid-cols-1 gap-3">
+                      {selectedTask.task_link && (
+                        <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 flex items-center justify-between group hover:border-[#7C3AED]/30 transition-all">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 shadow-sm">
+                              <Layers className="w-5 h-5" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Reference URL</span>
+                              <a 
+                                href={selectedTask.task_link} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="text-xs font-black text-[#7C3AED] hover:underline truncate max-w-[250px]"
+                              >
+                                {selectedTask.task_link}
+                              </a>
+                            </div>
+                          </div>
+                          <a 
+                            href={selectedTask.task_link} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="px-3.5 py-2.5 bg-white text-[#7C3AED] hover:bg-[#7C3AED] hover:text-white rounded-xl transition-all shadow-sm font-black text-[9px] uppercase tracking-widest"
+                          >
+                            Visit Link
+                          </a>
+                        </div>
+                      )}
+
                       {selectedTask.attachments.filter(a => a.entity_type === 'Task').map(att => (
                         <div key={att.id} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 group">
                           <div className="flex items-center gap-3">
