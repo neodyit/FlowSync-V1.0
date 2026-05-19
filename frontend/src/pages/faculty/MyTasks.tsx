@@ -23,7 +23,9 @@ import {
   MessageSquare,
   Sparkles,
   ArrowRight,
-  BookOpen
+  BookOpen,
+  Layers,
+  Link
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
@@ -650,6 +652,35 @@ const FacultyMyTasks: React.FC = () => {
                           <FileText className="w-4 h-4 text-[#7C3AED]" /> Instructional Materials
                         </h3>
                         <div className="grid grid-cols-1 gap-3">
+                          {selectedTask.task_link && (
+                            <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 flex items-center justify-between group hover:border-[#7C3AED]/30 transition-all">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 shadow-sm">
+                                  <Layers className="w-5 h-5" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Reference URL</span>
+                                  <a 
+                                    href={selectedTask.task_link} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    className="text-xs font-black text-[#7C3AED] hover:underline truncate max-w-[200px]"
+                                  >
+                                    {selectedTask.task_link}
+                                  </a>
+                                </div>
+                              </div>
+                              <a 
+                                href={selectedTask.task_link} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="px-3.5 py-2.5 bg-white text-[#7C3AED] hover:bg-[#7C3AED] hover:text-white rounded-xl transition-all shadow-sm font-black text-[9px] uppercase tracking-widest"
+                              >
+                                Visit Link
+                              </a>
+                            </div>
+                          )}
+
                           {selectedTask.attachments.filter(a => a.entity_type === 'Task').map(att => (
                             <div key={att.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-[#7C3AED]/30 transition-all">
                               <div className="flex items-center gap-3">
@@ -664,8 +695,8 @@ const FacultyMyTasks: React.FC = () => {
                               </div>
                             </div>
                           ))}
-                          {selectedTask.attachments.filter(a => a.entity_type === 'Task').length === 0 && (
-                            <p className="text-[10px] font-bold text-slate-400 italic">No reference files attached.</p>
+                          {(selectedTask.attachments.filter(a => a.entity_type === 'Task').length === 0 && !selectedTask.task_link) && (
+                            <p className="text-[10px] font-bold text-slate-400 italic">No reference materials or files attached.</p>
                           )}
                         </div>
                       </div>

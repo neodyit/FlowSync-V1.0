@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Kolkata');
 
 require_once __DIR__ . '/../src/Config/Database.php';
 require_once __DIR__ . '/../src/Auth/JWT.php';
