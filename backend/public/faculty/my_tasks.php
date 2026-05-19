@@ -28,7 +28,7 @@ try {
                 SELECT t.*, u.name as assigned_by_name, u.profile_pic as assigned_by_pic,
                        ta.status as my_status, ta.progress, 
                        ta.points as my_points, ta.bonus_points as my_bonus, 
-                       ta.remarks as my_remarks, ta.public_remarks, ta.private_remarks,
+                       ta.remarks as my_remarks, ta.public_remarks, ta.private_remarks, ta.submission_link,
                        CASE WHEN ta.submitted_at IS NOT NULL AND DATE(ta.submitted_at) > t.deadline THEN 1 ELSE 0 END as is_delayed
                 FROM tasks t
                 JOIN users u ON t.assigned_by_id = u.id
@@ -99,6 +99,7 @@ try {
             // Update assignment status and remarks
             $publicRemarks = $_POST['public_remarks'] ?? null;
             $privateRemarks = $_POST['private_remarks'] ?? null;
+            $submissionLink = $_POST['submission_link'] ?? null;
 
             $stmt = $db->prepare("
                 UPDATE task_assignments 
@@ -106,14 +107,16 @@ try {
                     submitted_at = NOW(), 
                     progress = 100,
                     public_remarks = :pub,
-                    private_remarks = :priv
+                    private_remarks = :priv,
+                    submission_link = :sub_link
                 WHERE task_id = :tid AND user_id = :uid
             ");
             $stmt->execute([
                 'tid' => $taskId, 
                 'uid' => $session['user_id'],
                 'pub' => $publicRemarks,
-                'priv' => $privateRemarks
+                'priv' => $privateRemarks,
+                'sub_link' => $submissionLink
             ]);
 
             // Handle uploads

@@ -101,7 +101,8 @@ try {
                 $stmt = $db->prepare("
                     UPDATE tasks 
                     SET title = :title, description = :description, deadline = :deadline, 
-                        priority = :priority, task_type = :task_type, category = :category, assigned_to_id = :assigned_to
+                        priority = :priority, task_type = :task_type, category = :category, 
+                        assigned_to_id = :assigned_to, task_link = :task_link
                         $statusUpdate
                     WHERE id = :id AND department_id = :dept_id
                 ");
@@ -109,21 +110,21 @@ try {
                     'title' => $data['title'], 'description' => $data['description'] ?? '',
                     'deadline' => $data['deadline'], 'priority' => $data['priority'],
                     'task_type' => $data['task_type'], 'category' => $data['category'] ?? 'General', 
-                    'assigned_to' => $assignedToId,
+                    'assigned_to' => $assignedToId, 'task_link' => $data['task_link'] ?? null,
                     'id' => $taskId, 'dept_id' => $deptId
                 ]);
             } else {
                 $status = $isBroadcast ? 'Broadcasted' : 'Assigned';
                 $stmt = $db->prepare("
-                    INSERT INTO tasks (college_id, department_id, assigned_by_id, assigned_to_id, title, description, deadline, priority, task_type, category, status, assigned_at)
-                    VALUES (:college_id, :dept_id, :assigned_by, :assigned_to, :title, :description, :deadline, :priority, :task_type, :category, :status, NOW())
+                    INSERT INTO tasks (college_id, department_id, assigned_by_id, assigned_to_id, title, description, deadline, priority, task_type, category, status, assigned_at, task_link)
+                    VALUES (:college_id, :dept_id, :assigned_by, :assigned_to, :title, :description, :deadline, :priority, :task_type, :category, :status, NOW(), :task_link)
                 ");
                 $stmt->execute([
                     'college_id' => $collegeId, 'dept_id' => $deptId, 'assigned_by' => $session['user_id'],
                     'assigned_to' => $assignedToId, 'title' => $data['title'], 'description' => $data['description'] ?? '',
                     'deadline' => $data['deadline'], 'priority' => $data['priority'], 
                     'task_type' => $data['task_type'], 'category' => $data['category'] ?? 'General',
-                    'status' => $status
+                    'status' => $status, 'task_link' => $data['task_link'] ?? null
                 ]);
                 $taskId = $db->lastInsertId();
             }
@@ -146,6 +147,29 @@ try {
                         }
                     }
                 }
+            }
+
+            // Dispatch notifications to assigned faculties
+            if ($isBroadcast) {
+                // Fetch all active faculty members in this department
+                $stmt = $db->prepare("
+                    SELECT u.id 
+                    FROM users u
+                    JOIN faculty_departments fd ON u.id = fd.user_id
+                    WHERE fd.department_id = :dept_id 
+                    AND u.role_id = 3 
+                    AND u.is_active = 1
+                ");
+                $stmt->execute(['dept_id' => $deptId]);
+                $faculties = $stmt->fetchAll();
+
+                $notifMsg = ($data['id'] ?? null) ? "Update on broadcast task: '{$data['title']}'" : "New department broadcast task: '{$data['title']}'";
+                foreach ($faculties as $fac) {
+                    $notifier->send($fac['id'], 'TASK_ASSIGNED', $notifMsg, $taskId, $session['user_id']);
+                }
+            } else if ($assignedToId) {
+                $notifMsg = ($data['id'] ?? null) ? "Update on assigned task: '{$data['title']}'" : "You have been assigned a new task: '{$data['title']}'";
+                $notifier->send($assignedToId, 'TASK_ASSIGNED', $notifMsg, $taskId, $session['user_id']);
             }
 
             echo json_encode(['status' => 'success', 'message' => 'Task processed', 'id' => $taskId]);
@@ -241,7 +265,10 @@ try {
                     ]);
                 }
 
-                $notifier->send($assignmentUserId, 'TASK_REVIEWED', "Your contribution to '{$task['title']}' has been updated to {$newStatus}", $taskId);
+                // Only send notification if the status has actually transitioned to a critical state (Approved, Rework Required, Rejected)
+                if ($newStatus !== $assignment['status'] && in_array($newStatus, ['Approved', 'Rework Required', 'Rejected'])) {
+                    $notifier->send($assignmentUserId, 'TASK_REVIEWED', "Your contribution to '{$task['title']}' has been updated to {$newStatus}", $taskId);
+                }
                 
                 // Always sync the main task points and status
                 // For broadcast tasks, check if all faculty in department have completed it
