@@ -130,7 +130,7 @@ const HODTasks: React.FC = () => {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'All' | 'Broadcasted' | 'Review Pending' | 'Active' | 'Completed' | 'Extensions'>('All');
+  const [activeTab, setActiveTab] = useState<'All' | 'Broadcasted' | 'Review Pending' | 'Active' | 'Completed' | 'Extensions' | 'Drafts'>('All');
   const [extensionRequests, setExtensionRequests] = useState<ExtensionRequest[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openSelect, setOpenSelect] = useState<'priority' | 'faculty' | 'category' | null>(null);
@@ -142,6 +142,7 @@ const HODTasks: React.FC = () => {
   const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<number[]>([]);
   const [bulkReviewData, setBulkReviewData] = useState({ status: 'Approved', points: 0, bonus_points: 0, remarks: '' });
   const [isBulkStatusDropdownOpen, setIsBulkStatusDropdownOpen] = useState(false);
+  const [systemSettings, setSystemSettings] = useState({ pause_new_tasks: 'false' });
   // Form State
   const [formData, setFormData] = useState({
     id: null as number | null,
@@ -166,6 +167,9 @@ const HODTasks: React.FC = () => {
       const data = await response.json();
       if (data.status === 'success') {
         setTasks(data.data);
+        if (data.settings) {
+          setSystemSettings(data.settings);
+        }
         
         setSelectedTask(prev => {
           if (!prev) return null;
@@ -314,11 +318,12 @@ const HODTasks: React.FC = () => {
     }
   }, [searchParams, tasks]);
 
-  const handleCreateOrUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateOrUpdate = async (e: React.FormEvent, isDraft = false) => {
+    e?.preventDefault();
     setIsSubmitting(true);
 
     const submitData = new FormData();
+    submitData.append('is_draft', isDraft.toString());
     Object.entries(formData).forEach(([key, value]) => {
       if (key === 'attachments') {
         (value as File[]).forEach(file => submitData.append('attachments[]', file));
@@ -537,7 +542,7 @@ const HODTasks: React.FC = () => {
 
   const getStatusConfig = (status: string) => {
     switch (status) {
-      case 'Draft': return { color: 'text-slate-500', bg: 'bg-slate-100', icon: Clock };
+      case 'Draft': return { color: 'text-slate-500', bg: 'bg-slate-500', icon: Clock };
       case 'Assigned': return { color: 'text-blue-500', bg: 'bg-blue-500', label: 'Pending' };
       case 'Broadcasted': return { color: 'text-indigo-500', bg: 'bg-indigo-500', label: 'Broadcast' };
       case 'Accepted': return { color: 'text-indigo-500', bg: 'bg-indigo-500', label: 'Accepted' };
@@ -578,6 +583,8 @@ const HODTasks: React.FC = () => {
                t.assignments.some(a => ['Accepted', 'In Progress', 'Rework Required'].includes(a.status));
       case 'Completed': 
         return ['Completed', 'Approved'].includes(t.status);
+      case 'Drafts':
+        return t.status === 'Draft';
       default: return true;
     }
   });
@@ -595,6 +602,7 @@ const HODTasks: React.FC = () => {
     ).length },
     { id: 'Extensions', label: 'Extensions', count: extensionRequests.filter(r => r.status === 'Pending').length },
     { id: 'Completed', label: 'Completed', count: tasks.filter(t => ['Completed', 'Approved'].includes(t.status)).length },
+    { id: 'Drafts', label: 'Drafts', count: tasks.filter(t => t.status === 'Draft').length },
   ];
 
   return (
@@ -979,7 +987,13 @@ const HODTasks: React.FC = () => {
               </div>
 
               <div className="p-8 overflow-y-auto custom-scrollbar">
-                <form onSubmit={handleCreateOrUpdate} className="space-y-5">
+                {systemSettings.pause_new_tasks === 'true' && (
+                  <div className="mb-6 bg-rose-50 text-rose-600 p-4 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-start gap-3 border border-rose-100">
+                    <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                    <p>Task Creation is closed by Admin, You can save it in Draft and publish later.</p>
+                  </div>
+                )}
+                <form onSubmit={(e) => handleCreateOrUpdate(e)} className="space-y-5">
                   <div className="space-y-1.5">
                     <label className="text-[9px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Mission Title</label>
                     <input 
@@ -1271,20 +1285,30 @@ const HODTasks: React.FC = () => {
                     )}
                   </div>
 
-                  <button 
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-4 bg-[#7C3AED] text-white rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#7C3AED]/20 hover:bg-[#6D28D9] transition-all disabled:opacity-50 active:scale-95"
-                  >
-                    {isSubmitting ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                        Deploying...
-                      </span>
-                    ) : (
-                      formData.id ? 'Update Mission' : 'Launch Mission'
-                    )}
-                  </button>
+                  <div className="flex gap-4 pt-4">
+                    <button 
+                      type="button"
+                      onClick={(e) => handleCreateOrUpdate(e as any, true)}
+                      disabled={isSubmitting}
+                      className="flex-1 py-4 bg-slate-100 text-slate-500 hover:text-[#7C3AED] hover:bg-slate-200 rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 active:scale-95 border border-slate-200"
+                    >
+                      {isSubmitting ? 'Saving...' : formData.id ? 'Update Draft' : 'Create Draft'}
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={isSubmitting || (systemSettings.pause_new_tasks === 'true' && (!formData.id || tasks.find(t=>t.id===formData.id)?.status === 'Draft'))}
+                      className="flex-[2] py-4 bg-[#7C3AED] text-white rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#7C3AED]/20 hover:bg-[#6D28D9] transition-all disabled:opacity-50 disabled:bg-slate-300 disabled:shadow-none active:scale-95"
+                    >
+                      {isSubmitting ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Deploying...
+                        </span>
+                      ) : (
+                        formData.id && tasks.find(t=>t.id===formData.id)?.status !== 'Draft' ? 'Update Mission' : 'Launch Mission'
+                      )}
+                    </button>
+                  </div>
                 </form>
               </div>
             </motion.div>
