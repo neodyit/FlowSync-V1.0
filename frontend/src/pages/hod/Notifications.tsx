@@ -33,7 +33,8 @@ const HODNotifications: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/notifications.php`, {
         credentials: 'include'
@@ -45,12 +46,16 @@ const HODNotifications: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchNotifications();
+    const interval = setInterval(() => {
+      fetchNotifications(true);
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const markAsRead = async (id?: number) => {

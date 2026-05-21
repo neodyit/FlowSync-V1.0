@@ -195,6 +195,13 @@ const Tasks: React.FC = () => {
           <p className="text-[#4C1D95]/60 mt-1 font-medium">Monitoring academic and administrative workflows globally.</p>
         </div>
         <div className="flex items-center gap-3">
+          <a
+            href={`${import.meta.env.VITE_API_URL}/admin/export_tasks.php`}
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border border-slate-200 text-[#1E1B4B] font-bold text-sm hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <Download className="w-4 h-4" />
+            EXPORT CSV
+          </a>
           <button 
             onClick={() => fetchData()}
             className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border border-[#7C3AED]/10 text-[#7C3AED] font-bold text-sm hover:bg-[#7C3AED]/5 transition-all"

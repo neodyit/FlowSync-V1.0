@@ -29,6 +29,7 @@ import SEO from '@/components/SEO';
 const MySwal = withReactContent(Swal);
 
 interface User {
+  profile_pic: any;
   id: number;
   name: string;
   email: string;
@@ -375,13 +376,22 @@ const UsersManagement: React.FC = () => {
           </h1>
           <p className="text-[#4C1D95]/60 mt-1 font-medium">Manage institutional accounts and access permissions.</p>
         </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="flex items-center justify-center gap-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-xl shadow-purple-500/20 active:scale-95"
-        >
-          <UserPlus className="w-5 h-5" />
-          Add New User
-        </button>
+        <div className="flex items-center gap-3">
+          <a
+            href={`${import.meta.env.VITE_API_URL}/admin/export_users.php`}
+            className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-[#1E1B4B] border border-slate-200 px-6 py-3 rounded-2xl font-bold transition-all shadow-sm active:scale-95"
+          >
+            <Download className="w-5 h-5" />
+            Export CSV
+          </a>
+          <button
+            onClick={() => handleOpenModal()}
+            className="flex items-center justify-center gap-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-xl shadow-purple-500/20 active:scale-95"
+          >
+            <UserPlus className="w-5 h-5" />
+            Add New User
+          </button>
+        </div>
       </div>
 
       {/* Filter Bar */}
@@ -457,7 +467,7 @@ const UsersManagement: React.FC = () => {
                   email={user.email}
                   role={user.role_name}
                   status={user.is_active ? "online" : "offline"}
-                  avatar="" // Using initial letter fallback in ProfileCard
+                  avatar={user.profile_pic ? `${import.meta.env.VITE_API_URL}/${user.profile_pic}` : ""}
                   college={user.college_name}
                   department={user.department_name}
                   onEdit={user.id === 1 ? undefined : () => handleOpenModal(user)}

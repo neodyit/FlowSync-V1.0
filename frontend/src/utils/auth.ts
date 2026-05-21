@@ -49,6 +49,10 @@ export const checkSession = async () => {
       return null;
     }
     
+    if (data.status === 'maintenance') {
+      data.session.maintenance = true;
+    }
+    
     return data;
   } catch (error) {
     console.error('Session validation connection error', error);

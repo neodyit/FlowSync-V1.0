@@ -16,7 +16,8 @@ import {
   History,
   ShieldCheck,
   Building2,
-  Trophy
+  Trophy,
+  MessageSquare
 } from 'lucide-react';
 import { checkSession } from '../utils/auth';
 
@@ -38,7 +39,8 @@ export default function MainLayout() {
     { name: 'Notifications', icon: Bell, path: '/admin/notifications' },
     { name: 'Leaderboard', icon: Trophy, path: '/admin/leaderboard' },
     { name: 'Audit Logs', icon: History, path: '/admin/audit' },
-    { name: 'Settings', icon: Settings, path: '/admin/settings' },
+    { name: 'Feedbacks', icon: MessageSquare, path: '/admin/feedbacks' },
+    { name: 'System Controls', icon: Settings, path: '/admin/controls' },
   ];
 
   const initials = (user.name || 'User')
