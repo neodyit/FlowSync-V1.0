@@ -24,6 +24,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
 import { cn } from '@/lib/utils';
+import { AdvancedTracking } from './AdvancedTracking';
 
 interface Stats {
   total_tasks: number;
@@ -72,7 +73,7 @@ const Reports: React.FC = () => {
   } | null>(null);
   
   const [isLoading, setIsLoading] = useState(true);
-  const [activeReportTab, setActiveReportTab] = useState<'overview' | 'pending' | 'workload' | 'categories'>('overview');
+  const [activeReportTab, setActiveReportTab] = useState<'overview' | 'pending' | 'workload' | 'categories' | 'advanced_tracking'>('overview');
   
   // Filters
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -158,6 +159,7 @@ const Reports: React.FC = () => {
             { id: 'pending', label: 'Pending Intel', icon: AlertCircle },
             { id: 'workload', label: 'Workload', icon: Users },
             { id: 'categories', label: 'Categories', icon: Tag },
+            { id: 'advanced_tracking', label: 'Advanced Tracking', icon: Activity },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -508,6 +510,15 @@ const Reports: React.FC = () => {
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Total Missions</p>
               </div>
             ))}
+          </motion.div>
+        )}
+
+        {activeReportTab === 'advanced_tracking' && (
+          <motion.div
+            key="advanced_tracking"
+            initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
+          >
+            <AdvancedTracking />
           </motion.div>
         )}
       </AnimatePresence>
