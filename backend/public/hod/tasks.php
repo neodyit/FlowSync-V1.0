@@ -81,7 +81,14 @@ try {
                 $task['comments'] = $commentStmt->fetchAll();
             }
 
-            echo json_encode(['status' => 'success', 'data' => $tasks]);
+            // Include system settings in response so frontend knows if task creation is paused
+            $settingsStmt = $db->query("SELECT setting_key, setting_value FROM system_settings WHERE setting_key = 'pause_new_tasks'");
+            $settings = [];
+            while ($row = $settingsStmt->fetch()) {
+                $settings[$row['setting_key']] = $row['setting_value'];
+            }
+
+            echo json_encode(['status' => 'success', 'data' => $tasks, 'settings' => $settings]);
             break;
 
         case 'POST':
@@ -89,10 +96,21 @@ try {
             $data = $isMultipart ? $_POST : json_decode(file_get_contents('php://input'), true);
             
             $taskId = $data['id'] ?? null;
+            $isDraft = filter_var($data['is_draft'] ?? false, FILTER_VALIDATE_BOOLEAN);
             
-            if (!$taskId && FlowSync\Utils\SystemSettings::get('pause_new_tasks') === 'true') {
+            if (!$isDraft && !$taskId && FlowSync\Utils\SystemSettings::get('pause_new_tasks') === 'true') {
                 throw new Exception("New task creation is currently paused by the system administrator.");
             }
+            if (!$isDraft && $taskId) {
+                // Check if old status was draft and task posting is paused
+                $stmtCheck = $db->prepare("SELECT status FROM tasks WHERE id = :id");
+                $stmtCheck->execute(['id' => $taskId]);
+                $oldTask = $stmtCheck->fetch();
+                if ($oldTask && $oldTask['status'] === 'Draft' && FlowSync\Utils\SystemSettings::get('pause_new_tasks') === 'true') {
+                    throw new Exception("Task publishing is currently paused by the system administrator.");
+                }
+            }
+            
             if (empty($data['title']) || empty($data['deadline']) || empty($data['priority']) || empty($data['task_type'])) {
                 throw new Exception("Title, deadline, priority, and task type are required.");
             }
@@ -101,13 +119,17 @@ try {
             $assignedToId = $isBroadcast ? null : ($data['assigned_to_id'] ?? null);
 
             if ($taskId) {
-                $statusUpdate = $isBroadcast ? ", status = 'Broadcasted'" : ($assignedToId ? ", status = 'Assigned'" : "");
+                $stmtCheck = $db->prepare("SELECT status FROM tasks WHERE id = :id");
+                $stmtCheck->execute(['id' => $taskId]);
+                $oldTask = $stmtCheck->fetch();
+                $wasDraft = ($oldTask && $oldTask['status'] === 'Draft');
+                
+                $newStatus = $isDraft ? 'Draft' : ($isBroadcast ? 'Broadcasted' : ($assignedToId ? 'Assigned' : 'Draft'));
                 $stmt = $db->prepare("
                     UPDATE tasks 
                     SET title = :title, description = :description, deadline = :deadline, 
                         priority = :priority, task_type = :task_type, category = :category, 
-                        assigned_to_id = :assigned_to, task_link = :task_link
-                        $statusUpdate
+                        assigned_to_id = :assigned_to, task_link = :task_link, status = :status
                     WHERE id = :id AND department_id = :dept_id
                 ");
                 $stmt->execute([
@@ -115,10 +137,11 @@ try {
                     'deadline' => $data['deadline'], 'priority' => $data['priority'],
                     'task_type' => $data['task_type'], 'category' => $data['category'] ?? 'General', 
                     'assigned_to' => $assignedToId, 'task_link' => $data['task_link'] ?? null,
-                    'id' => $taskId, 'dept_id' => $deptId
+                    'status' => $newStatus, 'id' => $taskId, 'dept_id' => $deptId
                 ]);
             } else {
-                $status = $isBroadcast ? 'Broadcasted' : 'Assigned';
+                $wasDraft = false;
+                $status = $isDraft ? 'Draft' : ($isBroadcast ? 'Broadcasted' : 'Assigned');
                 $stmt = $db->prepare("
                     INSERT INTO tasks (college_id, department_id, assigned_by_id, assigned_to_id, title, description, deadline, priority, task_type, category, status, assigned_at, task_link)
                     VALUES (:college_id, :dept_id, :assigned_by, :assigned_to, :title, :description, :deadline, :priority, :task_type, :category, :status, NOW(), :task_link)
@@ -133,8 +156,8 @@ try {
                 $taskId = $db->lastInsertId();
             }
 
-            // Create assignment record for individual tasks
-            if (!$isBroadcast && $assignedToId) {
+            // Create assignment record for individual tasks only if not draft
+            if (!$isDraft && !$isBroadcast && $assignedToId) {
                 $stmt = $db->prepare("INSERT INTO task_assignments (task_id, user_id, status) VALUES (:tid, :uid, 'Accepted') ON DUPLICATE KEY UPDATE status = 'Accepted'");
                 $stmt->execute(['tid' => $taskId, 'uid' => $assignedToId]);
             }
@@ -153,30 +176,32 @@ try {
                 }
             }
 
-            // Dispatch notifications to assigned faculties
-            if ($isBroadcast) {
-                // Fetch all active faculty members in this department
-                $stmt = $db->prepare("
-                    SELECT u.id 
-                    FROM users u
-                    JOIN faculty_departments fd ON u.id = fd.user_id
-                    WHERE fd.department_id = :dept_id 
-                    AND u.role_id = 3 
-                    AND u.is_active = 1
-                ");
-                $stmt->execute(['dept_id' => $deptId]);
-                $faculties = $stmt->fetchAll();
+            // Dispatch notifications to assigned faculties only if not draft
+            if (!$isDraft) {
+                if ($isBroadcast) {
+                    // Fetch all active faculty members in this department
+                    $stmt = $db->prepare("
+                        SELECT u.id 
+                        FROM users u
+                        JOIN faculty_departments fd ON u.id = fd.user_id
+                        WHERE fd.department_id = :dept_id 
+                        AND u.role_id = 3 
+                        AND u.is_active = 1
+                    ");
+                    $stmt->execute(['dept_id' => $deptId]);
+                    $faculties = $stmt->fetchAll();
 
-                $notifMsg = ($data['id'] ?? null) ? "Update on broadcast task: '{$data['title']}'" : "New department broadcast task: '{$data['title']}'";
-                foreach ($faculties as $fac) {
-                    $notifier->send($fac['id'], 'TASK_ASSIGNED', $notifMsg, $taskId, $session['user_id']);
+                    $notifMsg = ($data['id'] ?? null) && !$wasDraft ? "Update on broadcast task: '{$data['title']}'" : "New department broadcast task: '{$data['title']}'";
+                    foreach ($faculties as $fac) {
+                        $notifier->send($fac['id'], 'TASK_ASSIGNED', $notifMsg, $taskId, $session['user_id']);
+                    }
+                } else if ($assignedToId) {
+                    $notifMsg = ($data['id'] ?? null) && !$wasDraft ? "Update on assigned task: '{$data['title']}'" : "You have been assigned a new task: '{$data['title']}'";
+                    $notifier->send($assignedToId, 'TASK_ASSIGNED', $notifMsg, $taskId, $session['user_id']);
                 }
-            } else if ($assignedToId) {
-                $notifMsg = ($data['id'] ?? null) ? "Update on assigned task: '{$data['title']}'" : "You have been assigned a new task: '{$data['title']}'";
-                $notifier->send($assignedToId, 'TASK_ASSIGNED', $notifMsg, $taskId, $session['user_id']);
             }
 
-            echo json_encode(['status' => 'success', 'message' => 'Task processed', 'id' => $taskId]);
+            echo json_encode(['status' => 'success', 'message' => $isDraft ? 'Task saved as draft' : 'Task processed', 'id' => $taskId]);
             break;
 
         case 'PUT':
