@@ -14,7 +14,7 @@ try {
     switch ($method) {
         case 'GET':
             $stmt = $db->query("
-                SELECT u.id, u.name, u.email, u.is_active, r.name as role_name, c.name as college_name, u.college_id, u.role_id,
+                SELECT u.id, u.name, u.email, u.is_active, u.profile_pic, r.name as role_name, c.name as college_name, u.college_id, u.role_id,
                        fd.department_id, d.name as department_name,
                        (SELECT COUNT(*) FROM departments WHERE hod_id = u.id) as is_current_hod
                 FROM users u 

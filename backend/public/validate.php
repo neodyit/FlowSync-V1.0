@@ -34,6 +34,14 @@ $auth = new \FlowSync\Auth\AuthService();
 $session = $auth->validateSession();
 
 if ($session) {
+    require_once __DIR__ . '/../src/Utils/SystemSettings.php';
+    $isMaintenance = \FlowSync\Utils\SystemSettings::get('maintenance_mode') === 'true';
+    
+    if ($isMaintenance && in_array((int)$session['role_id'], [2, 3])) {
+        echo json_encode(['status' => 'maintenance', 'session' => $session]);
+        exit;
+    }
+
     echo json_encode(['status' => 'success', 'session' => $session]);
 } else {
     http_response_code(401);

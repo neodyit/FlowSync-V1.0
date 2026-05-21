@@ -89,6 +89,10 @@ try {
             $data = $isMultipart ? $_POST : json_decode(file_get_contents('php://input'), true);
             
             $taskId = $data['id'] ?? null;
+            
+            if (!$taskId && FlowSync\Utils\SystemSettings::get('pause_new_tasks') === 'true') {
+                throw new Exception("New task creation is currently paused by the system administrator.");
+            }
             if (empty($data['title']) || empty($data['deadline']) || empty($data['priority']) || empty($data['task_type'])) {
                 throw new Exception("Title, deadline, priority, and task type are required.");
             }
@@ -206,6 +210,20 @@ try {
                     $newPoints = isset($data['points']) ? (int)$data['points'] : (int)($assignment['points'] ?? 0);
                     $newBonus = isset($data['bonus_points']) ? (int)$data['bonus_points'] : (int)($assignment['bonus_points'] ?? 0);
                     
+                    $maxBonus = (int)(FlowSync\Utils\SystemSettings::get('max_bonus_points', 5));
+                    if ($newBonus > $maxBonus) {
+                        $newBonus = $maxBonus;
+                    }
+
+                    $multiplier = (float)(FlowSync\Utils\SystemSettings::get('global_multiplier', 1.0));
+                    // Only apply multiplier if the points are newly set from the frontend (meaning $data['points'] was provided)
+                    if (isset($data['points'])) {
+                        $newPoints = (int)round($newPoints * $multiplier);
+                    }
+                    if (isset($data['bonus_points'])) {
+                        $newBonus = (int)round($newBonus * $multiplier);
+                    }
+
                     if ($newStatus === 'Rework Required') {
                         $newPoints = 0;
                         $newBonus = 0; 

@@ -26,13 +26,33 @@ try {
     $stmt = $db->query("SELECT COUNT(*) as count FROM users WHERE role_id = 3");
     $faculty = $stmt->fetch()['count'] ?? 0;
     
+    // Count active and completed tasks
+    $stmt = $db->query("SELECT COUNT(*) as count FROM tasks WHERE status NOT IN ('Completed', 'Archived', 'Declined')");
+    $activeTasks = $stmt->fetch()['count'] ?? 0;
+    
+    $stmt = $db->query("SELECT COUNT(*) as count FROM tasks WHERE status = 'Completed'");
+    $completedTasks = $stmt->fetch()['count'] ?? 0;
+
+    // Get recent activity (last 10 audit logs)
+    $stmt = $db->query("
+        SELECT a.*, u.name as user_name 
+        FROM audit_logs a 
+        LEFT JOIN users u ON a.user_id = u.id 
+        ORDER BY a.created_at DESC 
+        LIMIT 10
+    ");
+    $recentActivity = $stmt->fetchAll();
+
     echo json_encode([
         'status' => 'success',
         'data' => [
             'colleges' => (int)$colleges,
             'departments' => (int)$departments,
             'hods' => (int)$hods,
-            'faculty' => (int)$faculty
+            'faculty' => (int)$faculty,
+            'active_tasks' => (int)$activeTasks,
+            'completed_tasks' => (int)$completedTasks,
+            'recent_activity' => $recentActivity
         ]
     ]);
 } catch (Exception $e) {

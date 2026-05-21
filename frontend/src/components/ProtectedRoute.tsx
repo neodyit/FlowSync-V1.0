@@ -33,6 +33,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
 
   const session = user.session;
 
+  if (session.maintenance && session.role_id !== 1) {
+    return <Navigate to="/maintenance" replace />;
+  }
+
   if (allowedRoles && !allowedRoles.includes(session.role_id)) {
     // Redirect based on role to their appropriate dashboard
     if (session.role_id === 1) return <Navigate to="/admin/dashboard" replace />;

@@ -89,8 +89,13 @@ export default function HODLayout() {
   useEffect(() => {
     const validate = async () => {
       const sessionData = await checkSession();
+      if (sessionData?.session?.maintenance) {
+        navigate('/maintenance', { replace: true });
+      }
     };
     validate();
+    const interval = setInterval(validate, 60000);
+    return () => clearInterval(interval);
   }, [navigate]);
 
   useEffect(() => {

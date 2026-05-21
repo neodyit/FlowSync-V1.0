@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import Maintenance from './pages/Maintenance';
 
 // Admin Pages
 import Dashboard from './pages/admin/Dashboard';
@@ -16,6 +17,7 @@ import AuditLogs from './pages/admin/AuditLogs';
 import Settings from './pages/admin/Settings';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ControlsPage from './pages/admin/ControlsPage';
+import Feedbacks from './pages/admin/Feedbacks';
 
 // HOD Pages
 import HODLayout from './layouts/HODLayout';
@@ -63,6 +65,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/maintenance" element={<Maintenance />} />
         
         {/* Root redirect */}
         <Route path="/" element={<RootRedirect />} />
@@ -71,7 +74,7 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={[1]} />}>
           <Route path="/admin" element={<MainLayout />}>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="institution" element={<InstitutionManagement />} />
             <Route path="users" element={<UsersManagement />} />
             <Route path="colleges/:shortName" element={<CollegeDetails />} />
@@ -80,7 +83,8 @@ function App() {
             <Route path="notifications" element={<Notifications />} />
             <Route path="leaderboard" element={<Leaderboard />} />
             <Route path="audit" element={<AuditLogs />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="controls" element={<ControlsPage />} />
+            <Route path="feedbacks" element={<Feedbacks />} />
           </Route>
         </Route>
 
