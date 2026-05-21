@@ -2,19 +2,70 @@
 
 > **FlowSync** is a premium, multi-college, web-based task and academic workflow orchestration engine. It streamlines departmental productivity, optimizes task assignments, and unlocks deep performance analytics under a secure, responsive, and state-of-the-art Progressive Web App (PWA) wrapper.
 
-```
-       ┌────────────────────────────────────────────────────────┐
-       │                       FlowSync                         │
-       │           Academic Coordination Platform              │
-       └───────────────────────────┬────────────────────────────┘
-                                   │
-         ┌─────────────────────────┼─────────────────────────┐
-         ▼                         ▼                         ▼
-   🛡️ SUPER ADMIN                🎓 HOD                  👨‍🏫 FACULTY
-  System Orchestration     Department Command       Task Execution & Leaderboard
+---
+
+## 🏗️ System Architecture & Workflow Flowcharts
+
+### 1. Role Interaction & Workflow Architecture
+```mermaid
+flowchart TD
+    subgraph Global Control
+        Admin((🛡️ Admin))
+    end
+    
+    subgraph Department Management
+        HOD((🎓 HOD))
+    end
+    
+    subgraph Department Faculties
+        FacA((👨‍🏫 Faculty A))
+        FacB((👩‍🏫 Faculty B))
+        FacC((👨‍🏫 Faculty C))
+    end
+    
+    %% Admin Interactions
+    Admin -->|Manages Colleges & Depts| HOD
+    Admin -->|Controls Global Rules & Toggles| HOD
+    Admin -->|Monitors Audit Logs & Export Data| HOD
+    Admin -->|Reviews System Feedback| FacA
+    
+    %% HOD Interactions
+    HOD -->|Assigns Direct Tasks| FacA
+    HOD -->|Broadcasts Tasks| DepartmentFaculties
+    HOD -->|Reviews Submissions & Awards Points| FacA
+    HOD -->|Approves Deadline Extensions| FacB
+    
+    %% Faculty Interactions
+    FacA -->|Accepts Broadcasts & Submits Work| HOD
+    FacB -->|Requests Extension & Submits Work| HOD
+    FacC -->|Submits Work & Provides Feedback| Admin
 ```
 
-***
+### 2. Task Lifecycle State Diagram
+```mermaid
+stateDiagram-v2
+    [*] --> Draft : HOD Saves Incomplete Task
+    Draft --> Assigned : Direct Assignment
+    Draft --> Broadcasted : Department Broadcast
+    
+    Assigned --> Accepted : Faculty Accepts
+    
+    Broadcasted --> Accepted : Faculty Accepts (Simultaneous Allowed)
+    
+    Accepted --> InProgress : Faculty Works
+    InProgress --> Submitted : Submission Uploaded
+    
+    Submitted --> UnderReview : HOD Notified
+    UnderReview --> Approved : HOD Accepts & Awards Points
+    UnderReview --> ReworkRequired : HOD Demands Revision
+    
+    ReworkRequired --> Resubmitted : Faculty Re-uploads
+    Resubmitted --> UnderReview
+    
+    Approved --> Completed : Workflow Finalized
+```
+
+---
 
 ## 🌟 Core Pillars & Capabilities
 
@@ -22,34 +73,16 @@
 Designed with multi-college scalability at its core. Colleges operate under isolated environments while retaining absolute modular data containment:
 $$\text{College} \longrightarrow \text{Departments} \longrightarrow \text{Faculty / Teams}$$
 
-### 2. Transactional Broadcast Lock System
-Solves real-time race conditions in departmental broadcasts. When an HOD broadcasts a task to the department:
-- The first faculty member to open the task triggers a secure **transactional lock** (30–60 seconds).
-- Other department members see a locked status, preventing double-acceptance conflicts.
-- Automatic rollbacks/unlocks trigger if the lock period expires without acceptance.
+### 2. Simultaneous Broadcast Assignments
+Replaces legacy locks with simultaneous execution. When an HOD broadcasts a task to the department:
+- All eligible faculty members can view and accept the task.
+- Multiple faculties can work on the same broadcasted task and receive points based on their individual submissions.
 
-### 3. Dynamic Interactive Lifecycle
-Tasks seamlessly transition through an advanced academic lifecycle:
-```mermaid
-stateDiagram-v2
-    [*] --> Draft
-    Draft --> Broadcasted : Broadcast Assignment
-    Draft --> Assigned : Direct Assignment
-    Broadcasted --> Locked : Faculty Opens
-    Locked --> Accepted : Faculty Accepts
-    Locked --> Broadcasted : Lock Expiry (Rollback)
-    Assigned --> Accepted : Faculty Accepts
-    Assigned --> Declined : Faculty Rejects
-    Accepted --> InProgress
-    InProgress --> Submitted : Submission Uploaded
-    Submitted --> UnderReview : HOD Notified
-    UnderReview --> Approved : HOD Accepts
-    UnderReview --> ReworkRequired : HOD Demands Revision
-    ReworkRequired --> Resubmitted : Faculty Re-uploads
-    Resubmitted --> UnderReview
-    Approved --> Completed : Workflow Archive
-    Declined --> [*]
-```
+### 3. Global System Controls & Draft Mode
+Admins have absolute control over the system's operational state:
+- **Pause Task Postings**: If Admins restrict new tasks, HODs can still prepare tasks and save them in **Draft Mode** to be published once restrictions are lifted.
+- **Maintenance Mode**: Easily pause non-essential activities across the board.
+- **Global Multipliers**: Admins can configure global point multipliers for incentive campaigns.
 
 ### 4. Advanced Gamification (Leaderboard & Point System)
 Tracks performance dynamically:
@@ -60,10 +93,39 @@ Tracks performance dynamically:
 ### 5. Progressive Web App (PWA) & Offline Cache
 Provides seamless mobile compatibility and network resilience:
 - Built-in dynamic service worker caching standard assets (`/logo.png`, layout stylesheets, manifest protocols).
-- Support for offline views and automatic database reconciliation once online access resumes.
 
-### 6. Search Engine Optimization (SEO)
-Fully configured dynamic metadata rendering using automated `<SEO>` component hydration, custom meta descriptions, OpenGraph tags for rich previews, and proper header structures.
+### 6. Dynamic Auditing & Exporting
+Comprehensive tracking for compliance:
+- Every action (Login, Acceptance, Review, Override) is permanently logged in the Audit Trail.
+- Admins can instantly export Task and User records to CSV/Excel for external reporting.
+
+---
+
+## 🎯 Feature Matrix
+
+### 🛡️ Admin Features
+- **Dashboard & Analytics**: High-level statistics of colleges, users, and tasks.
+- **Global Settings Control**: Toggle Maintenance Mode, Pause New Tasks, set Max Bonus Points, and configure Global Point Multipliers.
+- **Entity Management**: Full CRUD for Colleges, Departments, and User Accounts (HOD/Faculty).
+- **Audit Logs**: View immutable logs of all system operations.
+- **Feedback Center**: View and respond to system feedback submitted by users.
+- **Bulk Exports**: Instantly download User and Task databases.
+
+### 🎓 HOD Features
+- **Mission Control**: Assign individual tasks or broadcast missions to the entire department.
+- **Drafts System**: Save incomplete tasks as drafts; useful when task-posting rules are paused.
+- **Submissions & Bulk Review**: Review faculty submissions individually or approve multiple submissions in bulk. Award base points and bonus points.
+- **Advanced Tracking**: Monitor which faculties have not yet accepted or completed their tasks.
+- **Extension Requests**: Review, approve, or reject deadline extensions requested by faculties.
+- **Push Reminders**: Send immediate alert notifications to faculties lagging behind.
+- **Department Reports**: Generate specific statistics on department task turnaround times and point distributions.
+
+### 👨‍🏫 Faculty Features
+- **Task Execution**: Accept tasks, upload reference documents, and submit completed work.
+- **Extensions**: Request deadline extensions with formal reasoning directly from the task interface.
+- **Comments & Communication**: Threaded task comments to discuss requirements with the HOD.
+- **Leaderboard**: Track personal rank, total points, and completed tasks relative to peers.
+- **Feedback**: Submit system and workflow feedback directly to the Admin.
 
 ---
 
@@ -71,7 +133,7 @@ Fully configured dynamic metadata rendering using automated `<SEO>` component hy
 
 | Layer | Technology | Primary Role |
 | :--- | :--- | :--- |
-| **Frontend** | React 19 (TypeScript) | Reactive interfaces, rich glassmorphism UI, client state. |
+| **Frontend** | React 19 (TypeScript, Vite) | Reactive interfaces, rich glassmorphism UI, client state. |
 | **Styling** | TailwindCSS v4 | Sleek modern aesthetics, utility-first responsiveness, typography. |
 | **Backend** | Native PHP 8+ | High-performance RESTful APIs, strict JWT authentication. |
 | **Database** | MySQL 8+ | Transaction-safe schema with optimized index tables. |
@@ -86,19 +148,20 @@ FlowSync/
 ├── backend/                  # PHP API Engine
 │   ├── src/                  # Core Business Logic
 │   │   ├── Config/           # Database & Connection settings
-│   │   ├── Controllers/      # API Controllers (Authentication, Tasks, Audit)
-│   │   ├── Middleware/       # JWT and RBAC guards
-│   │   └── Models/           # Database abstractions
+│   │   ├── Utils/            # Middleware, JWT, RBAC, Settings & Logging Guards
 │   ├── public/               # API Gateway & Routing endpoints
+│   │   ├── admin/            # Admin-specific API routes
+│   │   ├── hod/              # HOD-specific API routes
+│   │   └── faculty/          # Faculty-specific API routes
 │   ├── sql/                  # DB Schemas, triggers, and indices
 │   └── .env                  # Backend environments (Ignored in Git)
 │
 ├── frontend/                 # React SPA Frontend
-│   ├── public/               # Static resources (PWA Manifest, sw.js, logo.png)
+│   ├── public/               # Static resources (PWA Manifest, sw.js)
 │   ├── src/                  # Application source
 │   │   ├── components/       # Reusable components (SEO, Selectors, Modals)
 │   │   ├── layouts/          # Dashboards (FacultyLayout, HODLayout, MainLayout)
-│   │   ├── pages/            # Core views (Login, Tasks, Notifications, Analytics)
+│   │   ├── pages/            # Core views (Login, Maintenance, Admin/HOD/Faculty areas)
 │   │   └── App.tsx           # Route definitions & state
 │   ├── vite.config.ts        # Vite configuration & API proxies
 │   └── .env                  # Frontend configuration
@@ -116,9 +179,9 @@ FlowSync/
 - **Package Manager**: Node.js & npm (v18+)
 
 ### 1. Database Configuration
-1. Open your MySQL database manager (e.g., phpMyAdmin).
+1. Open your MySQL database manager.
 2. Create a new database named `flowsync`.
-3. Import the schema template found in `backend/sql/schema.sql`.
+3. Import the schema template found in `backend/sql/flowsync.sql`.
 
 ### 2. Backend Installation & Configurations
 1. Navigate to the `backend` folder.

@@ -23,6 +23,7 @@ frontend/node_modules/
 
 # PHP (Composer)
 vendor/
+backend/public/uploads/
 backend/vendor/
 backend/sql/data.xlsx
 backend/sql/seed_faculties.sql

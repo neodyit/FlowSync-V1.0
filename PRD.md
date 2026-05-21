@@ -11,6 +11,7 @@ The system enables Admins and HODs to:
 - review submissions
 - maintain workflow records
 - generate productivity insights
+- control system-wide settings
 
 The platform supports:
 - role-based access control
@@ -46,6 +47,10 @@ The platform supports:
 - Create HOD accounts
 - Create faculty accounts
 - Assign faculties to departments
+- Manage global system controls (Maintenance Mode, Pause Task Creation, Multipliers)
+- View system feedbacks
+- Bulk Export Data (Tasks, Users) to CSV
+- View global leaderboards
 - View all audit logs
 - Manage permissions
 - Monitor system activity
@@ -55,25 +60,27 @@ The platform supports:
 ## 2. HOD
 
 ### Permissions
-- Create tasks
+- Create tasks (Drafts or Published)
 - Assign tasks individually
-- Broadcast tasks
-- Review submissions
-- Approve/reject submissions
-- Extend deadlines
+- Broadcast tasks to entire departments
+- Advanced tracking of faculty participation
+- Send push reminders
+- Manage deadline extension requests
+- Bulk review submissions
+- Review individual submissions (approve/reject/rework)
 - Add remarks
 - Award points & bonus points
-- View department analytics
+- View department analytics and leaderboards
 
 ---
 
 ## 3. Faculty
 
 ### Permissions
-- Accept tasks
-- Decline tasks
-- Submit work
-- Upload attachments
+- Accept broadcast tasks
+- Submit work with attachments
+- Request deadline extensions
+- Submit system feedback
 - Add comments
 - Track deadlines
 - View leaderboard
@@ -165,24 +172,20 @@ Visible only to:
 HOD broadcasts task to all department faculties.
 
 ### Workflow
-- All eligible faculties can view task
-- First faculty to accept gets assignment
-- Temporary lock prevents race conditions
+- All eligible faculties in the department can view the broadcasted task.
+- Multiple faculties can accept and work on the same broadcasted task simultaneously.
+- No locking mechanism: Collaboration and parallel execution are encouraged.
 
-### Broadcast Lock System
+---
 
-When a faculty opens a broadcast task:
-- task becomes temporarily locked
-- other faculties can still view task
-- others cannot accept during lock window
+## 3. Draft Mode
 
-### Lock Expiry
-If faculty does not accept within lock duration:
-- task automatically unlocks
-- others can accept
+HOD can save tasks as drafts.
 
-### Suggested Lock Duration
-30–60 seconds
+### Workflow
+- Drafts are invisible to faculties.
+- Useful when the task details are incomplete or if global task creation is paused by the Admin.
+- Drafts can be published as Individual or Broadcast tasks later.
 
 ---
 
@@ -190,7 +193,6 @@ If faculty does not accept within lock duration:
 
 Draft
 → Assigned / Broadcasted
-→ Locked
 → Accepted
 → In Progress
 → Submitted
@@ -200,18 +202,16 @@ Draft
 → Rework Required
 → Resubmitted
 → Completed
-→ Declined
 → Expired
 
 ---
 
-# Rework Workflow
+# Review Workflow
 
-If submission is rejected:
-- HOD provides remarks
-- Task enters "Rework Required"
-- Faculty resubmits task
-- HOD reviews again
+After a task is submitted by the faculty:
+- **Approve**: HOD marks it as completed, awarding base and optional bonus points.
+- **Rework Required**: HOD specifies missing elements. The task points are reset and the faculty must resubmit.
+- **Reject**: The submission is entirely rejected.
 
 ---
 
@@ -227,14 +227,13 @@ Visible only to:
 
 ## Broadcast Tasks
 Before acceptance:
-- visible to department faculties
+- visible to all department faculties
 
 After acceptance:
-- hidden from other faculties
-- visible only to:
-  - assigned faculty
-  - HOD
-  - Admin
+- Visible to the accepting faculty (as an active task)
+- Continues to be visible to other faculties who can also accept it.
+- visible to HOD
+- visible to Admin
 
 ---
 
@@ -247,7 +246,6 @@ Each task must maintain:
 - submitted_at
 - reviewed_at
 - completed_at
-- declined_at
 - updated_at
 - created_at
 
@@ -271,7 +269,8 @@ These timestamps will support:
 - remarks
 - status
 - department
-- assigned faculty
+- assigned faculty / broadcast flag
+- reference links
 
 ---
 
@@ -311,27 +310,14 @@ Each task includes threaded comments.
 
 ---
 
-# Review System
+# Extensions & Reminders
 
-After submission:
-- HOD reviews work
-- adds remarks
-- approves/rejects
-- awards points
-- awards bonus points
+## Deadline Extensions
+- Faculties can formally request deadline extensions with reasons.
+- HODs can approve or reject these requests with remarks.
 
----
-
-# Decline Workflow
-
-Faculty may decline task with remarks.
-
-## Decline Process
-
-Assigned
-→ Declined
-→ HOD notified
-→ HOD reassigns or cancels
+## Push Reminders
+- HODs can send manual push alerts to faculties who are delaying acceptance or submission.
 
 ---
 
@@ -339,32 +325,17 @@ Assigned
 
 ## Notification Types
 
-- task assigned
+- task assigned/broadcasted
 - task accepted
-- task declined
 - reminder alerts
 - review updates
-- deadline extension
-- approval/rejection alerts
-
----
+- deadline extension requests & decisions
+- approval/rejection/rework alerts
 
 ## Delivery Channels
 
 ### In-App Notifications
-Polling-based updates
-
-### Email Notifications
-Automated email reminders
-
----
-
-## Reminder System
-
-### Examples
-- 2 days before deadline
-- 1 day before deadline
-- overdue notification
+Polling-based real-time updates
 
 ---
 
@@ -373,10 +344,10 @@ Automated email reminders
 ## Recommended Intervals
 
 Dashboard:
-- every 20–30 seconds
+- every 5–10 seconds for real-time responsiveness
 
 Notifications:
-- every 10–15 seconds
+- every 5–10 seconds
 
 ---
 
@@ -391,13 +362,12 @@ Notifications:
 
 ---
 
-## Future Analytics
+## Advanced Analytics
 
-- best performer
-- most active faculty
-- highest score
-- monthly performance
-- department efficiency
+- global multiplier overrides
+- department-level breakdown charts
+- task participation rates
+- delay metrics
 
 ---
 
@@ -413,9 +383,10 @@ The system must maintain complete workflow records.
 - acceptance
 - submission
 - deadline updates
-- approvals/rejections
+- approvals/rejections/reworks
 - permission changes
 - point updates
+- global settings overrides
 
 ---
 
@@ -446,13 +417,16 @@ MySQL 8+
 - roles
 - faculty_departments
 - tasks
-- task_locks
+- task_assignments (tracks individual participation in tasks)
 - task_comments
 - task_reviews
+- extension_requests
 - notifications
 - leaderboard_points
 - attachments
 - audit_logs
+- system_settings
+- feedbacks
 
 ---
 
@@ -462,6 +436,7 @@ MySQL 8+
 - React
 - TypeScript
 - TailwindCSS
+- Vite
 
 ---
 
@@ -474,22 +449,6 @@ MySQL 8+
 
 ## Database
 - MySQL 8+
-
----
-
-# API Design Recommendations
-
-Use REST-style APIs.
-
-## Examples
-
-/api/tasks/create
-/api/tasks/accept
-/api/tasks/review
-/api/tasks/comment
-/api/notifications/list
-
-Avoid query-action style APIs.
 
 ---
 
@@ -516,38 +475,15 @@ Avoid query-action style APIs.
 - Modular architecture
 
 ## Reliability
-- Transaction-safe task acceptance
-- Lock expiry handling
 - Secure authentication
+- Strict file validations
 
 ---
 
 # Future Scope
 
-- Group/collaborative tasks
-- Task templates
 - Real-time websocket notifications
-- Mobile app
-- Analytics dashboard
+- Mobile app (Native)
 - AI-powered productivity insights
 - Calendar integration
 - Faculty achievement badges
-
----
-
-# Project Status
-
-Current Version Scope:
-- Individual tasks
-- Broadcast tasks
-- Review workflow
-- Notifications
-- Audit logging
-- Leaderboard
-- Multi-college support
-
-Excluded From Current Scope:
-- Collaborative/group tasks
-- Task templates
-- Escalation system
-- Real-time socket architecture
