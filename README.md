@@ -8,37 +8,23 @@
 
 ### 1. Role Interaction & Workflow Architecture
 ```mermaid
-flowchart TD
-    subgraph Global Control
-        Admin((🛡️ Admin))
-    end
-    
-    subgraph Department Management
-        HOD((🎓 HOD))
-    end
-    
-    subgraph Department Faculties
-        FacA((👨‍🏫 Faculty A))
-        FacB((👩‍🏫 Faculty B))
-        FacC((👨‍🏫 Faculty C))
-    end
-    
-    %% Admin Interactions
-    Admin -->|Manages Colleges & Depts| HOD
-    Admin -->|Controls Global Rules & Toggles| HOD
-    Admin -->|Monitors Audit Logs & Export Data| HOD
-    Admin -->|Reviews System Feedback| FacA
-    
-    %% HOD Interactions
-    HOD -->|Assigns Direct Tasks| FacA
-    HOD -->|Broadcasts Tasks| DepartmentFaculties
-    HOD -->|Reviews Submissions & Awards Points| FacA
-    HOD -->|Approves Deadline Extensions| FacB
-    
-    %% Faculty Interactions
-    FacA -->|Accepts Broadcasts & Submits Work| HOD
-    FacB -->|Requests Extension & Submits Work| HOD
-    FacC -->|Submits Work & Provides Feedback| Admin
+flowchart LR
+    %% Entities
+    Admin([🛡️ Admin])
+    HOD([🎓 HOD])
+    Faculty([👨‍🏫 Faculty Team])
+
+    %% Admin <-> HOD
+    Admin -- Manages Users, Depts & System Rules --> HOD
+    HOD -- Action Logs & Analytics Data --> Admin
+
+    %% HOD <-> Faculty
+    HOD -- Assigns & Broadcasts Tasks --> Faculty
+    Faculty -- Submits Work & Extension Requests --> HOD
+    HOD -- Reviews Submissions & Awards Points --> Faculty
+
+    %% Faculty <-> Admin
+    Faculty -. Submits System Feedback .-> Admin
 ```
 
 ### 2. Task Lifecycle State Diagram
