@@ -27,7 +27,8 @@ import {
   Bell,
   AlertTriangle,
   Info,
-  Tag
+  Tag,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
@@ -138,7 +139,9 @@ const HODTasks: React.FC = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<{url: string, name: string, type: string} | null>(null);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | null>(null);
-
+  const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<number[]>([]);
+  const [bulkReviewData, setBulkReviewData] = useState({ status: 'Approved', points: 0, bonus_points: 0, remarks: '' });
+  const [isBulkStatusDropdownOpen, setIsBulkStatusDropdownOpen] = useState(false);
   // Form State
   const [formData, setFormData] = useState({
     id: null as number | null,
@@ -370,6 +373,41 @@ const HODTasks: React.FC = () => {
           } else {
             setSelectedTask({ ...selectedTask, ...updates });
           }
+        }
+      } else {
+        Swal.fire('Error', data.message || 'Update failed', 'error');
+      }
+    } catch (error) {
+      console.error("Update error:", error);
+      Swal.fire('Error', 'Network error or server crash', 'error');
+    }
+  };
+
+  const handleBulkReviewSubmit = async () => {
+    if (!selectedTask || selectedAssignmentIds.length === 0) return;
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/hod/tasks.php`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          id: selectedTask.id, 
+          ...bulkReviewData, 
+          user_ids: selectedAssignmentIds 
+        })
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        fetchTasks();
+        window.dispatchEvent(new CustomEvent('refresh-notifications'));
+        setSelectedAssignmentIds([]);
+        setBulkReviewData({ status: 'Approved', points: 0, bonus_points: 0, remarks: '' });
+        Swal.fire('Success', 'Bulk review completed', 'success');
+        if (selectedTask) {
+           const updatedAssignments = selectedTask.assignments.map(a => 
+             selectedAssignmentIds.includes(a.user_id) ? { ...a, ...bulkReviewData } : a
+           );
+           setSelectedTask({ ...selectedTask, assignments: updatedAssignments });
         }
       } else {
         Swal.fire('Error', data.message || 'Update failed', 'error');
@@ -1342,7 +1380,29 @@ const HODTasks: React.FC = () => {
                         <Users className="w-4 h-4 text-indigo-500" />
                         Assignment Report
                       </div>
-                      <span className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg text-[9px]">{selectedTask.assignments.length} Accepted</span>
+                      <div className="flex items-center gap-4">
+                        {selectedTask.assignments.some(a => ['Submitted', 'Under Review', 'Approved'].includes(a.status)) && (
+                          <label className="flex items-center gap-2 cursor-pointer bg-slate-50 px-2 py-1 rounded-lg">
+                            <input 
+                              type="checkbox"
+                              checked={
+                                selectedTask.assignments.filter(a => ['Submitted', 'Under Review', 'Approved'].includes(a.status)).length > 0 &&
+                                selectedTask.assignments.filter(a => ['Submitted', 'Under Review', 'Approved'].includes(a.status)).every(a => selectedAssignmentIds.includes(a.user_id))
+                              }
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedAssignmentIds(selectedTask.assignments.filter(a => ['Submitted', 'Under Review', 'Approved'].includes(a.status)).map(a => a.user_id));
+                                } else {
+                                  setSelectedAssignmentIds([]);
+                                }
+                              }}
+                              className="w-3 h-3 rounded text-[#7C3AED] border-slate-300 focus:ring-[#7C3AED]"
+                            />
+                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Select All</span>
+                          </label>
+                        )}
+                        <span className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg text-[9px]">{selectedTask.assignments.length} Accepted</span>
+                      </div>
                     </h3>
                     
                     <div className="space-y-3">
@@ -1350,6 +1410,20 @@ const HODTasks: React.FC = () => {
                         selectedTask.assignments.map(assign => (
                           <div key={assign.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-2xl gap-4">
                             <div className="flex items-center gap-3">
+                              {['Submitted', 'Under Review', 'Approved'].includes(assign.status) && (
+                                <input 
+                                  type="checkbox"
+                                  checked={selectedAssignmentIds.includes(assign.user_id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedAssignmentIds(prev => [...prev, assign.user_id]);
+                                    } else {
+                                      setSelectedAssignmentIds(prev => prev.filter(id => id !== assign.user_id));
+                                    }
+                                  }}
+                                  className="w-4 h-4 rounded text-[#7C3AED] border-slate-300 focus:ring-[#7C3AED] shrink-0"
+                                />
+                              )}
                               <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center font-black text-indigo-600 shadow-sm border border-slate-100 overflow-hidden">
                                 {assign.faculty_pic ? (
                                   <img 
@@ -1633,7 +1707,100 @@ const HODTasks: React.FC = () => {
                 </div>
 
                 <div className="space-y-10 flex-1">
-                  {selectedAssignmentId ? (
+                  {selectedAssignmentIds.length > 0 ? (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className="p-6 bg-indigo-50 border border-indigo-100 rounded-3xl text-center">
+                        <Users className="w-8 h-8 text-indigo-500 mx-auto mb-3" />
+                        <p className="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Bulk Review Mode</p>
+                        <p className="text-[9px] font-bold text-indigo-600 mt-1 leading-relaxed">
+                          {selectedAssignmentIds.length} faculties selected for review.
+                        </p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Action</label>
+                          <div className="relative">
+                            <button 
+                              onClick={() => setIsBulkStatusDropdownOpen(!isBulkStatusDropdownOpen)}
+                              className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-[#1E184B] p-4 flex justify-between items-center focus:ring-2 focus:ring-indigo-500 hover:border-indigo-200 transition-all"
+                            >
+                              {bulkReviewData.status === 'Approved' ? 'Approve All' : 'Request Rework All'}
+                              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isBulkStatusDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            
+                            {isBulkStatusDropdownOpen && (
+                              <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border-2 border-slate-100 rounded-xl shadow-xl overflow-hidden z-20">
+                                <button 
+                                  onClick={() => { setBulkReviewData({...bulkReviewData, status: 'Approved'}); setIsBulkStatusDropdownOpen(false); }}
+                                  className={`w-full text-left px-4 py-3 text-xs font-black transition-colors ${bulkReviewData.status === 'Approved' ? 'bg-indigo-600 text-white' : 'text-[#1E184B] hover:bg-slate-50'}`}
+                                >
+                                  Approve All
+                                </button>
+                                <button 
+                                  onClick={() => { setBulkReviewData({...bulkReviewData, status: 'Rework Required'}); setIsBulkStatusDropdownOpen(false); }}
+                                  className={`w-full text-left px-4 py-3 text-xs font-black transition-colors ${bulkReviewData.status === 'Rework Required' ? 'bg-indigo-600 text-white' : 'text-[#1E184B] hover:bg-slate-50'}`}
+                                >
+                                  Request Rework All
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Points</label>
+                              <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">{bulkReviewData.points}</span>
+                            </div>
+                            <input 
+                              type="range" 
+                              min="0"
+                              max="50"
+                              step="5"
+                              value={bulkReviewData.points} 
+                              onChange={e => setBulkReviewData({...bulkReviewData, points: parseInt(e.target.value) || 0})}
+                              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                            />
+                          </div>
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Bonus Points</label>
+                              <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">{bulkReviewData.bonus_points}</span>
+                            </div>
+                            <input 
+                              type="range" 
+                              min="0"
+                              max="5"
+                              step="1"
+                              value={bulkReviewData.bonus_points} 
+                              onChange={e => setBulkReviewData({...bulkReviewData, bonus_points: parseInt(e.target.value) || 0})}
+                              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Remarks (Optional)</label>
+                          <textarea 
+                            value={bulkReviewData.remarks} 
+                            onChange={e => setBulkReviewData({...bulkReviewData, remarks: e.target.value})}
+                            placeholder="Add remarks for all selected faculties..."
+                            className="w-full bg-slate-50 border-none rounded-xl text-xs font-medium text-[#1E184B] p-4 min-h-[100px] resize-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={handleBulkReviewSubmit}
+                        className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle2 className="w-4 h-4" /> 
+                        Submit Bulk Review
+                      </button>
+                    </div>
+                  ) : selectedAssignmentId ? (
                     (() => {
                       const currentAssign = selectedTask.assignments.find(a => a.user_id === selectedAssignmentId);
                       if (!currentAssign) return null;

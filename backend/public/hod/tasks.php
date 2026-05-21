@@ -178,7 +178,11 @@ try {
         case 'PUT':
             $data = json_decode(file_get_contents('php://input'), true);
             $taskId = $data['id'] ?? null;
-            $assignmentUserId = $data['user_id'] ?? null; // Specific faculty to review
+            $assignmentUserIds = $data['user_ids'] ?? [];
+            if (!empty($data['user_id'])) {
+                $assignmentUserIds[] = $data['user_id'];
+            }
+            $assignmentUserIds = array_unique($assignmentUserIds);
             
             if (!$taskId) throw new Exception("Task ID is required.");
 
@@ -190,84 +194,86 @@ try {
             $task = $check->fetch();
             if (!$task) throw new Exception("Task not found or access denied.");
 
-            // If reviewing a specific assignment
-            if ($assignmentUserId) {
-                $stmt = $db->prepare("SELECT * FROM task_assignments WHERE task_id = :tid AND user_id = :uid");
-                $stmt->execute(['tid' => $taskId, 'uid' => $assignmentUserId]);
-                $assignment = $stmt->fetch();
-                if (!$assignment) throw new Exception("Assignment not found for this user.");
+            // If reviewing specific assignments
+            if (!empty($assignmentUserIds)) {
+                foreach ($assignmentUserIds as $assignmentUserId) {
+                    $stmt = $db->prepare("SELECT * FROM task_assignments WHERE task_id = :tid AND user_id = :uid");
+                    $stmt->execute(['tid' => $taskId, 'uid' => $assignmentUserId]);
+                    $assignment = $stmt->fetch();
+                    if (!$assignment) continue; // Skip if not found
 
-                $newStatus = $data['status'] ?? $assignment['status'];
-                $newPoints = isset($data['points']) ? (int)$data['points'] : (int)($assignment['points'] ?? 0);
-                $newBonus = isset($data['bonus_points']) ? (int)$data['bonus_points'] : (int)($assignment['bonus_points'] ?? 0);
-                
-                if ($newStatus === 'Rework Required') {
-                    $newPoints = 0;
-                    $newBonus = 0; 
-                }
-                
-                $newRemarks = $data['remarks'] ?? $assignment['remarks'] ?? '';
-
-                // Update Assignment
-                $stmt = $db->prepare("
-                    UPDATE task_assignments 
-                    SET status = :status_val, 
-                        points = :pts, 
-                        bonus_points = :bn, 
-                        remarks = :rem,
-                        reviewed_at = NOW(),
-                        completed_at = CASE 
-                            WHEN :status_val_2 IN ('Approved') THEN NOW() 
-                            ELSE completed_at 
-                        END
-                    WHERE id = :id
-                ");
-                $stmt->execute([
-                    'status_val' => $newStatus, 
-                    'status_val_2' => $newStatus,
-                    'pts' => $newPoints, 
-                    'bn' => $newBonus, 
-                    'rem' => $newRemarks,
-                    'id' => $assignment['id']
-                ]);
-
-                // Update Leaderboard
-                $oldTotal = (int)($assignment['points'] ?? 0) + (int)($assignment['bonus_points'] ?? 0);
-                $newTotal = $newPoints + $newBonus;
-                
-                $wasCompleted = ($assignment['status'] === 'Approved');
-                $isCompleted = ($newStatus === 'Approved');
-
-                if (!$wasCompleted && $isCompleted) {
-                    $stmt = $db->prepare("
-                        INSERT INTO leaderboard_points (user_id, total_points, tasks_completed) 
-                        VALUES (:uid, :pts, 1) 
-                        ON DUPLICATE KEY UPDATE total_points = total_points + :pts_inc, tasks_completed = tasks_completed + 1
-                    ");
-                    $stmt->execute(['uid' => $assignmentUserId, 'pts' => $newTotal, 'pts_inc' => $newTotal]);
-                } else if ($wasCompleted && $isCompleted) {
-                    $delta = $newTotal - $oldTotal;
-                    if ($delta !== 0) {
-                        $stmt = $db->prepare("UPDATE leaderboard_points SET total_points = total_points + :delta WHERE user_id = :uid");
-                        $stmt->execute(['uid' => $assignmentUserId, 'delta' => $delta]);
+                    $newStatus = $data['status'] ?? $assignment['status'];
+                    $newPoints = isset($data['points']) ? (int)$data['points'] : (int)($assignment['points'] ?? 0);
+                    $newBonus = isset($data['bonus_points']) ? (int)$data['bonus_points'] : (int)($assignment['bonus_points'] ?? 0);
+                    
+                    if ($newStatus === 'Rework Required') {
+                        $newPoints = 0;
+                        $newBonus = 0; 
                     }
-                } else if ($wasCompleted && !$isCompleted) {
-                    $stmt = $db->prepare("UPDATE leaderboard_points SET total_points = GREATEST(0, total_points - :pts), tasks_completed = GREATEST(0, tasks_completed - 1) WHERE user_id = :uid");
-                    $stmt->execute(['uid' => $assignmentUserId, 'pts' => $oldTotal]);
-                }
+                    
+                    $newRemarks = $data['remarks'] ?? $assignment['remarks'] ?? '';
 
-                // Log history
-                if ($isCompleted || $newStatus === 'Rework Required' || $newStatus === 'Rejected') {
-                    $stmt = $db->prepare("INSERT INTO task_reviews (task_id, reviewer_id, remarks, points, bonus_points, status) VALUES (:tid, :rid, :rem, :pts, :bn, :st)");
+                    // Update Assignment
+                    $stmt = $db->prepare("
+                        UPDATE task_assignments 
+                        SET status = :status_val, 
+                            points = :pts, 
+                            bonus_points = :bn, 
+                            remarks = :rem,
+                            reviewed_at = NOW(),
+                            completed_at = CASE 
+                                WHEN :status_val_2 IN ('Approved') THEN NOW() 
+                                ELSE completed_at 
+                            END
+                        WHERE id = :id
+                    ");
                     $stmt->execute([
-                        'tid' => $taskId, 'rid' => $session['user_id'], 'rem' => $newRemarks, 
-                        'pts' => $newPoints, 'bn' => $newBonus, 'st' => $newStatus
+                        'status_val' => $newStatus, 
+                        'status_val_2' => $newStatus,
+                        'pts' => $newPoints, 
+                        'bn' => $newBonus, 
+                        'rem' => $newRemarks,
+                        'id' => $assignment['id']
                     ]);
-                }
 
-                // Only send notification if the status has actually transitioned to a critical state (Approved, Rework Required, Rejected)
-                if ($newStatus !== $assignment['status'] && in_array($newStatus, ['Approved', 'Rework Required', 'Rejected'])) {
-                    $notifier->send($assignmentUserId, 'TASK_REVIEWED', "Your contribution to '{$task['title']}' has been updated to {$newStatus}", $taskId);
+                    // Update Leaderboard
+                    $oldTotal = (int)($assignment['points'] ?? 0) + (int)($assignment['bonus_points'] ?? 0);
+                    $newTotal = $newPoints + $newBonus;
+                    
+                    $wasCompleted = ($assignment['status'] === 'Approved');
+                    $isCompleted = ($newStatus === 'Approved');
+
+                    if (!$wasCompleted && $isCompleted) {
+                        $stmt = $db->prepare("
+                            INSERT INTO leaderboard_points (user_id, total_points, tasks_completed) 
+                            VALUES (:uid, :pts, 1) 
+                            ON DUPLICATE KEY UPDATE total_points = total_points + :pts_inc, tasks_completed = tasks_completed + 1
+                        ");
+                        $stmt->execute(['uid' => $assignmentUserId, 'pts' => $newTotal, 'pts_inc' => $newTotal]);
+                    } else if ($wasCompleted && $isCompleted) {
+                        $delta = $newTotal - $oldTotal;
+                        if ($delta !== 0) {
+                            $stmt = $db->prepare("UPDATE leaderboard_points SET total_points = total_points + :delta WHERE user_id = :uid");
+                            $stmt->execute(['uid' => $assignmentUserId, 'delta' => $delta]);
+                        }
+                    } else if ($wasCompleted && !$isCompleted) {
+                        $stmt = $db->prepare("UPDATE leaderboard_points SET total_points = GREATEST(0, total_points - :pts), tasks_completed = GREATEST(0, tasks_completed - 1) WHERE user_id = :uid");
+                        $stmt->execute(['uid' => $assignmentUserId, 'pts' => $oldTotal]);
+                    }
+
+                    // Log history
+                    if ($isCompleted || $newStatus === 'Rework Required' || $newStatus === 'Rejected') {
+                        $stmt = $db->prepare("INSERT INTO task_reviews (task_id, reviewer_id, remarks, points, bonus_points, status) VALUES (:tid, :rid, :rem, :pts, :bn, :st)");
+                        $stmt->execute([
+                            'tid' => $taskId, 'rid' => $session['user_id'], 'rem' => $newRemarks, 
+                            'pts' => $newPoints, 'bn' => $newBonus, 'st' => $newStatus
+                        ]);
+                    }
+
+                    // Only send notification if the status has actually transitioned to a critical state (Approved, Rework Required, Rejected)
+                    if ($newStatus !== $assignment['status'] && in_array($newStatus, ['Approved', 'Rework Required', 'Rejected'])) {
+                        $notifier->send($assignmentUserId, 'TASK_REVIEWED', "Your contribution to '{$task['title']}' has been updated to {$newStatus}", $taskId);
+                    }
                 }
                 
                 // Always sync the main task points and status
