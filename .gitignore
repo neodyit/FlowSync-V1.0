@@ -25,6 +25,7 @@ frontend/node_modules/
 vendor/
 backend/public/uploads/
 backend/vendor/
+backend/public/uploads/
 backend/sql/data.xlsx
 backend/sql/seed_faculties.sql
 backend/sql/flowsync.sql
