@@ -1,4 +1,4 @@
-# ⚡ FlowSync — Faculty Task Management & Workflow System (FTMWS)
+# ⚡ FlowSync - Faculty Task Management & Workflow System (FTMWS)
 
 > **FlowSync** is a premium, multi-college, web-based task and academic workflow orchestration engine. It streamlines departmental productivity, optimizes task assignments, and unlocks deep performance analytics under a secure, responsive, and state-of-the-art Progressive Web App (PWA) wrapper.
 
