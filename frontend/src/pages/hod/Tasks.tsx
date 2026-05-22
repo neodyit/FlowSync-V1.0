@@ -98,6 +98,7 @@ interface Task {
   task_type: string;
   category: string;
   status: string;
+  assignment_mode?: 'individual' | 'group' | 'broadcast';
   assigned_to_id: number | null;
   assigned_to_name: string | null;
   assigned_to_pic: string | null;
@@ -120,7 +121,7 @@ interface Task {
 
 const HODTasks: React.FC = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [facultyList, setFacultyList] = useState<Faculty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -153,7 +154,7 @@ const HODTasks: React.FC = () => {
     task_type: 'Other',
     category: 'General',
     assignment_mode: 'individual',
-    assigned_to_id: '',
+    assigned_to_ids: [] as string[],
     task_link: '',
     attachments: [] as File[]
   });
@@ -184,6 +185,9 @@ const HODTasks: React.FC = () => {
           if (task) {
             setSelectedTask(task);
             setIsDetailModalOpen(true);
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete('taskId');
+            setSearchParams(newParams, { replace: true });
           }
         }
       }
@@ -327,6 +331,8 @@ const HODTasks: React.FC = () => {
     Object.entries(formData).forEach(([key, value]) => {
       if (key === 'attachments') {
         (value as File[]).forEach(file => submitData.append('attachments[]', file));
+      } else if (key === 'assigned_to_ids') {
+        (value as string[]).forEach(id => submitData.append('assigned_to_ids[]', id));
       } else if (value !== null) {
         submitData.append(key, value.toString());
       }
@@ -388,8 +394,38 @@ const HODTasks: React.FC = () => {
     }
   };
 
+  const handleApproveContribution = async (taskId: number, userId: number, currentPoints: number) => {
+    if (!currentPoints || currentPoints === 0) {
+      const result = await Swal.fire({
+        title: 'No Marks Assigned',
+        text: 'You have not given any points yet. Do you want to continue without giving marks?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#10B981',
+        cancelButtonColor: '#64748B',
+        confirmButtonText: 'Yes, Approve without marks'
+      });
+      if (!result.isConfirmed) return;
+    }
+    updateReviewStatus(taskId, { status: 'Approved' }, userId);
+  };
+
   const handleBulkReviewSubmit = async () => {
     if (!selectedTask || selectedAssignmentIds.length === 0) return;
+    
+    if (bulkReviewData.status === 'Approved' && bulkReviewData.points === 0) {
+      const result = await Swal.fire({
+        title: 'No Marks Assigned',
+        text: 'You have not given any points yet. Do you want to continue without giving marks?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#10B981',
+        cancelButtonColor: '#64748B',
+        confirmButtonText: 'Yes, Approve without marks'
+      });
+      if (!result.isConfirmed) return;
+    }
+
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/hod/tasks.php`, {
         method: 'PUT',
@@ -534,7 +570,7 @@ const HODTasks: React.FC = () => {
       task_type: 'Other',
       category: 'General',
       assignment_mode: 'individual',
-      assigned_to_id: '',
+      assigned_to_ids: [],
       task_link: '',
       attachments: []
     });
@@ -877,8 +913,8 @@ const HODTasks: React.FC = () => {
                                 priority: task.priority,
                                 task_type: task.task_type,
                                 category: task.category || 'General',
-                                assignment_mode: task.assigned_to_id ? 'individual' : 'broadcast',
-                                assigned_to_id: task.assigned_to_id?.toString() || '',
+                                assignment_mode: task.assignment_mode || (task.assigned_to_id ? 'individual' : 'broadcast'),
+                                assigned_to_ids: task.assignments ? task.assignments.map(a => a.user_id.toString()) : (task.assigned_to_id ? [task.assigned_to_id.toString()] : []),
                                 task_link: task.task_link || '',
                                 attachments: []
                               }); 
@@ -972,7 +1008,7 @@ const HODTasks: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative bg-white rounded-[2.5rem] w-full max-w-xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
+              className="relative bg-white rounded-[2.5rem] w-full max-w-xl lg:max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
             >
               <div className="p-8 border-b border-slate-50">
                 <div className="flex items-center justify-between">
@@ -993,7 +1029,9 @@ const HODTasks: React.FC = () => {
                     <p>Task Creation is closed by Admin, You can save it in Draft and publish later.</p>
                   </div>
                 )}
-                <form onSubmit={(e) => handleCreateOrUpdate(e)} className="space-y-5">
+                <form onSubmit={(e) => handleCreateOrUpdate(e)} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Left Column */}
+                  <div className="space-y-6">
                   <div className="space-y-1.5">
                     <label className="text-[9px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Mission Title</label>
                     <input 
@@ -1115,6 +1153,30 @@ const HODTasks: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Mission Intelligence (Description)</label>
+                    <textarea 
+                      placeholder="Detailed instructions for the faculty..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all h-24 resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-[#7C3AED] uppercase tracking-widest ml-1">Reference URL / Task Link (Optional)</label>
+                    <input 
+                      type="url"
+                      placeholder="e.g., https://academic-portal.com/instructions"
+                      value={formData.task_link}
+                      onChange={(e) => setFormData({...formData, task_link: e.target.value})}
+                      className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
+                    />
+                  </div>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-6">
+                  <div className="space-y-1.5">
                     <label className="text-[9px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Assignment Mode</label>
                     <div className="grid grid-cols-2 gap-3">
                       <button 
@@ -1148,8 +1210,10 @@ const HODTasks: React.FC = () => {
                           }}
                           className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] flex items-center justify-between hover:border-[#7C3AED]/20 transition-all"
                         >
-                          <span className={formData.assigned_to_id ? "text-[#1E184B]" : "text-slate-300"}>
-                            {facultyList.find(f => f.id.toString() === formData.assigned_to_id)?.name || "Choose a member..."}
+                          <span className={formData.assigned_to_ids.length > 0 ? "text-[#1E184B]" : "text-slate-300"}>
+                            {formData.assigned_to_ids.length > 0 
+                              ? `${formData.assigned_to_ids.length} member${formData.assigned_to_ids.length > 1 ? 's' : ''} selected` 
+                              : "Choose members..."}
                           </span>
                           <User className="w-3.5 h-3.5 text-slate-300" />
                         </button>
@@ -1192,14 +1256,25 @@ const HODTasks: React.FC = () => {
                                     ).map((f) => (
                                       <button
                                         key={f.id} type="button"
-                                        onClick={() => { setFormData({...formData, assigned_to_id: f.id.toString()}); setOpenSelect(null); }}
+                                        onClick={() => { 
+                                          const idStr = f.id.toString();
+                                          setFormData(prev => ({
+                                            ...prev, 
+                                            assigned_to_ids: prev.assigned_to_ids.includes(idStr) 
+                                              ? prev.assigned_to_ids.filter(id => id !== idStr)
+                                              : [...prev.assigned_to_ids, idStr]
+                                          })); 
+                                        }}
                                         className={cn(
                                           "w-full px-4 py-3 rounded-xl text-left transition-all",
-                                          formData.assigned_to_id === f.id.toString() ? "bg-[#7C3AED] text-white" : "text-slate-500 hover:bg-slate-50 hover:text-[#7C3AED]"
+                                          formData.assigned_to_ids.includes(f.id.toString()) ? "bg-[#7C3AED] text-white" : "text-slate-500 hover:bg-slate-50 hover:text-[#7C3AED]"
                                         )}
                                       >
-                                        <div className="text-[10px] font-black uppercase tracking-widest">{f.name}</div>
-                                        <div className={cn("text-[8px] font-bold", formData.assigned_to_id === f.id.toString() ? "text-white/60" : "text-slate-400")}>{f.email}</div>
+                                        <div className="flex justify-between items-center">
+                                          <div className="text-[10px] font-black uppercase tracking-widest">{f.name}</div>
+                                          {formData.assigned_to_ids.includes(f.id.toString()) && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                        </div>
+                                        <div className={cn("text-[8px] font-bold", formData.assigned_to_ids.includes(f.id.toString()) ? "text-white/60" : "text-slate-400")}>{f.email}</div>
                                       </button>
                                     ))
                                   )}
@@ -1211,27 +1286,6 @@ const HODTasks: React.FC = () => {
                       </div>
                     </div>
                   )}
-
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Mission Intelligence (Description)</label>
-                    <textarea 
-                      placeholder="Detailed instructions for the faculty..."
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all h-24 resize-none"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-[#7C3AED] uppercase tracking-widest ml-1">Reference URL / Task Link (Optional)</label>
-                    <input 
-                      type="url"
-                      placeholder="e.g., https://academic-portal.com/instructions"
-                      value={formData.task_link}
-                      onChange={(e) => setFormData({...formData, task_link: e.target.value})}
-                      className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
-                    />
-                  </div>
 
                   <div className="space-y-3">
                     <label className="text-[9px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Reference Materials</label>
@@ -1284,8 +1338,9 @@ const HODTasks: React.FC = () => {
                       </div>
                     )}
                   </div>
+                  </div>
 
-                  <div className="flex gap-4 pt-4">
+                  <div className="lg:col-span-2 flex gap-4 pt-4 border-t border-slate-50 mt-4">
                     <button 
                       type="button"
                       onClick={(e) => handleCreateOrUpdate(e as any, true)}
@@ -1725,8 +1780,15 @@ const HODTasks: React.FC = () => {
                 "w-full md:w-[420px] bg-white border-l border-slate-100 p-6 md:p-10 flex-col shrink-0 overflow-y-auto custom-scrollbar",
                 mobileDetailTab === 'evaluation' ? "flex flex-1 md:flex-none" : "hidden md:flex"
               )}>
-                <div className="flex justify-between items-center mb-10">
-                  <h3 className="text-xl font-black text-[#1E184B]">Evaluation</h3>
+                <div className="flex justify-between items-start mb-10">
+                  <div>
+                    <h3 className="text-xl font-black text-[#1E184B]">Evaluation</h3>
+                    {selectedAssignmentId && selectedAssignmentIds.length === 0 && (
+                      <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">
+                        {selectedTask.assignments.find(a => a.user_id === selectedAssignmentId)?.faculty_name || 'Faculty'}
+                      </p>
+                    )}
+                  </div>
                   <button onClick={() => setIsDetailModalOpen(false)} className="hidden md:block p-2 hover:bg-slate-50 rounded-xl"><X className="w-6 h-6 text-slate-400" /></button>
                 </div>
 
@@ -1883,7 +1945,7 @@ const HODTasks: React.FC = () => {
                           {['Submitted', 'Under Review'].includes(currentAssign.status) ? (
                             <div className="space-y-3">
                               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Review Outcome for {currentAssign.faculty_name}</h4>
-                              <button onClick={() => updateReviewStatus(selectedTask.id, { status: 'Approved' }, currentAssign.user_id)} className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2"><CheckCircle2 className="w-4 h-4" /> Approve Contribution</button>
+                              <button onClick={() => handleApproveContribution(selectedTask.id, currentAssign.user_id, currentAssign.points)} className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2"><CheckCircle2 className="w-4 h-4" /> Approve Contribution</button>
                               <button onClick={() => updateReviewStatus(selectedTask.id, { status: 'Rework Required' }, currentAssign.user_id)} className="w-full py-4 bg-orange-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all flex items-center justify-center gap-2"><RotateCcw className="w-4 h-4" /> Request Rework</button>
                             </div>
                           ) : currentAssign.status === 'Approved' ? (

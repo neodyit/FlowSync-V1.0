@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     priority ENUM('Low', 'Medium', 'High', 'Critical') DEFAULT 'Medium',
     task_type ENUM('Academic', 'Event', 'Research', 'Administrative', 'Examination', 'Documentation', 'Other') DEFAULT 'Other',
     status ENUM('Draft', 'Assigned', 'Broadcasted', 'Accepted', 'In Progress', 'Submitted', 'Under Review', 'Approved', 'Rejected', 'Rework Required', 'Completed', 'Declined', 'Expired') DEFAULT 'Assigned',
+    assignment_mode ENUM('individual', 'broadcast', 'group') DEFAULT 'individual',
     assigned_at TIMESTAMP NULL,
     accepted_at TIMESTAMP NULL,
     submitted_at TIMESTAMP NULL,
