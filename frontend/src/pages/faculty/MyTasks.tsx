@@ -1062,13 +1062,20 @@ const FacultyMyTasks: React.FC = () => {
         {isSubmitModalOpen && selectedTask && (
           <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsSubmitModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative bg-white rounded-[3rem] w-full max-w-lg p-10 shadow-2xl">
-              <h2 className="text-2xl font-black text-[#1E184B] mb-2">Finalize Mission</h2>
-              <p className="text-slate-400 text-sm font-bold mb-8">Upload evidence if required, or simply finalize to notify the HOD.</p>
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+              <div className="p-8 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <div>
+                  <h2 className="text-2xl font-black text-[#1E184B]">Finalize Mission</h2>
+                  <p className="text-sm font-bold text-slate-400 mt-1">Upload evidence or finalize to notify the HOD.</p>
+                </div>
+                <button onClick={() => setIsSubmitModalOpen(false)} className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-rose-50 hover:text-rose-500 transition-all shrink-0">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
               
-              <form onSubmit={handleSubmitTask} className="space-y-6">
-                <div className="grid grid-cols-1 gap-6">
-                  <div className="border-2 border-dashed border-slate-100 rounded-[2rem] p-8 text-center hover:border-[#7C3AED]/30 transition-all group relative">
+              <form onSubmit={handleSubmitTask} className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="border-2 border-dashed border-slate-200 rounded-[2rem] p-6 text-center hover:border-[#7C3AED]/50 bg-slate-50/50 hover:bg-[#7C3AED]/5 transition-all group relative flex flex-col justify-center h-full min-h-[200px]">
                     <input 
                       type="file" 
                       multiple 
@@ -1076,41 +1083,41 @@ const FacultyMyTasks: React.FC = () => {
                       className="absolute inset-0 opacity-0 cursor-pointer"
                     />
                     <div className="flex flex-col items-center">
-                      <div className="w-12 h-12 bg-[#7C3AED]/5 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <div className="w-12 h-12 bg-white shadow-sm rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <Plus className="w-6 h-6 text-[#7C3AED]" />
                       </div>
-                      <p className="text-xs font-black text-[#1E184B] uppercase tracking-widest">Add Evidence (Optional)</p>
-                      <p className="text-[10px] font-bold text-slate-400 mt-1">PDF, Images, Word documents</p>
+                      <p className="text-xs font-black text-[#1E184B] uppercase tracking-widest">Add Evidence</p>
+                      <p className="text-[10px] font-bold text-slate-400 mt-1">PDF, Images, Docs (Optional)</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] ml-2">Submission Link (Optional)</label>
+                      <label className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] ml-1">Submission Link</label>
                       <input 
                         type="url"
                         value={submissionLink}
                         onChange={(e) => setSubmissionLink(e.target.value)}
-                        placeholder="e.g., https://github.com/my-repo or demo url"
-                        className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:bg-white focus:border-emerald-500 transition-all"
+                        placeholder="e.g. github repo, drive link (Optional)"
+                        className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-[0.2em] ml-2">Public Remarks (Team)</label>
+                      <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-[0.2em] ml-1">Public Remarks</label>
                       <textarea 
                         value={publicRemarks}
                         onChange={(e) => setPublicRemarks(e.target.value)}
-                        placeholder="Visible to all team members..."
-                        className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:bg-white focus:border-[#7C3AED] transition-all resize-none h-20"
+                        placeholder="Visible to team..."
+                        className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:bg-white focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all resize-none h-[68px]"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] ml-2">Private Note (HOD)</label>
+                      <label className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] ml-1">Private Note</label>
                       <textarea 
                         value={privateRemarks}
                         onChange={(e) => setPrivateRemarks(e.target.value)}
                         placeholder="Visible only to HOD..."
-                        className="w-full p-4 bg-amber-50/30 border border-amber-100 rounded-2xl text-xs font-bold focus:bg-white focus:border-amber-500 transition-all resize-none h-20"
+                        className="w-full p-3.5 bg-amber-50/30 border border-amber-100 rounded-2xl text-xs font-bold focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all resize-none h-[68px]"
                       />
                     </div>
                   </div>
@@ -1120,21 +1127,23 @@ const FacultyMyTasks: React.FC = () => {
                   <div className="space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
                     {submissionFiles.map((file, idx) => (
                       <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 animate-in slide-in-from-left duration-200">
-                        <span className="text-[10px] font-bold text-[#1E184B] truncate">{file.name}</span>
-                        <button type="button" onClick={() => setSubmissionFiles(f => f.filter((_, i) => i !== idx))}><X className="w-4 h-4 text-rose-500" /></button>
+                        <span className="text-[10px] font-bold text-[#1E184B] truncate max-w-[80%]">{file.name}</span>
+                        <button type="button" onClick={() => setSubmissionFiles(f => f.filter((_, i) => i !== idx))} className="p-1 hover:bg-rose-100 rounded-md transition-colors"><X className="w-4 h-4 text-rose-500" /></button>
                       </div>
                     ))}
                   </div>
                 )}
 
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="w-full py-4 bg-[#7C3AED] text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#7C3AED]/20 hover:bg-[#6D28D9] disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-3"
-                >
-                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                  Confirm Submission
-                </button>
+                <div className="pt-4 border-t border-slate-100">
+                  <button 
+                    type="submit" 
+                    disabled={isSubmitting}
+                    className="w-full py-4 bg-[#7C3AED] text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#7C3AED]/20 hover:bg-[#6D28D9] disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-3"
+                  >
+                    {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                    Confirm Submission
+                  </button>
+                </div>
               </form>
             </motion.div>
           </div>
