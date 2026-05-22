@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
-import { cn, formatDate, getDownloadUrl, calculateProgress } from '@/lib/utils';
+import { cn, formatDate, getDownloadUrl, calculateProgress, getDeadlineStatus } from '@/lib/utils';
 import Swal from 'sweetalert2';
 
 interface Attachment {
@@ -438,9 +438,18 @@ const FacultyMyTasks: React.FC = () => {
                       {task.is_delayed === 1 && (
                         <div className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest animate-pulse">Delayed</div>
                       )}
-                      <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-300">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(task.deadline)}
+                      <div className="flex flex-col items-end gap-1">
+                        <div className={cn(
+                          "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest", 
+                          getDeadlineStatus(task.deadline).isPassed ? "text-rose-500" : "text-slate-400"
+                        )}>
+                          <Clock className="w-3 h-3" />
+                          {getDeadlineStatus(task.deadline).text}
+                        </div>
+                        <div className="flex items-center gap-1 text-[8px] font-bold text-slate-300">
+                          <Calendar className="w-2.5 h-2.5" />
+                          {formatDate(task.deadline)}
+                        </div>
                       </div>
                     </div>
 

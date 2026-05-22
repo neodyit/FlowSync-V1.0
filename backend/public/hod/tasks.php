@@ -116,7 +116,19 @@ try {
             }
 
             $isBroadcast = ($data['assignment_mode'] ?? 'individual') === 'broadcast';
-            $assignedToId = $isBroadcast ? null : ($data['assigned_to_id'] ?? null);
+            
+            $assignedToIds = [];
+            if (!$isBroadcast) {
+                if (isset($data['assigned_to_ids']) && is_array($data['assigned_to_ids'])) {
+                    $assignedToIds = $data['assigned_to_ids'];
+                } elseif (!empty($data['assigned_to_id'])) {
+                    $assignedToIds = [$data['assigned_to_id']];
+                }
+            }
+
+            $isGroup = count($assignedToIds) > 1;
+            $assignmentMode = $isBroadcast ? 'broadcast' : ($isGroup ? 'group' : 'individual');
+            $assignedToId = ($assignmentMode === 'individual' && count($assignedToIds) === 1) ? $assignedToIds[0] : null;
 
             if ($taskId) {
                 $stmtCheck = $db->prepare("SELECT status FROM tasks WHERE id = :id");
@@ -124,31 +136,31 @@ try {
                 $oldTask = $stmtCheck->fetch();
                 $wasDraft = ($oldTask && $oldTask['status'] === 'Draft');
                 
-                $newStatus = $isDraft ? 'Draft' : ($isBroadcast ? 'Broadcasted' : ($assignedToId ? 'Assigned' : 'Draft'));
+                $newStatus = $isDraft ? 'Draft' : ($isBroadcast ? 'Broadcasted' : (!empty($assignedToIds) ? 'Assigned' : 'Draft'));
                 $stmt = $db->prepare("
                     UPDATE tasks 
                     SET title = :title, description = :description, deadline = :deadline, 
                         priority = :priority, task_type = :task_type, category = :category, 
-                        assigned_to_id = :assigned_to, task_link = :task_link, status = :status
+                        assigned_to_id = :assigned_to, assignment_mode = :assignment_mode, task_link = :task_link, status = :status
                     WHERE id = :id AND department_id = :dept_id
                 ");
                 $stmt->execute([
                     'title' => $data['title'], 'description' => $data['description'] ?? '',
                     'deadline' => $data['deadline'], 'priority' => $data['priority'],
                     'task_type' => $data['task_type'], 'category' => $data['category'] ?? 'General', 
-                    'assigned_to' => $assignedToId, 'task_link' => $data['task_link'] ?? null,
+                    'assigned_to' => $assignedToId, 'assignment_mode' => $assignmentMode, 'task_link' => $data['task_link'] ?? null,
                     'status' => $newStatus, 'id' => $taskId, 'dept_id' => $deptId
                 ]);
             } else {
                 $wasDraft = false;
                 $status = $isDraft ? 'Draft' : ($isBroadcast ? 'Broadcasted' : 'Assigned');
                 $stmt = $db->prepare("
-                    INSERT INTO tasks (college_id, department_id, assigned_by_id, assigned_to_id, title, description, deadline, priority, task_type, category, status, assigned_at, task_link)
-                    VALUES (:college_id, :dept_id, :assigned_by, :assigned_to, :title, :description, :deadline, :priority, :task_type, :category, :status, NOW(), :task_link)
+                    INSERT INTO tasks (college_id, department_id, assigned_by_id, assigned_to_id, assignment_mode, title, description, deadline, priority, task_type, category, status, assigned_at, task_link)
+                    VALUES (:college_id, :dept_id, :assigned_by, :assigned_to, :assignment_mode, :title, :description, :deadline, :priority, :task_type, :category, :status, NOW(), :task_link)
                 ");
                 $stmt->execute([
                     'college_id' => $collegeId, 'dept_id' => $deptId, 'assigned_by' => $session['user_id'],
-                    'assigned_to' => $assignedToId, 'title' => $data['title'], 'description' => $data['description'] ?? '',
+                    'assigned_to' => $assignedToId, 'assignment_mode' => $assignmentMode, 'title' => $data['title'], 'description' => $data['description'] ?? '',
                     'deadline' => $data['deadline'], 'priority' => $data['priority'], 
                     'task_type' => $data['task_type'], 'category' => $data['category'] ?? 'General',
                     'status' => $status, 'task_link' => $data['task_link'] ?? null
@@ -156,10 +168,12 @@ try {
                 $taskId = $db->lastInsertId();
             }
 
-            // Create assignment record for individual tasks only if not draft
-            if (!$isDraft && !$isBroadcast && $assignedToId) {
+            // Create assignment record for individual and group tasks only if not draft
+            if (!$isDraft && !$isBroadcast && !empty($assignedToIds)) {
                 $stmt = $db->prepare("INSERT INTO task_assignments (task_id, user_id, status) VALUES (:tid, :uid, 'Accepted') ON DUPLICATE KEY UPDATE status = 'Accepted'");
-                $stmt->execute(['tid' => $taskId, 'uid' => $assignedToId]);
+                foreach ($assignedToIds as $uid) {
+                    $stmt->execute(['tid' => $taskId, 'uid' => $uid]);
+                }
             }
 
             // Handle File Uploads
@@ -195,9 +209,11 @@ try {
                     foreach ($faculties as $fac) {
                         $notifier->send($fac['id'], 'TASK_ASSIGNED', $notifMsg, $taskId, $session['user_id']);
                     }
-                } else if ($assignedToId) {
+                } else if (!empty($assignedToIds)) {
                     $notifMsg = ($data['id'] ?? null) && !$wasDraft ? "Update on assigned task: '{$data['title']}'" : "You have been assigned a new task: '{$data['title']}'";
-                    $notifier->send($assignedToId, 'TASK_ASSIGNED', $notifMsg, $taskId, $session['user_id']);
+                    foreach ($assignedToIds as $uid) {
+                        $notifier->send($uid, 'TASK_ASSIGNED', $notifMsg, $taskId, $session['user_id']);
+                    }
                 }
             }
 
@@ -327,7 +343,15 @@ try {
                         t.points = (SELECT COALESCE(SUM(points), 0) FROM task_assignments WHERE task_id = t.id),
                         t.bonus_points = (SELECT COALESCE(SUM(bonus_points), 0) FROM task_assignments WHERE task_id = t.id),
                         t.status = CASE 
-                            WHEN t.assigned_to_id IS NOT NULL THEN (SELECT status FROM task_assignments WHERE task_id = t.id LIMIT 1)
+                            WHEN t.assignment_mode = 'individual' THEN (SELECT status FROM task_assignments WHERE task_id = t.id LIMIT 1)
+                            WHEN t.assignment_mode = 'group' THEN (
+                                SELECT CASE 
+                                    WHEN (SELECT COUNT(*) FROM task_assignments WHERE task_id = t.id AND status = 'Approved') >= 
+                                         (SELECT COUNT(*) FROM task_assignments WHERE task_id = t.id)
+                                    THEN 'Completed'
+                                    ELSE t.status 
+                                END
+                            )
                             ELSE (
                                 SELECT CASE 
                                     WHEN (SELECT COUNT(*) FROM task_assignments WHERE task_id = t.id AND status = 'Approved') >= 

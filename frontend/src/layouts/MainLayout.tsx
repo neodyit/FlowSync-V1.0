@@ -287,7 +287,7 @@ export default function MainLayout() {
                     </span>
                   </p>
                   
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mt-1 text-[10px] font-bold text-slate-400">
+                  {/* <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mt-1 text-[10px] font-bold text-slate-400">
                     <p className="tracking-wide">
                       Created and Managed by <a href="https://neodyit.in" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors font-black">Neody IT</a>
                     </p>
@@ -295,7 +295,7 @@ export default function MainLayout() {
                     <p className="tracking-wide">
                       Powered by <a href="https://www.readynestcorp.com" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors font-black">ReadyNest Corp.</a>
                     </p>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="flex items-center gap-6 mt-2">
