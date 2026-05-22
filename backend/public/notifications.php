@@ -20,7 +20,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Fetch notifications: BOTH READ AND UNREAD and ONLY LATEST 3 DAYS
         $stmt = $db->prepare("
-            SELECT n.*, u.name as trigger_user_name, t.title as task_title
+            SELECT n.*, u.name as trigger_user_name, t.title as task_title, n.title, n.points, n.is_actioned
             FROM notifications n
             LEFT JOIN users u ON n.trigger_user_id = u.id
             LEFT JOIN tasks t ON n.task_id = t.id
@@ -112,6 +112,34 @@ try {
         $isRead = $data['is_read'] ?? 1;
 
         if ($notifId) {
+            $claimPoints = $data['claim_points'] ?? false;
+            if ($claimPoints) {
+                // Check if notification is HOD_PUSH and points can be claimed
+                $checkStmt = $db->prepare("SELECT type, points, is_actioned FROM notifications WHERE id = :id AND user_id = :user_id");
+                $checkStmt->execute(['id' => $notifId, 'user_id' => $userId]);
+                $notif = $checkStmt->fetch();
+
+                if ($notif && $notif['type'] === 'HOD_PUSH' && $notif['is_actioned'] == 0 && $notif['points'] > 0) {
+                    $db->beginTransaction();
+                    try {
+                        // Mark actioned and read
+                        $updateStmt = $db->prepare("UPDATE notifications SET is_read = 1, is_actioned = 1 WHERE id = :id");
+                        $updateStmt->execute(['id' => $notifId]);
+
+                        // Add points
+                        $pointsStmt = $db->prepare("UPDATE leaderboard_points SET total_points = total_points + :points WHERE user_id = :user_id");
+                        $pointsStmt->execute(['points' => $notif['points'], 'user_id' => $userId]);
+                        
+                        $db->commit();
+                        echo json_encode(['status' => 'success', 'message' => 'Points claimed successfully!', 'points_awarded' => $notif['points']]);
+                        exit;
+                    } catch (Exception $e) {
+                        $db->rollBack();
+                        throw $e;
+                    }
+                }
+            }
+
             $stmt = $db->prepare("UPDATE notifications SET is_read = :is_read WHERE id = :id AND user_id = :user_id");
             $stmt->execute(['id' => $notifId, 'user_id' => $userId, 'is_read' => $isRead]);
         } else {

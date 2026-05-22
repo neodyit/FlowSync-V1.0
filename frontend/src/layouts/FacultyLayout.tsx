@@ -286,7 +286,68 @@ export default function FacultyLayout() {
     // Check if the latest notification is a Reminder or Warning
     const latest = notifications[0];
     if (latest && !latest.is_read && latest.id !== lastPopupId) {
-      if (latest.message.includes('[Reminder]') || latest.message.includes('[Warning]')) {
+      if (latest.type === 'HOD_PUSH' && !latest.is_actioned) {
+        setLastPopupId(latest.id);
+        
+        Swal.fire({
+          title: latest.title || 'HOD NOTIFICATION',
+          html: `
+            <div class="text-left mt-4 mb-6">
+              <p class="text-sm font-bold text-[#1E184B] mb-6">${latest.message}</p>
+              ${latest.points > 0 ? `
+              <div class="bg-[#7C3AED]/10 border border-[#7C3AED]/20 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] font-black text-[#7C3AED] uppercase tracking-widest">Reward Available</p>
+                  <p class="text-xs font-bold text-[#1E184B] mt-1">Claim your points for acknowledging.</p>
+                </div>
+                <div class="w-12 h-12 bg-[#7C3AED] rounded-full flex items-center justify-center text-white text-xl font-black shadow-lg shadow-[#7C3AED]/30">
+                  +${latest.points}
+                </div>
+              </div>` : ''}
+            </div>
+          `,
+          icon: 'info',
+          background: '#ffffff',
+          showCancelButton: true,
+          confirmButtonColor: '#7C3AED',
+          cancelButtonColor: '#f1f5f9',
+          confirmButtonText: 'Read & Claim Points',
+          cancelButtonText: 'Dismiss for now',
+          customClass: {
+            popup: 'rounded-[2.5rem] border border-[#7C3AED]/10 shadow-2xl',
+            title: 'font-black text-xl text-[#1E184B]',
+            confirmButton: 'rounded-xl px-8 py-3 font-black uppercase tracking-widest text-[10px]',
+            cancelButton: 'rounded-xl px-8 py-3 font-black uppercase tracking-widest text-[10px] !bg-slate-100 !text-slate-500 hover:!bg-slate-200'
+          }
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            try {
+              const res = await fetch(`${import.meta.env.VITE_API_URL}/notifications.php`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ id: latest.id, claim_points: true })
+              });
+              const data = await res.json();
+              if (data.status === 'success') {
+                Swal.fire({
+                  title: 'Points Claimed!',
+                  text: data.message,
+                  icon: 'success',
+                  timer: 2000,
+                  showConfirmButton: false,
+                  customClass: {
+                    popup: 'rounded-[2.5rem]'
+                  }
+                });
+                fetchNotifications();
+              }
+            } catch (err) {}
+          } else {
+            toggleReadStatus(latest.id, false);
+          }
+        });
+      } else if (latest.message.includes('[Reminder]') || latest.message.includes('[Warning]')) {
         setLastPopupId(latest.id);
         const isWarning = latest.message.includes('[Warning]');
         
@@ -303,6 +364,24 @@ export default function FacultyLayout() {
             confirmButton: 'rounded-xl px-10 py-4 font-black uppercase tracking-widest text-[10px]'
           },
           backdrop: `rgba(${isWarning ? '244, 63, 94, 0.2' : '251, 191, 36, 0.1'})`
+        }).then(() => {
+          toggleReadStatus(latest.id, false);
+        });
+      } else if (latest.type === 'System Announcement') {
+        setLastPopupId(latest.id);
+        Swal.fire({
+          title: 'SYSTEM BROADCAST',
+          html: `<div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left text-sm font-bold text-[#1E184B] shadow-inner">${latest.message}</div>`,
+          icon: 'info',
+          background: '#ffffff',
+          confirmButtonColor: '#1E184B',
+          confirmButtonText: 'Acknowledge',
+          customClass: {
+            popup: 'rounded-[2.5rem] border-4 border-[#1E184B] shadow-2xl',
+            title: 'font-black text-xl text-[#1E184B] tracking-widest',
+            confirmButton: 'rounded-xl px-10 py-4 font-black uppercase tracking-widest text-[10px]'
+          },
+          backdrop: `rgba(30, 24, 75, 0.4)`
         }).then(() => {
           toggleReadStatus(latest.id, false);
         });

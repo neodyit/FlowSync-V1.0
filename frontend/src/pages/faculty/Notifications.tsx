@@ -108,6 +108,7 @@ const FacultyNotifications: React.FC = () => {
       case 'TASK_APPROVED': return { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50' };
       case 'TASK_REJECTED': return { icon: AlertCircle, color: 'text-rose-500', bg: 'bg-rose-50' };
       case 'REWORK_REQUIRED': return { icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50' };
+      case 'System Announcement': return { icon: AlertCircle, color: 'text-purple-600', bg: 'bg-purple-100' };
       default: return { icon: Bell, color: 'text-slate-400', bg: 'bg-slate-50' };
     }
   };

@@ -183,23 +183,42 @@ export default function HODLayout() {
 
           const latestNotif = result.data.notifications && result.data.notifications[0];
           if (latestNotif) {
-            // Show premium brand-themed toast notification inside the app (perfect secure/insecure local HTTP fallback)
-            Swal.fire({
-              title: 'FlowSync Alert',
-              text: latestNotif.message,
-              icon: 'info',
-              toast: true,
-              position: 'top-end',
-              showConfirmButton: false,
-              timer: 5000,
-              timerProgressBar: true,
-              background: '#ffffff',
-              color: '#1E184B',
-              iconColor: '#7C3AED',
-              customClass: {
-                popup: 'rounded-[20px] border border-[#7C3AED]/10 shadow-2xl animate-in slide-in-from-right-5 duration-300'
-              }
-            });
+            if (latestNotif.type === 'System Announcement') {
+              Swal.fire({
+                title: 'SYSTEM BROADCAST',
+                html: `<div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left text-sm font-bold text-[#1E184B] shadow-inner">${latestNotif.message}</div>`,
+                icon: 'info',
+                background: '#ffffff',
+                confirmButtonColor: '#1E184B',
+                confirmButtonText: 'Acknowledge',
+                customClass: {
+                  popup: 'rounded-[2.5rem] border-4 border-[#1E184B] shadow-2xl',
+                  title: 'font-black text-xl text-[#1E184B] tracking-widest',
+                  confirmButton: 'rounded-xl px-10 py-4 font-black uppercase tracking-widest text-[10px]'
+                },
+                backdrop: `rgba(30, 24, 75, 0.4)`
+              }).then(() => {
+                toggleReadStatus(latestNotif.id, false);
+              });
+            } else {
+              // Show premium brand-themed toast notification inside the app
+              Swal.fire({
+                title: 'FlowSync Alert',
+                text: latestNotif.message,
+                icon: 'info',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true,
+                background: '#ffffff',
+                color: '#1E184B',
+                iconColor: '#7C3AED',
+                customClass: {
+                  popup: 'rounded-[20px] border border-[#7C3AED]/10 shadow-2xl animate-in slide-in-from-right-5 duration-300'
+                }
+              });
+            }
 
             // Show native desktop notification if allowed and granted (HTTPS secure context required)
             if (showDesktopNotification && 'Notification' in window && Notification.permission === 'granted') {
