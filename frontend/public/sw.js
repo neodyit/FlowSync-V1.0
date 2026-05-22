@@ -16,9 +16,14 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Skip non-http requests (e.g., chrome-extension://)
+  if (!event.request.url.startsWith('http')) return;
+
   event.respondWith(
     caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+      return response || fetch(event.request).catch((err) => {
+        console.error('Fetch failed:', err);
+      });
     })
   );
 });
