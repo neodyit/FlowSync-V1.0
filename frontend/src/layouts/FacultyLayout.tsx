@@ -367,6 +367,24 @@ export default function FacultyLayout() {
         }).then(() => {
           toggleReadStatus(latest.id, false);
         });
+      } else if (latest.type === 'System Announcement') {
+        setLastPopupId(latest.id);
+        Swal.fire({
+          title: 'SYSTEM BROADCAST',
+          html: `<div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left text-sm font-bold text-[#1E184B] shadow-inner">${latest.message}</div>`,
+          icon: 'info',
+          background: '#ffffff',
+          confirmButtonColor: '#1E184B',
+          confirmButtonText: 'Acknowledge',
+          customClass: {
+            popup: 'rounded-[2.5rem] border-4 border-[#1E184B] shadow-2xl',
+            title: 'font-black text-xl text-[#1E184B] tracking-widest',
+            confirmButton: 'rounded-xl px-10 py-4 font-black uppercase tracking-widest text-[10px]'
+          },
+          backdrop: `rgba(30, 24, 75, 0.4)`
+        }).then(() => {
+          toggleReadStatus(latest.id, false);
+        });
       }
     }
   }, [notifications, lastPopupId]);

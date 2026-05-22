@@ -176,6 +176,7 @@ const HODNotifications: React.FC = () => {
       case 'TASK_UPDATED': return { icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50' };
       case 'TASK_COMMENT': return { icon: MessageSquare, color: 'text-indigo-500', bg: 'bg-indigo-50' };
       case 'EXTENSION_REQUESTED': return { icon: Clock, color: 'text-pink-500', bg: 'bg-pink-50' };
+      case 'System Announcement': return { icon: AlertCircle, color: 'text-purple-600', bg: 'bg-purple-100' };
       default: return { icon: Bell, color: 'text-slate-400', bg: 'bg-slate-50' };
     }
   };
