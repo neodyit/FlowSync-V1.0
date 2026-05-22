@@ -50,3 +50,35 @@ export function calculateProgress(status: string, currentProgress: number = 0): 
     default: return currentProgress;
   }
 }
+
+export function getDeadlineStatus(deadline: string | null | undefined): { text: string, isPassed: boolean, isValid: boolean } {
+  if (!deadline) return { text: 'No deadline', isPassed: false, isValid: false };
+  const d = typeof deadline === 'string' ? new Date(deadline.replace(' ', 'T')) : new Date(deadline);
+  if (isNaN(d.getTime())) return { text: 'Invalid Date', isPassed: false, isValid: false };
+
+  const now = new Date();
+  const diffMs = d.getTime() - now.getTime();
+  const isPassed = diffMs < 0;
+  const absDiff = Math.abs(diffMs);
+
+  const days = Math.floor(absDiff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((absDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+  let timeString = '';
+  if (days > 0) {
+    timeString = `${days} day${days > 1 ? 's' : ''}`;
+  } else if (hours > 0) {
+    timeString = `${hours} hour${hours > 1 ? 's' : ''}`;
+  } else if (minutes > 0) {
+    timeString = `${minutes} min${minutes > 1 ? 's' : ''}`;
+  } else {
+    timeString = 'less than a minute';
+  }
+
+  if (isPassed) {
+    return { text: `Passed by ${timeString}`, isPassed: true, isValid: true };
+  } else {
+    return { text: `${timeString} remaining`, isPassed: false, isValid: true };
+  }
+}

@@ -584,11 +584,11 @@ export default function HODLayout() {
                     Made with <span className="text-rose-500 animate-pulse mx-1">❤️</span> by 
                     <span className="ml-1.5 space-x-1">
                       <a href="https://mayank.neodyit.in/" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors">Mayank Tiwari</a>,
-                      <a href="https://saurabhupadhyay.com" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors">Saurabh Upadhyay</a>
+                      <a href="#" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors">Saurabh Upadhyay</a>
                     </span>
                   </p>
                   
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mt-1 text-[10px] font-bold text-slate-400">
+                  {/* <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mt-1 text-[10px] font-bold text-slate-400">
                     <p className="tracking-wide">
                       Created and Managed by <a href="https://neodyit.in" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors font-black">Neody IT</a>
                     </p>
@@ -596,10 +596,10 @@ export default function HODLayout() {
                     <p className="tracking-wide">
                       Powered by <a href="https://www.readynestcorp.com" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors font-black">ReadyNest Corp.</a>
                     </p>
-                  </div>
+                  </div> */}
                 </div>
 
-                <div className="mt-2">
+                {/* <div className="mt-2">
                   <NavLink 
                     to="/hod/feedback" 
                     className="text-[10px] font-black text-[#7C3AED]/50 hover:text-[#7C3AED] uppercase tracking-[0.2em] transition-all flex items-center gap-2 group"
@@ -608,7 +608,7 @@ export default function HODLayout() {
                     Submit Protocol Feedback
                     <span className="h-px w-4 bg-[#7C3AED]/20 group-hover:w-6 transition-all" />
                   </NavLink>
-                </div>
+                </div> */}
 
                 <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mt-2">
                   <span className="text-[9px] font-bold text-[#7C3AED]/40 uppercase tracking-widest cursor-pointer hover:text-[#7C3AED] transition-colors">Privacy Protocol</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutGrid, 
   Building2, 
@@ -27,6 +27,7 @@ export default function FacultyLayout() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [lastPopupId, setLastPopupId] = useState<number | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Get user from localStorage
   const [user, setUser] = useState(() => {
@@ -308,6 +309,103 @@ export default function FacultyLayout() {
       }
     }
   }, [notifications, lastPopupId]);
+
+  const checkDeadlines = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/faculty/my_tasks.php`, {
+        credentials: 'include'
+      });
+      const result = await response.json();
+      if (result.status === 'success') {
+        const tasks = result.data;
+        const now = new Date();
+        const alertsQueue: any[] = [];
+
+        tasks.forEach((task: any) => {
+          if (['Completed', 'Submitted', 'Approved'].includes(task.status)) return;
+          if (!task.deadline) return;
+
+          const deadlineDate = new Date(task.deadline);
+          const timeDiff = deadlineDate.getTime() - now.getTime();
+          
+          if (timeDiff < 0) {
+            const storageKey = `deadline_missed_${task.id}`;
+            if (!localStorage.getItem(storageKey)) {
+              alertsQueue.push({ task, type: 'missed', storageKey });
+            }
+          } else if (timeDiff <= 24 * 60 * 60 * 1000) {
+            const storageKey = `deadline_reminder_${task.id}`;
+            if (!localStorage.getItem(storageKey)) {
+              alertsQueue.push({
+                task,
+                type: 'reminder',
+                storageKey,
+                hoursRemaining: Math.max(1, Math.round(timeDiff / (1000 * 60 * 60)))
+              });
+            }
+          }
+        });
+
+        if (alertsQueue.length > 0) {
+          const showNextAlert = async (index: number) => {
+            if (index >= alertsQueue.length) return;
+            const alert = alertsQueue[index];
+            const { task, type, storageKey, hoursRemaining } = alert;
+
+            let title = '';
+            let text = '';
+            let confirmButtonColor = '';
+            
+            if (type === 'missed') {
+              title = 'DEADLINE MISSED';
+              text = `You have missed the deadline for mission: <strong>${task.title}</strong>.<br/><br/>Original Deadline: ${formatDate(task.deadline)}`;
+              confirmButtonColor = '#f43f5e';
+            } else {
+              title = 'MISSION REMINDER';
+              text = `Mission <strong>${task.title}</strong> is due in approx ${hoursRemaining} hours!<br/><br/>Deadline: ${formatDate(task.deadline)}`;
+              confirmButtonColor = '#fbbf24';
+            }
+
+            const isWarning = type === 'missed';
+
+            const resultPopup = await Swal.fire({
+              title,
+              html: text,
+              icon: isWarning ? 'error' : 'warning',
+              background: '#ffffff',
+              confirmButtonColor,
+              showCancelButton: true,
+              cancelButtonText: 'Dismiss',
+              confirmButtonText: 'Open Task',
+              customClass: {
+                popup: `rounded-[2.5rem] border-4 ${isWarning ? 'border-rose-500' : 'border-amber-400'} shadow-2xl`,
+                title: `font-black text-xl ${isWarning ? 'text-rose-600' : 'text-amber-600'}`,
+                confirmButton: 'rounded-xl px-8 py-3 font-black uppercase tracking-widest text-[10px]',
+                cancelButton: 'rounded-xl px-8 py-3 font-bold uppercase tracking-widest text-[10px] text-slate-500 bg-slate-100 hover:bg-slate-200 border-none'
+              },
+              backdrop: `rgba(${isWarning ? '244, 63, 94, 0.2' : '251, 191, 36, 0.1'})`
+            });
+
+            localStorage.setItem(storageKey, 'true');
+
+            if (resultPopup.isConfirmed) {
+              navigate(`/faculty/my-tasks?taskId=${task.id}`);
+            } else {
+              setTimeout(() => showNextAlert(index + 1), 300);
+            }
+          };
+
+          showNextAlert(0);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check deadlines:', error);
+    }
+  };
+
+  useEffect(() => {
+    checkDeadlines();
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -593,11 +691,11 @@ export default function FacultyLayout() {
                     Made with <span className="text-rose-500 animate-pulse mx-1">❤️</span> by 
                     <span className="ml-1.5 space-x-1">
                       <a href="https://mayank.neodyit.in/" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors">Mayank Tiwari</a>,
-                      <a href="https://saurabhupadhyay.com" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors">Saurabh Upadhyay</a>
+                      <a href="" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors">Saurabh Upadhyay</a>
                     </span>
                   </p>
                   
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mt-1 text-[10px] font-bold text-slate-400">
+                  {/* <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mt-1 text-[10px] font-bold text-slate-400">
                     <p className="tracking-wide">
                       Created and Managed by <a href="https://neodyit.in" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors font-black">Neody IT</a>
                     </p>
@@ -605,11 +703,11 @@ export default function FacultyLayout() {
                     <p className="tracking-wide">
                       Powered by <a href="https://www.readynestcorp.com" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors font-black">ReadyNest Corp.</a>
                     </p>
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Feedback Action */}
-                <div className="mt-2">
+                {/* <div className="mt-2">
                   <NavLink 
                     to="/faculty/feedback" 
                     className="text-[10px] font-black text-[#7C3AED]/50 hover:text-[#7C3AED] uppercase tracking-[0.2em] transition-all flex items-center gap-2 group"
@@ -618,7 +716,7 @@ export default function FacultyLayout() {
                     Submit Protocol Feedback
                     <span className="h-px w-4 bg-[#7C3AED]/20 group-hover:w-6 transition-all" />
                   </NavLink>
-                </div>
+                </div> */}
 
                 {/* Protocol Links */}
                 <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mt-2">
