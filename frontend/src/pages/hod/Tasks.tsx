@@ -131,7 +131,9 @@ const HODTasks: React.FC = () => {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'All' | 'Broadcasted' | 'Review Pending' | 'Active' | 'Completed' | 'Extensions' | 'Drafts'>('All');
+  const [activeTab, setActiveTab] = useState<'All' | 'Assigned' | 'Group' | 'Broadcasted' | 'Review Pending' | 'Active' | 'Completed' | 'Extensions' | 'Drafts'>('All');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
   const [extensionRequests, setExtensionRequests] = useState<ExtensionRequest[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openSelect, setOpenSelect] = useState<'priority' | 'faculty' | 'category' | null>(null);
@@ -609,7 +611,20 @@ const HODTasks: React.FC = () => {
     
     if (!matchesSearch) return false;
 
+    if (filterStartDate) {
+      const start = new Date(filterStartDate);
+      start.setHours(0, 0, 0, 0);
+      if (new Date(t.created_at) < start) return false;
+    }
+    if (filterEndDate) {
+      const end = new Date(filterEndDate);
+      end.setHours(23, 59, 59, 999);
+      if (new Date(t.created_at) > end) return false;
+    }
+
     switch (activeTab) {
+      case 'Assigned': return t.assignment_mode === 'individual';
+      case 'Group': return t.assignment_mode === 'group';
       case 'Broadcasted': return t.status === 'Broadcasted';
       case 'Review Pending': 
         return ['Submitted', 'Under Review'].includes(t.status) || 
@@ -621,24 +636,67 @@ const HODTasks: React.FC = () => {
         return ['Completed', 'Approved'].includes(t.status);
       case 'Drafts':
         return t.status === 'Draft';
-      default: return true;
+      case 'All':
+      default: 
+        return !['Completed', 'Approved'].includes(t.status);
     }
   });
 
+  const filterCount = (tab: typeof activeTab) => {
+    return tasks.filter(t => {
+      if (filterStartDate) {
+        const start = new Date(filterStartDate);
+        start.setHours(0, 0, 0, 0);
+        if (new Date(t.created_at) < start) return false;
+      }
+      if (filterEndDate) {
+        const end = new Date(filterEndDate);
+        end.setHours(23, 59, 59, 999);
+        if (new Date(t.created_at) > end) return false;
+      }
+      switch (tab) {
+        case 'Assigned': return t.assignment_mode === 'individual';
+        case 'Group': return t.assignment_mode === 'group';
+        case 'Broadcasted': return t.status === 'Broadcasted';
+        case 'Review Pending': 
+          return ['Submitted', 'Under Review'].includes(t.status) || 
+                 t.assignments.some(a => ['Submitted', 'Under Review'].includes(a.status));
+        case 'Active': 
+          return ['Assigned', 'Accepted', 'In Progress', 'Rework Required'].includes(t.status) ||
+                 t.assignments.some(a => ['Accepted', 'In Progress', 'Rework Required'].includes(a.status));
+        case 'Completed': 
+          return ['Completed', 'Approved'].includes(t.status);
+        case 'Drafts': return t.status === 'Draft';
+        case 'Extensions': return false; // Handled separately
+        case 'All':
+        default: return !['Completed', 'Approved'].includes(t.status);
+      }
+    }).length;
+  };
+
   const tabs: {id: typeof activeTab, label: string, count: number}[] = [
-    { id: 'All', label: 'All Tasks', count: tasks.length },
-    { id: 'Broadcasted', label: 'Broadcasted', count: tasks.filter(t => t.status === 'Broadcasted').length },
-    { id: 'Active', label: 'Active', count: tasks.filter(t => 
-      ['Assigned', 'Accepted', 'In Progress', 'Rework Required'].includes(t.status) ||
-      t.assignments.some(a => ['Accepted', 'In Progress', 'Rework Required'].includes(a.status))
-    ).length },
-    { id: 'Review Pending', label: 'Review Pending', count: tasks.filter(t => 
-      ['Submitted', 'Under Review'].includes(t.status) ||
-      t.assignments.some(a => ['Submitted', 'Under Review'].includes(a.status))
-    ).length },
-    { id: 'Extensions', label: 'Extensions', count: extensionRequests.filter(r => r.status === 'Pending').length },
-    { id: 'Completed', label: 'Completed', count: tasks.filter(t => ['Completed', 'Approved'].includes(t.status)).length },
-    { id: 'Drafts', label: 'Drafts', count: tasks.filter(t => t.status === 'Draft').length },
+    { id: 'All', label: 'All Tasks', count: filterCount('All') },
+    { id: 'Assigned', label: 'Assigned', count: filterCount('Assigned') },
+    { id: 'Group', label: 'Group', count: filterCount('Group') },
+    { id: 'Broadcasted', label: 'Broadcasted', count: filterCount('Broadcasted') },
+    { id: 'Active', label: 'Active', count: filterCount('Active') },
+    { id: 'Review Pending', label: 'Review Pending', count: filterCount('Review Pending') },
+    { id: 'Extensions', label: 'Extensions', count: extensionRequests.filter(r => {
+      if (r.status !== 'Pending') return false;
+      if (filterStartDate) {
+        const start = new Date(filterStartDate);
+        start.setHours(0, 0, 0, 0);
+        if (new Date(r.requested_at) < start) return false;
+      }
+      if (filterEndDate) {
+        const end = new Date(filterEndDate);
+        end.setHours(23, 59, 59, 999);
+        if (new Date(r.requested_at) > end) return false;
+      }
+      return true;
+    }).length },
+    { id: 'Completed', label: 'Completed', count: filterCount('Completed') },
+    { id: 'Drafts', label: 'Drafts', count: filterCount('Drafts') },
   ];
 
   return (
@@ -752,7 +810,7 @@ const HODTasks: React.FC = () => {
           ))}
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 relative group">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-[#7C3AED] transition-colors" />
             <input 
@@ -763,6 +821,36 @@ const HODTasks: React.FC = () => {
               className="w-full pl-14 pr-6 py-4 bg-white border border-slate-100 rounded-3xl text-sm font-bold text-[#1E184B] focus:outline-none focus:ring-4 focus:ring-[#7C3AED]/10 focus:border-[#7C3AED] transition-all placeholder:text-slate-300"
             />
           </div>
+          <div className="flex items-center gap-2 bg-white border border-slate-100 rounded-3xl p-1.5 focus-within:border-[#7C3AED] focus-within:ring-4 focus-within:ring-[#7C3AED]/10 transition-all">
+            <div className="relative px-2">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase tracking-widest pointer-events-none">From</span>
+              <input 
+                type="date"
+                value={filterStartDate}
+                onChange={(e) => setFilterStartDate(e.target.value)}
+                className="pl-14 pr-4 py-2.5 bg-transparent text-sm font-bold text-[#1E184B] focus:outline-none cursor-pointer"
+              />
+            </div>
+            <div className="w-px h-6 bg-slate-200"></div>
+            <div className="relative px-2">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase tracking-widest pointer-events-none">To</span>
+              <input 
+                type="date"
+                value={filterEndDate}
+                onChange={(e) => setFilterEndDate(e.target.value)}
+                className="pl-10 pr-4 py-2.5 bg-transparent text-sm font-bold text-[#1E184B] focus:outline-none cursor-pointer"
+              />
+            </div>
+            {(filterStartDate || filterEndDate) && (
+              <button 
+                onClick={() => { setFilterStartDate(''); setFilterEndDate(''); }}
+                className="p-2 mr-1 hover:bg-rose-50 text-rose-500 rounded-full transition-colors"
+                title="Clear Dates"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -770,12 +858,25 @@ const HODTasks: React.FC = () => {
       {activeTab === 'Extensions' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {extensionRequests
-            .filter(req => 
-              req.task_title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-              req.faculty_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              req.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              req.task_desc.toLowerCase().includes(searchQuery.toLowerCase())
-            )
+            .filter(req => {
+              if (req.status !== 'Pending') return false;
+              
+              if (filterStartDate) {
+                const start = new Date(filterStartDate);
+                start.setHours(0, 0, 0, 0);
+                if (new Date(req.requested_at) < start) return false;
+              }
+              if (filterEndDate) {
+                const end = new Date(filterEndDate);
+                end.setHours(23, 59, 59, 999);
+                if (new Date(req.requested_at) > end) return false;
+              }
+
+              return req.task_title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                     req.faculty_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                     req.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                     req.task_desc.toLowerCase().includes(searchQuery.toLowerCase());
+            })
             .map((req) => (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -957,6 +1058,29 @@ const HODTasks: React.FC = () => {
                     </div>
                   </div>
 
+                  {(task.assignment_mode === 'group' || task.assignment_mode === 'broadcast' || task.status === 'Broadcasted' || (!task.assigned_to_id && task.assignments && task.assignments.length > 0)) && (() => {
+                    const totalAccepted = task.assignments?.length || 0;
+                    const submittedCount = task.assignments?.filter(a => ['Submitted', 'Under Review', 'Approved', 'Completed'].includes(a.status)).length || 0;
+                    const progressPercentage = totalAccepted > 0 ? Math.round((submittedCount / totalAccepted) * 100) : 0;
+                    
+                    return (
+                      <div className="mb-6 space-y-2">
+                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          <span>Progress</span>
+                          <span className="text-[#7C3AED]">{submittedCount} / {totalAccepted} Submitted</span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-[#7C3AED] to-[#38bdf8] rounded-full transition-all duration-500 relative" 
+                            style={{ width: `${progressPercentage}%` }}
+                          >
+                            <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]" />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <div className="flex items-center justify-between pt-4 border-t border-slate-50">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-[#7C3AED]/10 rounded-full flex items-center justify-center overflow-hidden border border-[#7C3AED]/20">
@@ -967,13 +1091,17 @@ const HODTasks: React.FC = () => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
+                          task.assignment_mode === 'group' ? <Users className="w-4 h-4 text-[#7C3AED]" /> :
+                          task.assignment_mode === 'broadcast' ? <Send className="w-4 h-4 text-[#7C3AED]" /> :
                           <User className="w-4 h-4 text-[#7C3AED]" />
                         )}
                       </div>
                       <div className="flex flex-col">
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Assigned To</span>
                         <span className="text-[11px] font-black text-[#1E184B] truncate max-w-[120px]">
-                          {task.assigned_to_name || "Broadcasted"}
+                          {task.assignment_mode === 'group' ? "Group Task" : 
+                           task.assignment_mode === 'broadcast' ? "Broadcasted" : 
+                           task.assigned_to_name || "Unassigned"}
                         </span>
                       </div>
                     </div>
