@@ -10,10 +10,14 @@ import {
   ArrowRight,
   User,
   ExternalLink,
-  MessageSquare
+  MessageSquare,
+  Send,
+  Star,
+  X
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
+import Swal from 'sweetalert2';
 import { cn, formatDate } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 
@@ -33,6 +37,24 @@ const HODNotifications: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Push Notification State
+  const [isPushModalOpen, setIsPushModalOpen] = useState(false);
+  const [pushTitle, setPushTitle] = useState('');
+  const [pushMessage, setPushMessage] = useState('');
+  const [pushPoints, setPushPoints] = useState(1);
+  const [pushTargetType, setPushTargetType] = useState('ALL');
+  const [pushSelectedFaculties, setPushSelectedFaculties] = useState<number[]>([]);
+  const [facultyList, setFacultyList] = useState<{id: number, name: string}[]>([]);
+  const [isSubmittingPush, setIsSubmittingPush] = useState(false);
+
+  const fetchFaculty = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/hod/faculty.php`, { credentials: 'include' });
+      const data = await response.json();
+      if (data.status === 'success') setFacultyList(data.data);
+    } catch (e) {}
+  };
+
   const fetchNotifications = async (silent = false) => {
     if (!silent) setIsLoading(true);
     try {
@@ -51,6 +73,7 @@ const HODNotifications: React.FC = () => {
   };
 
   useEffect(() => {
+    fetchFaculty();
     fetchNotifications();
     const interval = setInterval(() => {
       fetchNotifications(true);
@@ -101,6 +124,50 @@ const HODNotifications: React.FC = () => {
     }
   };
 
+  const handleSendPush = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pushTitle || !pushMessage) {
+      Swal.fire('Error', 'Title and message are required', 'error');
+      return;
+    }
+    if (pushTargetType === 'SELECTED' && pushSelectedFaculties.length === 0) {
+      Swal.fire('Error', 'Select at least one faculty member', 'error');
+      return;
+    }
+
+    setIsSubmittingPush(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/hod/push_notification.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: pushTitle,
+          message: pushMessage,
+          points: pushPoints,
+          targetType: pushTargetType,
+          selectedFaculties: pushSelectedFaculties
+        })
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        Swal.fire('Success!', data.message, 'success');
+        setIsPushModalOpen(false);
+        setPushTitle('');
+        setPushMessage('');
+        setPushPoints(1);
+        setPushTargetType('ALL');
+        setPushSelectedFaculties([]);
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error: any) {
+      Swal.fire('Error', error.message || 'Failed to send push notification', 'error');
+    } finally {
+      setIsSubmittingPush(false);
+    }
+  };
+
   const getTypeConfig = (type: string) => {
     switch (type) {
       case 'TASK_ACCEPTED': return { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50' };
@@ -131,6 +198,13 @@ const HODNotifications: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsPushModalOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-[#1E184B] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#7C3AED] transition-all shadow-xl shadow-[#1E184B]/20"
+          >
+            <Send className="w-4 h-4" />
+            New Push
+          </button>
           {notifications.some(n => !n.is_read) && (
             <button 
               onClick={() => markAsRead()}
@@ -243,6 +317,133 @@ const HODNotifications: React.FC = () => {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {isPushModalOpen && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setIsPushModalOpen(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl"
+            >
+              <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-black text-[#1E184B]">Push Notification</h2>
+                  <p className="text-sm font-bold text-slate-400 mt-1">Broadcast an alert with reward points</p>
+                </div>
+                <button onClick={() => setIsPushModalOpen(false)} className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-rose-50 hover:text-rose-500 transition-all">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSendPush} className="p-8 space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest">Notification Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={pushTitle}
+                    onChange={(e) => setPushTitle(e.target.value)}
+                    placeholder="e.g. Urgent Department Meeting"
+                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all text-sm font-bold text-[#1E184B]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest">Details</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={pushMessage}
+                    onChange={(e) => setPushMessage(e.target.value)}
+                    placeholder="Provide the notification details..."
+                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all text-sm font-bold text-[#1E184B] resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest">Reward Points ({pushPoints})</label>
+                    <input 
+                      type="range" 
+                      min="1" 
+                      max="5" 
+                      value={pushPoints} 
+                      onChange={(e) => setPushPoints(parseInt(e.target.value))}
+                      className="w-full accent-[#7C3AED]"
+                    />
+                    <div className="flex justify-between text-[10px] font-bold text-slate-400 px-1">
+                      <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest">Target Audience</label>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-[#1E184B]">
+                        <input 
+                          type="radio" 
+                          checked={pushTargetType === 'ALL'} 
+                          onChange={() => setPushTargetType('ALL')} 
+                          className="text-[#7C3AED] focus:ring-[#7C3AED]"
+                        />
+                        All Faculties
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-[#1E184B]">
+                        <input 
+                          type="radio" 
+                          checked={pushTargetType === 'SELECTED'} 
+                          onChange={() => setPushTargetType('SELECTED')} 
+                          className="text-[#7C3AED] focus:ring-[#7C3AED]"
+                        />
+                        Selected Only
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {pushTargetType === 'SELECTED' && (
+                  <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 max-h-48 overflow-y-auto custom-scrollbar">
+                    {facultyList.map(faculty => (
+                      <label key={faculty.id} className="flex items-center gap-3 cursor-pointer group">
+                        <input 
+                          type="checkbox"
+                          checked={pushSelectedFaculties.includes(faculty.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setPushSelectedFaculties([...pushSelectedFaculties, faculty.id]);
+                            else setPushSelectedFaculties(pushSelectedFaculties.filter(id => id !== faculty.id));
+                          }}
+                          className="w-4 h-4 rounded text-[#7C3AED] border-slate-300 focus:ring-[#7C3AED]"
+                        />
+                        <span className="text-sm font-bold text-[#1E184B] group-hover:text-[#7C3AED] transition-colors">{faculty.name}</span>
+                      </label>
+                    ))}
+                    {facultyList.length === 0 && (
+                      <p className="text-xs font-bold text-slate-400">No faculties found in your department.</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-slate-100 flex justify-end">
+                  <button 
+                    type="submit" 
+                    disabled={isSubmittingPush}
+                    className="px-8 py-4 bg-[#7C3AED] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#6D28D9] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isSubmittingPush ? 'Sending...' : 'Send Push Notification'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
