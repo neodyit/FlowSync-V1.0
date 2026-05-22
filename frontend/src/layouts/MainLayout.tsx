@@ -17,7 +17,8 @@ import {
   ShieldCheck,
   Building2,
   Trophy,
-  MessageSquare
+  MessageSquare,
+  Activity
 } from 'lucide-react';
 import { checkSession } from '../utils/auth';
 
@@ -40,6 +41,7 @@ export default function MainLayout() {
     { name: 'Leaderboard', icon: Trophy, path: '/admin/leaderboard' },
     { name: 'Audit Logs', icon: History, path: '/admin/audit' },
     { name: 'Feedbacks', icon: MessageSquare, path: '/admin/feedbacks' },
+    { name: 'Engagement Tracker', icon: Activity, path: '/admin/engagement' },
     { name: 'System Controls', icon: Settings, path: '/admin/controls' },
   ];
 
