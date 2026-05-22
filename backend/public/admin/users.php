@@ -16,7 +16,8 @@ try {
             $stmt = $db->query("
                 SELECT u.id, u.name, u.email, u.is_active, u.profile_pic, r.name as role_name, c.name as college_name, u.college_id, u.role_id,
                        fd.department_id, d.name as department_name,
-                       (SELECT COUNT(*) FROM departments WHERE hod_id = u.id) as is_current_hod
+                       (SELECT COUNT(*) FROM departments WHERE hod_id = u.id) as is_current_hod,
+                       (u.last_active_at IS NOT NULL AND u.last_active_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE)) as is_online
                 FROM users u 
                 JOIN roles r ON u.role_id = r.id 
                 JOIN colleges c ON u.college_id = c.id

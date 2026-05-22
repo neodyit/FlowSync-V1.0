@@ -41,6 +41,7 @@ interface User {
   department_id?: number | null;
   department_name?: string;
   is_current_hod?: number;
+  is_online?: number | boolean;
 }
 
 interface College {
@@ -197,6 +198,20 @@ const UsersManagement: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Silent background poll for live online status updates
+    const intervalId = setInterval(() => {
+      fetch(`${import.meta.env.VITE_API_URL}/admin/users.php`, { credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success') {
+            setUsers(data.data);
+          }
+        })
+        .catch(err => console.error('Silent poll failed:', err));
+    }, 10000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   // Filter logic
@@ -466,7 +481,7 @@ const UsersManagement: React.FC = () => {
                   name={user.name}
                   email={user.email}
                   role={user.role_name}
-                  status={user.is_active ? "online" : "offline"}
+                  status={!user.is_active ? "offline" : (user.is_online ? "online" : "away")}
                   avatar={user.profile_pic ? `${import.meta.env.VITE_API_URL}/${user.profile_pic}` : ""}
                   college={user.college_name}
                   department={user.department_name}

@@ -66,7 +66,12 @@ export function ProfileCard({
   college, department, email, id, onEdit, onToggleStatus, onDelete, onLogs 
 }: ProfileCardProps) {
   return (
-    <div className="group relative overflow-hidden rounded-[2.5rem] bg-[#EDE9FE]/70 light:bg-[#1E1B4B]/70 backdrop-blur-md p-8 w-full shadow-[12px_12px_24px_rgba(0,0,0,0.05),-12px_-12px_24px_rgba(255,255,255,0.8)] dark:shadow-[12px_12px_24px_rgba(0,0,0,0.3),-12px_-12px_24px_rgba(255,255,255,0.1)] transition-all duration-500 hover:shadow-[20px_20px_40px_rgba(124,58,237,0.1)] hover:scale-[1.02] hover:-translate-y-1">
+    <div className={cn(
+      "group relative overflow-hidden rounded-[2.5rem] bg-[#EDE9FE]/70 light:bg-[#1E1B4B]/70 backdrop-blur-md p-8 w-full transition-all duration-500 hover:-translate-y-1",
+      status === "online" 
+        ? "border-2 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]" 
+        : "shadow-[12px_12px_24px_rgba(0,0,0,0.05),-12px_-12px_24px_rgba(255,255,255,0.8)] hover:shadow-[20px_20px_40px_rgba(124,58,237,0.1)] hover:scale-[1.02]"
+    )}>
       {/* Status indicator with pulse animation */}
       <div className="absolute right-6 top-6 z-10">
         <div className="relative">
