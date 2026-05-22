@@ -331,19 +331,19 @@ const HODNotifications: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl"
+              className="relative bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
             >
-              <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+              <div className="p-8 border-b border-slate-100 flex items-center justify-between shrink-0">
                 <div>
-                  <h2 className="text-2xl font-black text-[#1E184B]">Push Notification</h2>
+                  <h2 className="text-2xl font-black text-[#1E184B]">Push Notice</h2>
                   <p className="text-sm font-bold text-slate-400 mt-1">Broadcast an alert with reward points</p>
                 </div>
-                <button onClick={() => setIsPushModalOpen(false)} className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-rose-50 hover:text-rose-500 transition-all">
+                <button onClick={() => setIsPushModalOpen(false)} className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-rose-50 hover:text-rose-500 transition-all shrink-0">
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
-              <form onSubmit={handleSendPush} className="p-8 space-y-6">
+              <form onSubmit={handleSendPush} className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest">Notification Title</label>
                   <input
