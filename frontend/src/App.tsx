@@ -27,6 +27,7 @@ import HODDepartment from './pages/hod/Department';
 import HODFaculty from './pages/hod/Faculty';
 import HODTasks from './pages/hod/Tasks';
 import HODNotifications from './pages/hod/Notifications';
+import HODGroups from './pages/hod/Groups';
 import HODLeaderboard from './pages/hod/Leaderboard';
 import HODSettings from './pages/hod/Settings';
 import HODReports from './pages/hod/Reports';
@@ -105,6 +106,7 @@ function App() {
             <Route path="dashboard" element={<HODDashboard />} />
             <Route path="department" element={<HODDepartment />} />
             <Route path="faculty" element={<HODFaculty />} />
+            <Route path="groups" element={<HODGroups />} />
             <Route path="tasks" element={<HODTasks />} />
             <Route path="notifications" element={<HODNotifications />} />
             <Route path="leaderboard" element={<HODLeaderboard />} />

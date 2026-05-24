@@ -126,7 +126,7 @@ try {
                 }
             }
 
-            $isGroup = count($assignedToIds) > 1;
+            $isGroup = count($assignedToIds) > 1 || ($data['assignment_mode'] ?? '') === 'group';
             $assignmentMode = $isBroadcast ? 'broadcast' : ($isGroup ? 'group' : 'individual');
             $assignedToId = ($assignmentMode === 'individual' && count($assignedToIds) === 1) ? $assignedToIds[0] : null;
 
