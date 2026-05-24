@@ -24,6 +24,7 @@ frontend/node_modules/
 # PHP (Composer)
 vendor/
 backend/public/uploads/
+backend/scratch/
 backend/vendor/
 backend/public/uploads/
 backend/sql/data.xlsx

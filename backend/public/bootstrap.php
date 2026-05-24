@@ -32,8 +32,14 @@ loadEnv(__DIR__ . '/../.env');
 header('Content-Type: application/json');
 
 // Session validation for global access
-$auth = new \FlowSync\Auth\AuthService();
-$session = $auth->validateSession();
+try {
+    $auth = new \FlowSync\Auth\AuthService();
+    $session = $auth->validateSession();
+} catch (\Throwable $e) {
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Server initialization error.']);
+    exit;
+}
 
 // Ensure uploads directory exists
 $uploadDir = __DIR__ . '/uploads';

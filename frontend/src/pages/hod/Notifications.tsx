@@ -13,13 +13,17 @@ import {
   MessageSquare,
   Send,
   Star,
-  X
+  X,
+  Paperclip,
+  History,
+  RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
 import Swal from 'sweetalert2';
 import { cn, formatDate } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { previewAttachment } from '@/utils/attachmentPreview';
 
 interface Notification {
   id: number;
@@ -32,6 +36,19 @@ interface Notification {
   created_at: string;
 }
 
+interface PushNoticeHistory {
+  id: number;
+  title: string;
+  message: string;
+  points: number;
+  attachment_url: string | null;
+  target_type: string;
+  created_at: string;
+  recipients: { id: number; name: string; is_read: number }[];
+  read_count: number;
+  total_count: number;
+}
+
 const HODNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,11 +58,19 @@ const HODNotifications: React.FC = () => {
   const [isPushModalOpen, setIsPushModalOpen] = useState(false);
   const [pushTitle, setPushTitle] = useState('');
   const [pushMessage, setPushMessage] = useState('');
-  const [pushPoints, setPushPoints] = useState(1);
+  const [pushPoints, setPushPoints] = useState(0);
   const [pushTargetType, setPushTargetType] = useState('ALL');
   const [pushSelectedFaculties, setPushSelectedFaculties] = useState<number[]>([]);
+  const [pushAttachment, setPushAttachment] = useState<File | null>(null);
   const [facultyList, setFacultyList] = useState<{id: number, name: string}[]>([]);
   const [isSubmittingPush, setIsSubmittingPush] = useState(false);
+  
+  // History State
+  const [pushHistory, setPushHistory] = useState<PushNoticeHistory[]>([]);
+  const [expandedNoticeId, setExpandedNoticeId] = useState<number | null>(null);
+
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'alerts' | 'history'>('alerts');
 
   const fetchFaculty = async () => {
     try {
@@ -72,11 +97,27 @@ const HODNotifications: React.FC = () => {
     }
   };
 
+  const fetchPushHistory = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/hod/get_push_notices.php`, {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        setPushHistory(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch push history:', error);
+    }
+  };
+
   useEffect(() => {
     fetchFaculty();
     fetchNotifications();
+    fetchPushHistory();
     const interval = setInterval(() => {
       fetchNotifications(true);
+      fetchPushHistory();
     }, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -137,17 +178,22 @@ const HODNotifications: React.FC = () => {
 
     setIsSubmittingPush(true);
     try {
+      const formData = new FormData();
+      formData.append('title', pushTitle);
+      formData.append('message', pushMessage);
+      formData.append('points', pushPoints.toString());
+      formData.append('targetType', pushTargetType);
+      if (pushTargetType === 'SELECTED') {
+        formData.append('selectedFaculties', JSON.stringify(pushSelectedFaculties));
+      }
+      if (pushAttachment) {
+        formData.append('attachment', pushAttachment);
+      }
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/hod/push_notification.php`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          title: pushTitle,
-          message: pushMessage,
-          points: pushPoints,
-          targetType: pushTargetType,
-          selectedFaculties: pushSelectedFaculties
-        })
+        body: formData
       });
       const data = await response.json();
       if (data.status === 'success') {
@@ -155,9 +201,11 @@ const HODNotifications: React.FC = () => {
         setIsPushModalOpen(false);
         setPushTitle('');
         setPushMessage('');
-        setPushPoints(1);
+        setPushPoints(0);
         setPushTargetType('ALL');
         setPushSelectedFaculties([]);
+        setPushAttachment(null);
+        fetchPushHistory();
       } else {
         throw new Error(data.message);
       }
@@ -165,6 +213,28 @@ const HODNotifications: React.FC = () => {
       Swal.fire('Error', error.message || 'Failed to send push notification', 'error');
     } finally {
       setIsSubmittingPush(false);
+    }
+  };
+
+  const handleResend = async (noticeId: number, pendingUsers: {id: number}[]) => {
+    try {
+      const userIds = pendingUsers.map(u => u.id);
+      if (userIds.length === 0) return;
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/hod/resend_push_notice.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ push_notice_id: noticeId, user_ids: userIds })
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        Swal.fire('Success', 'Pending faculties have been pinged.', 'success');
+        fetchPushHistory();
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (e: any) {
+      Swal.fire('Error', e.message, 'error');
     }
   };
 
@@ -191,10 +261,10 @@ const HODNotifications: React.FC = () => {
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-[#1E184B] tracking-tight">Alert Center</h1>
+          <h1 className="text-4xl font-black text-[#1E184B] tracking-tight">Notification Center</h1>
           <p className="text-[#1E184B]/60 mt-1 font-bold flex items-center gap-2 text-sm">
             <Bell className="w-4 h-4 text-[#7C3AED]" />
-            Real-time updates from your department.
+            Manage alerts and push notices.
           </p>
         </div>
         
@@ -227,9 +297,35 @@ const HODNotifications: React.FC = () => {
         </div>
       </div>
 
-      <div className="space-y-4">
-        {isLoading ? (
-          <div className="space-y-4">
+      <div className="flex gap-6 border-b border-slate-200">
+        <button 
+          onClick={() => setActiveTab('alerts')}
+          className={cn(
+            "pb-4 text-sm font-black uppercase tracking-widest transition-all",
+            activeTab === 'alerts' 
+              ? "text-[#7C3AED] border-b-2 border-[#7C3AED]" 
+              : "text-slate-400 hover:text-slate-600 border-b-2 border-transparent"
+          )}
+        >
+          Alert Center
+        </button>
+        <button 
+          onClick={() => setActiveTab('history')}
+          className={cn(
+            "pb-4 text-sm font-black uppercase tracking-widest transition-all",
+            activeTab === 'history' 
+              ? "text-[#7C3AED] border-b-2 border-[#7C3AED]" 
+              : "text-slate-400 hover:text-slate-600 border-b-2 border-transparent"
+          )}
+        >
+          Push Notice History
+        </button>
+      </div>
+
+      {activeTab === 'alerts' && (
+        <div className="space-y-4">
+          {isLoading ? (
+            <div className="space-y-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="h-24 bg-white rounded-3xl animate-pulse border border-[#7C3AED]/10" />
             ))}
@@ -318,13 +414,136 @@ const HODNotifications: React.FC = () => {
           </div>
         )}
       </div>
+      )}
+
+      {activeTab === 'history' && (
+        <div className="space-y-4">
+          {pushHistory.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4">
+            {pushHistory.map((notice) => {
+              const isExpanded = expandedNoticeId === notice.id;
+              const pendingUsers = notice.recipients.filter(r => !r.is_read);
+              const readUsers = notice.recipients.filter(r => r.is_read);
+              
+              return (
+                <div key={notice.id} className="bg-white rounded-[2rem] border border-[#7C3AED]/10 p-6 shadow-sm overflow-hidden">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {formatDate(notice.created_at)}
+                        </span>
+                        {notice.attachment_url && (
+                          <button onClick={() => previewAttachment(notice.attachment_url!)} className="text-[10px] font-black text-[#7C3AED] bg-[#7C3AED]/5 px-2 py-0.5 rounded flex items-center gap-1 hover:bg-[#7C3AED]/10 transition-colors">
+                            <Paperclip className="w-3 h-3" />
+                            Attachment
+                          </button>
+                        )}
+                        {notice.points > 0 && (
+                          <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-0.5 rounded flex items-center gap-1">
+                            <Star className="w-3 h-3" />
+                            {notice.points} pts
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-base font-bold text-[#1E184B]">{notice.title}</h3>
+                      <p className="text-sm text-slate-500 truncate mt-1">{notice.message}</p>
+                    </div>
+
+                    <div className="flex items-center gap-4 shrink-0">
+                      <div className="text-right">
+                        <p className="text-xs font-bold text-[#1E184B]">{notice.read_count} / {notice.total_count} Read</p>
+                        <div className="w-24 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
+                          <div 
+                            className="h-full bg-emerald-500 transition-all" 
+                            style={{ width: `${notice.total_count > 0 ? (notice.read_count / notice.total_count) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+                      
+                      <button 
+                        onClick={() => setExpandedNoticeId(isExpanded ? null : notice.id)}
+                        className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100 hover:text-[#1E184B] transition-all"
+                      >
+                        <ArrowRight className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-90")} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="mt-6 pt-6 border-t border-slate-100"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4" />
+                              Read ({readUsers.length})
+                            </h4>
+                            <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                              {readUsers.map(u => (
+                                <div key={u.id} className="text-sm font-bold text-slate-600 flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  {u.name}
+                                </div>
+                              ))}
+                              {readUsers.length === 0 && <p className="text-xs text-slate-400">None yet.</p>}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-xs font-black text-amber-600 uppercase tracking-widest flex items-center gap-2">
+                                <Clock className="w-4 h-4" />
+                                Pending ({pendingUsers.length})
+                              </h4>
+                              {pendingUsers.length > 0 && (
+                                <button 
+                                  onClick={() => handleResend(notice.id, pendingUsers)}
+                                  className="text-[10px] font-black text-[#7C3AED] uppercase flex items-center gap-1 hover:underline"
+                                >
+                                  <RefreshCw className="w-3 h-3" />
+                                  Ping Pending
+                                </button>
+                              )}
+                            </div>
+                            <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                              {pendingUsers.map(u => (
+                                <div key={u.id} className="text-sm font-bold text-slate-600 flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                  {u.name}
+                                </div>
+                              ))}
+                              {pendingUsers.length === 0 && <p className="text-xs text-slate-400">All users have read.</p>}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+            </div>
+          ) : (
+            <div className="bg-white rounded-[2.5rem] border border-[#7C3AED]/10 p-20 text-center shadow-sm">
+              <History className="w-12 h-12 text-[#7C3AED]/20 mx-auto mb-4" />
+              <h2 className="text-2xl font-black text-[#1E184B]/30 uppercase tracking-widest">No History</h2>
+              <p className="text-[#1E184B]/40 font-bold mt-2">You haven't sent any push notices yet.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <AnimatePresence>
         {isPushModalOpen && (
           <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setIsPushModalOpen(false)}
               className="absolute inset-0 bg-black/80 backdrop-blur-md"
             />
             <motion.div
@@ -373,14 +592,14 @@ const HODNotifications: React.FC = () => {
                     <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest">Reward Points ({pushPoints})</label>
                     <input 
                       type="range" 
-                      min="1" 
+                      min="0" 
                       max="5" 
                       value={pushPoints} 
                       onChange={(e) => setPushPoints(parseInt(e.target.value))}
                       className="w-full accent-[#7C3AED]"
                     />
                     <div className="flex justify-between text-[10px] font-bold text-slate-400 px-1">
-                      <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                      <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
                     </div>
                   </div>
 
@@ -406,6 +625,17 @@ const HODNotifications: React.FC = () => {
                         Selected Only
                       </label>
                     </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest">Optional Attachment</label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      onChange={(e) => setPushAttachment(e.target.files ? e.target.files[0] : null)}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-[#7C3AED]/10 file:text-[#7C3AED] hover:file:bg-[#7C3AED]/20 transition-all text-sm font-bold text-[#1E184B] cursor-pointer"
+                    />
                   </div>
                 </div>
 

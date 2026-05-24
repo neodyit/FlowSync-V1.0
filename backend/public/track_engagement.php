@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'active_time' => (int)($s['active_time'] ?? 0),
                     'interactions' => (int)($s['interactions'] ?? 0),
                     'device_info' => isset($s['device_info']) ? json_encode($s['device_info']) : null,
-                    'ts' => $s['timestamp'] ?? date('Y-m-d H:i:s')
+                    'ts' => isset($s['timestamp']) ? date('Y-m-d H:i:s', strtotime($s['timestamp'])) : date('Y-m-d H:i:s')
                 ]);
             }
         }
