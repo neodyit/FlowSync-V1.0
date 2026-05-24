@@ -11,12 +11,14 @@ import {
   ArrowRight,
   User,
   ExternalLink,
-  Loader2
+  Loader2,
+  Paperclip
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
 import { cn, formatDate } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { previewAttachment } from '@/utils/attachmentPreview';
 
 interface Notification {
   id: number;
@@ -27,6 +29,7 @@ interface Notification {
   trigger_user_name: string | null;
   is_read: boolean;
   created_at: string;
+  attachment_url?: string | null;
 }
 
 const FacultyNotifications: React.FC = () => {
@@ -221,6 +224,19 @@ const FacultyNotifications: React.FC = () => {
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                         Go to My Tasks: {notif.task_title || 'View Progress'}
+                      </button>
+                    )}
+                    
+                    {notif.attachment_url && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          previewAttachment(notif.attachment_url!);
+                        }}
+                        className="mt-2 inline-flex items-center gap-2 text-[10px] font-black text-[#1E184B] uppercase tracking-widest hover:underline bg-slate-50 px-4 py-2 rounded-xl border border-slate-200 hover:border-slate-300 transition-all shadow-sm"
+                      >
+                        <Paperclip className="w-3.5 h-3.5 text-[#7C3AED]" />
+                        View Attachment
                       </button>
                     )}
                   </div>

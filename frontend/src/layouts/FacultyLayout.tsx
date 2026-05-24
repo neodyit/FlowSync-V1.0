@@ -192,6 +192,7 @@ export default function FacultyLayout() {
               background: '#ffffff',
               color: '#1E184B',
               iconColor: '#7C3AED',
+              allowOutsideClick: false,
               customClass: {
                 popup: 'rounded-[20px] border border-[#7C3AED]/10 shadow-2xl animate-in slide-in-from-right-5 duration-300'
               }
@@ -295,7 +296,7 @@ export default function FacultyLayout() {
             <div class="text-left mt-4 mb-6">
               <p class="text-sm font-bold text-[#1E184B] mb-6">${latest.message}</p>
               ${latest.points > 0 ? `
-              <div class="bg-[#7C3AED]/10 border border-[#7C3AED]/20 rounded-2xl p-4 flex items-center justify-between">
+              <div class="bg-[#7C3AED]/10 border border-[#7C3AED]/20 rounded-2xl p-4 flex items-center justify-between mb-6">
                 <div>
                   <p class="text-[10px] font-black text-[#7C3AED] uppercase tracking-widest">Reward Available</p>
                   <p class="text-xs font-bold text-[#1E184B] mt-1">Claim your points for acknowledging.</p>
@@ -304,6 +305,29 @@ export default function FacultyLayout() {
                   +${latest.points}
                 </div>
               </div>` : ''}
+              
+              ${latest.attachment_url ? `
+                <div class="border-t border-slate-100 pt-6">
+                  <p class="text-[10px] font-black text-[#7C3AED] uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                    Attached File Preview
+                  </p>
+                  ${latest.attachment_url.match(/\.(jpeg|jpg|gif|png)$/i) 
+                    ? `<img src="${import.meta.env.VITE_API_URL}${latest.attachment_url}" class="max-w-full max-h-[30vh] object-contain rounded-xl shadow-sm border border-slate-200 mx-auto" />` 
+                    : latest.attachment_url.match(/\.pdf$/i)
+                      ? `<iframe src="${import.meta.env.VITE_API_URL}${latest.attachment_url}" class="w-full h-[30vh] rounded-xl border border-slate-200"></iframe>`
+                      : `<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl w-full text-center">
+                           <p class="text-xs font-bold text-slate-500">Preview not available.</p>
+                         </div>`
+                  }
+                  <div class="text-center mt-4">
+                    <a href="${import.meta.env.VITE_API_URL}/download.php?file=${encodeURIComponent(latest.attachment_url.replace(/^\//, ''))}" class="inline-flex items-center gap-2 text-[10px] font-black text-[#1E184B] uppercase tracking-widest hover:underline bg-slate-50 px-4 py-2 rounded-xl border border-slate-200 hover:border-slate-300 transition-all shadow-sm">
+                      <svg class="w-3.5 h-3.5 text-[#7C3AED]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                      Download Attachment
+                    </a>
+                  </div>
+                </div>
+              ` : ''}
             </div>
           `,
           icon: 'info',
@@ -313,6 +337,7 @@ export default function FacultyLayout() {
           cancelButtonColor: '#f1f5f9',
           confirmButtonText: 'Read & Claim Points',
           cancelButtonText: 'Dismiss for now',
+          allowOutsideClick: false,
           customClass: {
             popup: 'rounded-[2.5rem] border border-[#7C3AED]/10 shadow-2xl',
             title: 'font-black text-xl text-[#1E184B]',
@@ -343,8 +368,6 @@ export default function FacultyLayout() {
                 fetchNotifications();
               }
             } catch (err) {}
-          } else {
-            toggleReadStatus(latest.id, false);
           }
         });
       } else if (latest.message.includes('[Reminder]') || latest.message.includes('[Warning]')) {
@@ -358,14 +381,13 @@ export default function FacultyLayout() {
           background: '#ffffff',
           confirmButtonColor: isWarning ? '#f43f5e' : '#fbbf24',
           confirmButtonText: 'I Understand',
+          allowOutsideClick: false,
           customClass: {
             popup: `rounded-[2.5rem] border-4 ${isWarning ? 'border-rose-500' : 'border-amber-400'} shadow-2xl`,
             title: `font-black text-xl ${isWarning ? 'text-rose-600' : 'text-amber-600'}`,
             confirmButton: 'rounded-xl px-10 py-4 font-black uppercase tracking-widest text-[10px]'
           },
           backdrop: `rgba(${isWarning ? '244, 63, 94, 0.2' : '251, 191, 36, 0.1'})`
-        }).then(() => {
-          toggleReadStatus(latest.id, false);
         });
       } else if (latest.type === 'System Announcement') {
         setLastPopupId(latest.id);
@@ -376,14 +398,13 @@ export default function FacultyLayout() {
           background: '#ffffff',
           confirmButtonColor: '#1E184B',
           confirmButtonText: 'Acknowledge',
+          allowOutsideClick: false,
           customClass: {
             popup: 'rounded-[2.5rem] border-4 border-[#1E184B] shadow-2xl',
             title: 'font-black text-xl text-[#1E184B] tracking-widest',
             confirmButton: 'rounded-xl px-10 py-4 font-black uppercase tracking-widest text-[10px]'
           },
           backdrop: `rgba(30, 24, 75, 0.4)`
-        }).then(() => {
-          toggleReadStatus(latest.id, false);
         });
       }
     }
@@ -456,6 +477,7 @@ export default function FacultyLayout() {
               showCancelButton: true,
               cancelButtonText: 'Dismiss',
               confirmButtonText: 'Open Task',
+              allowOutsideClick: false,
               customClass: {
                 popup: `rounded-[2.5rem] border-4 ${isWarning ? 'border-rose-500' : 'border-amber-400'} shadow-2xl`,
                 title: `font-black text-xl ${isWarning ? 'text-rose-600' : 'text-amber-600'}`,
