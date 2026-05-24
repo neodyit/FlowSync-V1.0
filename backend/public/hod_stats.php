@@ -59,7 +59,7 @@ try {
         SELECT COUNT(*) 
         FROM tasks 
         WHERE department_id = :dept_id 
-        AND status IN ('Assigned', 'Accepted', 'In Progress', 'Submitted', 'Under Review', 'Rework Required')
+        AND CAST(status AS CHAR) IN ('Assigned', 'Accepted', 'In Progress', 'Submitted', 'Under Review', 'Rework Required')
     ");
     $stmt->execute(['dept_id' => $deptId]);
     $activeTasks = $stmt->fetchColumn() ?: 0;

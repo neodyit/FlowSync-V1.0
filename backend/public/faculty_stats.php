@@ -27,7 +27,7 @@ try {
         FROM tasks t
         LEFT JOIN task_assignments ta ON t.id = ta.task_id AND ta.user_id = :uid1
         WHERE (t.assigned_to_id = :uid2 OR ta.user_id = :uid3)
-        AND COALESCE(ta.status, t.status) IN ('Completed', 'Approved')
+        AND CAST(COALESCE(ta.status, t.status) AS CHAR) IN ('Completed', 'Approved')
         AND COALESCE(ta.completed_at, t.completed_at, t.updated_at) >= DATE_FORMAT(NOW() ,'%Y-%m-01')
     ");
     $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId]);
@@ -39,7 +39,7 @@ try {
         FROM tasks t
         LEFT JOIN task_assignments ta ON t.id = ta.task_id AND ta.user_id = :uid1
         WHERE (t.assigned_to_id = :uid2 OR ta.user_id = :uid3)
-        AND COALESCE(ta.status, t.status) IN ('Assigned', 'Accepted', 'In Progress', 'Submitted', 'Under Review', 'Rework Required')
+        AND CAST(COALESCE(ta.status, t.status) AS CHAR) IN ('Assigned', 'Accepted', 'In Progress', 'Submitted', 'Under Review', 'Rework Required')
     ");
     $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId]);
     $activeTasks = $stmt->fetchColumn();
@@ -50,7 +50,7 @@ try {
         FROM tasks t
         LEFT JOIN task_assignments ta ON t.id = ta.task_id AND ta.user_id = :uid1
         WHERE (t.assigned_to_id = :uid2 OR ta.user_id = :uid3)
-        AND COALESCE(ta.status, t.status) IN ('Completed', 'Approved')
+        AND CAST(COALESCE(ta.status, t.status) AS CHAR) IN ('Completed', 'Approved')
     ");
     $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId]);
     $completedTasks = $stmt->fetchColumn();
@@ -61,7 +61,7 @@ try {
         FROM tasks t
         LEFT JOIN task_assignments ta ON t.id = ta.task_id AND ta.user_id = :uid1
         WHERE (t.assigned_to_id = :uid2 OR ta.user_id = :uid3)
-        AND COALESCE(ta.status, t.status) IN ('Submitted', 'Under Review')
+        AND CAST(COALESCE(ta.status, t.status) AS CHAR) IN ('Submitted', 'Under Review')
     ");
     $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId]);
     $pendingReviews = $stmt->fetchColumn();

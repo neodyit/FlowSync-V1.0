@@ -58,7 +58,7 @@ try {
         if ($user) {
             $taskQuery = "";
             $params = [];
-            
+
             if ($user['role_id'] == 2) { // HOD
                 $taskQuery = "
                     SELECT title, status, deadline 
@@ -101,7 +101,7 @@ try {
             'status' => 'success',
             'data' => [
                 'notifications' => $notifications,
-                'unread_count' => (int)$unreadCount,
+                'unread_count' => (int) $unreadCount,
                 'active_task' => $activeTask,
                 'settings' => $userSettings
             ]
@@ -133,7 +133,7 @@ try {
                         // Add points
                         $pointsStmt = $db->prepare("UPDATE leaderboard_points SET total_points = total_points + :points WHERE user_id = :user_id");
                         $pointsStmt->execute(['points' => $notif['points'], 'user_id' => $userId]);
-                        
+
                         $db->commit();
                         echo json_encode(['status' => 'success', 'message' => 'Points claimed successfully!', 'points_awarded' => $notif['points']]);
                         exit;

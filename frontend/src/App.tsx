@@ -18,6 +18,7 @@ import Settings from './pages/admin/Settings';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ControlsPage from './pages/admin/ControlsPage';
 import Feedbacks from './pages/admin/Feedbacks';
+import EngagementTracker from './pages/admin/EngagementTracker';
 
 // HOD Pages
 import HODLayout from './layouts/HODLayout';
@@ -60,9 +61,17 @@ const RootRedirect = () => {
   return <Navigate to="/login" replace />;
 };
 
+import { useEngagementTracker } from './hooks/useEngagementTracker';
+
+const GlobalTracker = () => {
+  useEngagementTracker();
+  return null;
+};
+
 function App() {
   return (
     <Router>
+      <GlobalTracker />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/maintenance" element={<Maintenance />} />
@@ -85,6 +94,7 @@ function App() {
             <Route path="audit" element={<AuditLogs />} />
             <Route path="controls" element={<ControlsPage />} />
             <Route path="feedbacks" element={<Feedbacks />} />
+            <Route path="engagement" element={<EngagementTracker />} />
           </Route>
         </Route>
 
