@@ -23,9 +23,13 @@ export function formatDate(dateInput: string | Date | null | undefined): string 
   const year = date.getFullYear();
   
   if (hasTime) {
-    const hours = String(date.getHours()).padStart(2, '0');
+    let hours = date.getHours();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    const formattedHours = String(hours).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+    return `${day}/${month}/${year} ${formattedHours}:${minutes} ${ampm}`;
   }
   
   return `${day}/${month}/${year}`;

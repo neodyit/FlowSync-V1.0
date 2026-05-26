@@ -26,6 +26,8 @@ import HODDashboard from './pages/hod/Dashboard';
 import HODDepartment from './pages/hod/Department';
 import HODFaculty from './pages/hod/Faculty';
 import HODTasks from './pages/hod/Tasks';
+import HODTaskForm from './pages/hod/TaskForm';
+import HODTaskDetails from './pages/hod/TaskDetails';
 import HODNotifications from './pages/hod/Notifications';
 import HODGroups from './pages/hod/Groups';
 import HODLeaderboard from './pages/hod/Leaderboard';
@@ -108,6 +110,9 @@ function App() {
             <Route path="faculty" element={<HODFaculty />} />
             <Route path="groups" element={<HODGroups />} />
             <Route path="tasks" element={<HODTasks />} />
+            <Route path="tasks/new" element={<HODTaskForm />} />
+            <Route path="tasks/edit/:id" element={<HODTaskForm />} />
+            <Route path="tasks/:id" element={<HODTaskDetails />} />
             <Route path="notifications" element={<HODNotifications />} />
             <Route path="leaderboard" element={<HODLeaderboard />} />
             <Route path="reports" element={<HODReports />} />
