@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, X, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from "@/lib/utils";
+import Swal from 'sweetalert2';
 
 interface DateTimePickerProps {
   value: string; // Expected: "YYYY-MM-DDTHH:mm" format
@@ -10,6 +11,9 @@ interface DateTimePickerProps {
   className?: string;
   disabled?: boolean;
   required?: boolean;
+  minDate?: string;
+  popoverDirection?: 'up' | 'down';
+  onOpenChange?: (open: boolean) => void;
 }
 
 const MONTH_NAMES = [
@@ -25,7 +29,10 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   label,
   className,
   disabled,
-  required
+  required,
+  minDate,
+  popoverDirection = 'down',
+  onOpenChange
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -118,6 +125,13 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
+  // Notify parent of open state changes
+  useEffect(() => {
+    if (onOpenChange) {
+      onOpenChange(isOpen);
+    }
+  }, [isOpen, onOpenChange]);
+
   // Merge components and trigger onChange
   const updateValue = (newYear: number, newMonth: number, newDay: number, newH12: number, newMin: number, newAmPm: 'AM' | 'PM') => {
     let h24 = newH12;
@@ -125,6 +139,25 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     if (newAmPm === 'AM' && newH12 === 12) h24 = 0;
 
     const formatted = `${newYear}-${pad(newMonth + 1)}-${pad(newDay)}T${pad(h24)}:${pad(newMin)}`;
+    
+    if (minDate) {
+      const selectedDateTime = new Date(formatted).getTime();
+      const minDateTime = new Date(minDate.replace(' ', 'T')).getTime();
+      if (selectedDateTime < minDateTime) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Invalid Date/Time',
+          text: 'The selected date and time cannot be prior to the allotted deadline or in the past.',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 4000
+        });
+        onChange(minDate.replace(' ', 'T').substring(0, 16));
+        return;
+      }
+    }
+
     onChange(formatted);
   };
 
@@ -220,11 +253,14 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              initial={{ opacity: 0, y: popoverDirection === 'up' ? -10 : 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              exit={{ opacity: 0, y: popoverDirection === 'up' ? -10 : 10, scale: 0.95 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute z-[350] left-0 mt-2 p-5 bg-white border border-[#7C3AED]/10 rounded-[24px] shadow-2xl shadow-[#7C3AED]/12 w-[340px] max-w-[95vw] overflow-hidden"
+              className={cn(
+                "absolute z-[350] left-0 p-5 bg-white border border-[#7C3AED]/10 rounded-[24px] shadow-2xl shadow-[#7C3AED]/12 w-[340px] max-w-[95vw] overflow-hidden",
+                popoverDirection === 'up' ? "bottom-[100%] mb-2" : "mt-2"
+              )}
             >
               {/* Calendar Header */}
               <div className="flex items-center justify-between mb-4">
@@ -264,10 +300,17 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                     cell.month === month && 
                     cell.year === year;
 
+                  const cellDate = new Date(cell.year, cell.month, cell.dayNum).setHours(0, 0, 0, 0);
+                  const minDateTime = minDate ? new Date(minDate) : null;
+                  const minDateMidnight = minDateTime ? new Date(minDateTime.setHours(0, 0, 0, 0)).getTime() : null;
+                  const isBeforeMin = minDateMidnight !== null && cellDate < minDateMidnight;
+                  const isBtnDisabled = disabled || isBeforeMin;
+
                   return (
                     <button
                       key={idx}
                       type="button"
+                      disabled={isBtnDisabled}
                       onClick={() => {
                         updateValue(cell.year, cell.month, cell.dayNum, hour12, minute, ampm);
                       }}
@@ -278,7 +321,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                           : "text-slate-300",
                         isSelected 
                           ? "bg-gradient-to-r from-[#7C3AED] to-[#6D28D9] text-white shadow-lg shadow-[#7C3AED]/20 font-black" 
-                          : ""
+                          : "",
+                        isBtnDisabled ? "opacity-30 cursor-not-allowed hover:bg-transparent" : ""
                       )}
                     >
                       {cell.dayNum}

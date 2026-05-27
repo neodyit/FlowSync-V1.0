@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, 
   Search, 
@@ -118,6 +118,7 @@ const HODTasks: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>(
     (searchParams.get('tab') as TabType) || 'All'
   );
+  const [highlightedRequestId, setHighlightedRequestId] = useState<number | null>(null);
 
   useEffect(() => {
     setSearchParams(prev => {
@@ -126,6 +127,28 @@ const HODTasks: React.FC = () => {
       return prev;
     }, { replace: true });
   }, [activeTab, setSearchParams]);
+
+  useEffect(() => {
+    if (highlightedRequestId) {
+      const timer = setTimeout(() => {
+        setHighlightedRequestId(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightedRequestId]);
+
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    const activeEl = tabRefs.current[activeTab];
+    if (activeEl) {
+      activeEl.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }, [activeTab]);
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
   const [filterModes, setFilterModes] = useState<string[]>([]);
@@ -524,14 +547,21 @@ const HODTasks: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {extensionRequests.filter(r => r.status === 'Pending').slice(0, 3).map((req) => (
-              <div key={req.id} className="bg-white p-6 rounded-[2.5rem] border border-rose-100 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
+              <div 
+                key={req.id} 
+                onClick={() => {
+                  setActiveTab('Extensions');
+                  setHighlightedRequestId(req.id);
+                }}
+                className="bg-white p-6 rounded-[2.5rem] border border-rose-100 shadow-sm hover:shadow-lg hover:border-[#7C3AED]/30 transition-all group overflow-hidden relative cursor-pointer active:scale-[0.98]"
+              >
                 <div className="relative z-10 space-y-4">
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">{req.faculty_name}</p>
-                      <h4 className="text-sm font-black text-[#1E184B] truncate">{req.task_title}</h4>
+                      <h4 className="text-sm font-black text-[#1E184B] truncate group-hover:text-[#7C3AED] transition-colors">{req.task_title}</h4>
                     </div>
-                    <Clock className="w-5 h-5 text-rose-200" />
+                    <Clock className="w-5 h-5 text-rose-200 group-hover:text-[#7C3AED]/40 transition-colors" />
                   </div>
                   
                   <div className="flex items-center gap-4 py-3 border-y border-slate-50">
@@ -548,13 +578,17 @@ const HODTasks: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-3">
                     <button 
-                      onClick={() => handleReviewExtension(req.id, 'Approved')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReviewExtension(req.id, 'Approved');
+                      }}
                       className="py-3 bg-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/10"
                     >
                       Approve
                     </button>
                     <button 
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         Swal.fire({
                           title: 'Reject Request',
                           input: 'text',
@@ -585,6 +619,9 @@ const HODTasks: React.FC = () => {
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              ref={(el) => {
+                tabRefs.current[tab.id] = el;
+              }}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 "flex items-center gap-2 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
@@ -719,86 +756,94 @@ const HODTasks: React.FC = () => {
                      req.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
                      req.task_desc.toLowerCase().includes(searchQuery.toLowerCase());
             })
-            .map((req) => (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                key={req.id}
-                className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all space-y-6"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className={cn(
-                      "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest",
-                      req.status === 'Pending' ? "bg-amber-100 text-amber-600" :
-                      req.status === 'Approved' ? "bg-emerald-100 text-emerald-600" :
-                      "bg-rose-100 text-rose-600"
-                    )}>
-                      {req.status}
-                    </span>
-                    <h4 className="text-lg font-black text-[#1E184B] mt-3 leading-tight">{req.task_title}</h4>
-                    <p className="text-[10px] text-slate-400 font-bold line-clamp-1 max-w-xs">{req.task_desc}</p>
-                    <p className="text-xs font-bold text-[#7C3AED] mt-1">{req.faculty_name}</p>
+            .map((req) => {
+              const isHighlighted = highlightedRequestId === req.id;
+              return (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: isHighlighted ? 1.03 : 1 }}
+                  key={req.id}
+                  className={cn(
+                    "bg-white p-8 rounded-[2.5rem] border transition-all duration-500 space-y-6",
+                    isHighlighted 
+                      ? "border-[#7C3AED] ring-4 ring-[#7C3AED]/10 shadow-2xl shadow-[#7C3AED]/20" 
+                      : "border-slate-100 shadow-sm hover:shadow-xl"
+                  )}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className={cn(
+                        "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest",
+                        req.status === 'Pending' ? "bg-amber-100 text-amber-600" :
+                        req.status === 'Approved' ? "bg-emerald-100 text-emerald-600" :
+                        "bg-rose-100 text-rose-600"
+                      )}>
+                        {req.status}
+                      </span>
+                      <h4 className="text-lg font-black text-[#1E184B] mt-3 leading-tight">{req.task_title}</h4>
+                      <p className="text-[10px] text-slate-400 font-bold line-clamp-1 max-w-xs">{req.task_desc}</p>
+                      <p className="text-xs font-bold text-[#7C3AED] mt-1">{req.faculty_name}</p>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-2xl">
+                      <Clock className="w-5 h-5 text-[#7C3AED]" />
+                    </div>
                   </div>
-                  <div className="p-3 bg-slate-50 rounded-2xl">
-                    <Clock className="w-5 h-5 text-[#7C3AED]" />
-                  </div>
-                </div>
 
-                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100/50">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Request Reason</p>
-                  <p className="text-[11px] font-medium text-[#1E184B] leading-relaxed italic">
-                    {req.reason ? `"${req.reason}"` : <span className="text-slate-300">No reason provided.</span>}
-                  </p>
-                </div>
+                  <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100/50">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Request Reason</p>
+                    <p className="text-[11px] font-medium text-[#1E184B] leading-relaxed italic">
+                      {req.reason ? `"${req.reason}"` : <span className="text-slate-300">No reason provided.</span>}
+                    </p>
+                  </div>
 
-                <div className="flex items-center gap-6 py-4 border-y border-slate-50">
-                  <div className="flex-1">
-                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Current</p>
-                    <p className="text-xs font-bold text-slate-400 line-through">{formatDate(req.current_deadline)}</p>
+                  <div className="flex items-center gap-6 py-4 border-y border-slate-50">
+                    <div className="flex-1">
+                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Current</p>
+                      <p className="text-xs font-bold text-slate-400 line-through">{formatDate(req.current_deadline)}</p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-[#7C3AED]" />
+                    <div className="flex-1 text-right">
+                      <p className="text-[8px] font-black text-[#7C3AED] uppercase mb-1">Requested</p>
+                      <p className="text-sm font-black text-[#1E184B]">{formatDate(req.requested_deadline)}</p>
+                    </div>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-[#7C3AED]" />
-                  <div className="flex-1 text-right">
-                    <p className="text-[8px] font-black text-[#7C3AED] uppercase mb-1">Requested</p>
-                    <p className="text-sm font-black text-[#1E184B]">{formatDate(req.requested_deadline)}</p>
-                  </div>
-                </div>
 
-                {req.status === 'Pending' ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <button 
-                      onClick={() => handleReviewExtension(req.id, 'Approved')}
-                      className="py-4 bg-[#7C3AED] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#6D28D9] transition-all shadow-lg shadow-[#7C3AED]/20"
-                    >
-                      Approve
-                    </button>
-                    <button 
-                      onClick={() => {
-                        Swal.fire({
-                          title: 'Reject Request',
-                          input: 'text',
-                          inputLabel: 'Reason for rejection',
-                          showCancelButton: true,
-                          confirmButtonColor: '#f43f5e'
-                        }).then((result) => {
-                          if (result.isConfirmed) {
-                            handleReviewExtension(req.id, 'Rejected', result.value);
-                          }
-                        });
-                      }}
-                      className="py-4 bg-white text-rose-500 border border-rose-100 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                ) : req.hod_remarks && (
-                  <div className="p-4 bg-slate-50/30 rounded-2xl border border-slate-100/30">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Review Remarks</p>
-                    <p className="text-[11px] font-medium text-slate-500 leading-relaxed italic">"{req.hod_remarks}"</p>
-                  </div>
-                )}
-              </motion.div>
-            ))}
+                  {req.status === 'Pending' ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <button 
+                        onClick={() => handleReviewExtension(req.id, 'Approved')}
+                        className="py-4 bg-[#7C3AED] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#6D28D9] transition-all shadow-lg shadow-[#7C3AED]/20"
+                      >
+                        Approve
+                      </button>
+                      <button 
+                        onClick={() => {
+                          Swal.fire({
+                            title: 'Reject Request',
+                            input: 'text',
+                            inputLabel: 'Reason for rejection',
+                            showCancelButton: true,
+                            confirmButtonColor: '#f43f5e'
+                          }).then((result) => {
+                            if (result.isConfirmed) {
+                              handleReviewExtension(req.id, 'Rejected', result.value);
+                            }
+                          });
+                        }}
+                        className="py-4 bg-white text-rose-500 border border-rose-100 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  ) : req.hod_remarks && (
+                    <div className="p-4 bg-slate-50/30 rounded-2xl border border-slate-100/30">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Review Remarks</p>
+                      <p className="text-[11px] font-medium text-slate-500 leading-relaxed italic">"{req.hod_remarks}"</p>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
         </div>
       ) : isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

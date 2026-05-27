@@ -31,7 +31,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
 import { cn, formatDate, getDownloadUrl, calculateProgress, getDeadlineStatus } from '@/lib/utils';
 import Swal from 'sweetalert2';
-
+import DateTimePicker from '@/components/ui/DateTimePicker';
 interface Attachment {
   id: number;
   file_name: string;
@@ -109,6 +109,7 @@ const FacultyMyTasks: React.FC = () => {
   const [extensionReason, setExtensionReason] = useState('');
   const [isRequestingExtension, setIsRequestingExtension] = useState(false);
   const [extensionRequests, setExtensionRequests] = useState<any[]>([]);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
@@ -146,6 +147,26 @@ const FacultyMyTasks: React.FC = () => {
     }
   };
 
+  const getMinExtensionDate = () => {
+    if (!selectedTask) return '';
+    
+    const now = new Date();
+    const nowStr = now.getFullYear() + '-' + 
+      String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(now.getDate()).padStart(2, '0') + 'T' + 
+      String(now.getHours()).padStart(2, '0') + ':' + 
+      String(now.getMinutes()).padStart(2, '0');
+      
+    const currentDeadline = selectedTask.deadline ? selectedTask.deadline.replace(' ', 'T').substring(0, 16) : '';
+    
+    if (!currentDeadline) return nowStr;
+    
+    const nowTime = now.getTime();
+    const deadlineTime = new Date(selectedTask.deadline.replace(' ', 'T')).getTime();
+    
+    return deadlineTime > nowTime ? currentDeadline : nowStr;
+  };
+
   useEffect(() => {
     fetchTasks();
     fetchExtensionRequests();
@@ -177,6 +198,17 @@ const FacultyMyTasks: React.FC = () => {
   const handleRequestExtension = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTask || !extensionDate || !extensionReason) return;
+
+    const selectedTime = new Date(extensionDate).getTime();
+    const minAllowedTime = new Date(getMinExtensionDate()).getTime();
+    if (selectedTime < minAllowedTime) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Invalid Date/Time',
+        text: 'The proposed deadline extension cannot be prior to the current allotted deadline or in the past.'
+      });
+      return;
+    }
 
     setIsRequestingExtension(true);
     try {
@@ -544,7 +576,6 @@ const FacultyMyTasks: React.FC = () => {
           <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setIsDetailModalOpen(false)}
               className="absolute inset-0 bg-black/80 backdrop-blur-md"
             />
             <motion.div
@@ -1076,7 +1107,7 @@ const FacultyMyTasks: React.FC = () => {
       <AnimatePresence>
         {isSubmitModalOpen && selectedTask && (
           <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsSubmitModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
               <div className="p-8 border-b border-slate-100 flex items-center justify-between shrink-0">
                 <div>
@@ -1198,17 +1229,16 @@ const FacultyMyTasks: React.FC = () => {
       {/* Deadline Extension Modal */}
       <AnimatePresence>
         {isExtensionModalOpen && selectedTask && (
-          <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[400] flex items-start justify-center p-4 overflow-y-auto custom-scrollbar">
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setIsExtensionModalOpen(false)}
-              className="absolute inset-0 bg-[#1E184B]/80 backdrop-blur-md"
+              className="fixed inset-0 bg-[#1E184B]/80 backdrop-blur-md"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col"
+              className="relative z-10 bg-white rounded-[2.5rem] w-full max-w-lg overflow-visible shadow-2xl flex flex-col my-auto md:my-10"
             >
               <div className="p-8 border-b border-slate-50">
                 <div className="flex items-center justify-between">
@@ -1226,12 +1256,12 @@ const FacultyMyTasks: React.FC = () => {
                 <form onSubmit={handleRequestExtension} className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-2">Proposed New Deadline</label>
-                    <input 
-                      type="datetime-local" required
-                      min={new Date().toISOString().split('T')[0] + 'T00:00'}
+                    <DateTimePicker 
                       value={extensionDate}
-                      onChange={(e) => setExtensionDate(e.target.value)}
-                      className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-rose-500/5 outline-none transition-all"
+                      onChange={setExtensionDate}
+                      minDate={getMinExtensionDate()}
+                      required
+                      onOpenChange={setIsDatePickerOpen}
                     />
                   </div>
 
@@ -1245,6 +1275,9 @@ const FacultyMyTasks: React.FC = () => {
                       className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:bg-white focus:border-rose-500 transition-all resize-none h-32"
                     />
                   </div>
+
+                  {/* Dynamic spacer to push form elements when DateTimePicker is open, avoiding overlap and enabling scroll */}
+                  <div className={cn("transition-all duration-300", isDatePickerOpen ? "h-[340px]" : "h-0")} />
 
                   <div className="flex items-center gap-4">
                     <button 
