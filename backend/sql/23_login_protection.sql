@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip_address VARCHAR(45) NOT NULL,
+    device_fingerprint VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_successful TINYINT DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS banned_clients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip_address VARCHAR(45) NOT NULL,
+    device_fingerprint VARCHAR(255) NOT NULL,
+    reason VARCHAR(255) NOT NULL,
+    banned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    unbanned_at TIMESTAMP NULL,
+    status VARCHAR(20) DEFAULT 'active'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

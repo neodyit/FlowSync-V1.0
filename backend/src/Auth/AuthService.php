@@ -12,8 +12,20 @@ class AuthService {
         $this->db = Database::getInstance()->getConnection();
     }
 
-    public function login($email, $password) {
+    public function login($email, $password, $fingerprint = '') {
         try {
+            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+
+            // Check if there is an active ban for this IP or fingerprint
+            $banCheck = $this->db->prepare("
+                SELECT COUNT(*) FROM banned_clients 
+                WHERE status = 'active' AND (ip_address = :ip OR (device_fingerprint = :fp AND device_fingerprint <> ''))
+            ");
+            $banCheck->execute(['ip' => $ipAddress, 'fp' => $fingerprint]);
+            if ($banCheck->fetchColumn() > 0) {
+                return ['status' => 'error', 'message' => 'Access blocked: This IP or device has been banned due to excessive failed attempts.'];
+            }
+
             $stmt = $this->db->prepare("
                 SELECT u.*, r.name as role_name 
                 FROM users u 
@@ -24,6 +36,16 @@ class AuthService {
             $user = $stmt->fetch();
 
             if (!$user) {
+                // Log failed attempt (user not found or inactive)
+                $logAttempt = $this->db->prepare("
+                    INSERT INTO login_attempts (ip_address, device_fingerprint, email, is_successful) 
+                    VALUES (:ip, :fp, :email, 0)
+                ");
+                $logAttempt->execute(['ip' => $ipAddress, 'fp' => $fingerprint, 'email' => $email]);
+
+                // Evaluate brute force limit
+                $this->checkBruteForceThreshold($ipAddress, $fingerprint);
+
                 return ['status' => 'error', 'message' => 'User not found or inactive'];
             }
 
@@ -39,7 +61,7 @@ class AuthService {
                 $stmt->execute([
                     'user_id' => $user['id'],
                     'token_id' => $sessionId,
-                    'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+                    'ip_address' => $ipAddress,
                     'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
                     'expires_at' => $expiryTime
                 ]);
@@ -72,6 +94,13 @@ class AuthService {
                     ]
                 );
 
+                // Log successful attempt
+                $logAttempt = $this->db->prepare("
+                    INSERT INTO login_attempts (ip_address, device_fingerprint, email, is_successful) 
+                    VALUES (:ip, :fp, :email, 1)
+                ");
+                $logAttempt->execute(['ip' => $ipAddress, 'fp' => $fingerprint, 'email' => $email]);
+
                 $logger = new \FlowSync\Utils\AuditLogger();
                 $logger->log($user['id'], 'LOGIN', 'USER', $user['id'], ['email' => $user['email']]);
 
@@ -88,10 +117,45 @@ class AuthService {
                 ];
             }
 
-            return ['status' => 'error', 'message' => 'Invalid password'];
+            // FAILED ATTEMPT (incorrect password)
+            $logAttempt = $this->db->prepare("
+                INSERT INTO login_attempts (ip_address, device_fingerprint, email, is_successful) 
+                VALUES (:ip, :fp, :email, 0)
+            ");
+            $logAttempt->execute(['ip' => $ipAddress, 'fp' => $fingerprint, 'email' => $email]);
+
+            // Check brute force limit and return remaining attempts count
+            $remaining = $this->checkBruteForceThreshold($ipAddress, $fingerprint);
+
+            return ['status' => 'error', 'message' => "Invalid password. (Attempts remaining: $remaining)"];
         } catch (\Exception $e) {
             return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
         }
+    }
+
+    private function checkBruteForceThreshold($ip, $fp) {
+        // Count failed attempts from this IP or device fingerprint in the last 5 minutes
+        $failedAttempts = $this->db->prepare("
+            SELECT COUNT(*) FROM login_attempts 
+            WHERE is_successful = 0 
+              AND attempted_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+              AND (ip_address = :ip OR (device_fingerprint = :fp AND device_fingerprint <> ''))
+        ");
+        $failedAttempts->execute(['ip' => $ip, 'fp' => $fp]);
+        $failedCount = (int)$failedAttempts->fetchColumn();
+
+        if ($failedCount >= 5) {
+            // Trigger Ban!
+            $triggerBan = $this->db->prepare("
+                INSERT INTO banned_clients (ip_address, device_fingerprint, reason) 
+                VALUES (:ip, :fp, 'Brute-force lockout triggered (5 consecutive failures)')
+            ");
+            $triggerBan->execute(['ip' => $ip, 'fp' => $fp]);
+
+            throw new \Exception('Access blocked: This IP or device has been banned due to excessive failed attempts.');
+        }
+
+        return max(0, 5 - $failedCount);
     }
 
     public function validateSession() {
