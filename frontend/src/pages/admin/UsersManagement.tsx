@@ -632,6 +632,21 @@ const UsersManagement: React.FC = () => {
                   />
                 </div>
 
+                {(!editingUser || editingUser.id !== 1) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <CustomSelect
+                      label="Account Operational Status"
+                      value={formData.is_active}
+                      onChange={(val) => setFormData({ ...formData, is_active: Number(val) })}
+                      options={[
+                        { value: 1, label: 'Active (Permit Access)' },
+                        { value: 0, label: 'Inactive (Revoke Access)' }
+                      ]}
+                      icon={Power}
+                    />
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3 pt-4">
                   <button
                     type="submit"

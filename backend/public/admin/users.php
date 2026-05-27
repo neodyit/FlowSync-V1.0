@@ -20,7 +20,7 @@ try {
                        (u.last_active_at IS NOT NULL AND u.last_active_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE)) as is_online
                 FROM users u 
                 JOIN roles r ON u.role_id = r.id 
-                JOIN colleges c ON u.college_id = c.id
+                LEFT JOIN colleges c ON u.college_id = c.id
                 LEFT JOIN faculty_departments fd ON u.id = fd.user_id
                 LEFT JOIN departments d ON fd.department_id = d.id
                 ORDER BY u.created_at DESC

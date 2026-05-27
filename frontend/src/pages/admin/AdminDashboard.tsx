@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Shield, Building2, Users, Briefcase, CheckCircle2, Activity, Clock, ShieldCheck, Database, Server, ServerCrash } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import SEO from '@/components/SEO';
+import { Link } from 'react-router-dom';
 
 interface DashboardData {
   colleges: number;
@@ -167,7 +168,7 @@ const AdminDashboard: React.FC = () => {
               )}
             </div>
             <div className="p-4 border-t border-slate-50 bg-slate-50/50 text-center">
-              <a href="/admin/audit-logs" className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline">View All Logs &rarr;</a>
+              <Link to="/admin/audit" className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline">View All Logs &rarr;</Link>
             </div>
           </div>
         </div>
