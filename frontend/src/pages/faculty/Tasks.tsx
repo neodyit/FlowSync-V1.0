@@ -63,6 +63,20 @@ const FacultyTasks: React.FC = () => {
     fetchTasks();
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const taskIdParam = params.get('taskId');
+    if (taskIdParam && tasks.length > 0) {
+      const foundTask = tasks.find(t => t.id === parseInt(taskIdParam));
+      if (foundTask) {
+        setSelectedTaskFiles(foundTask);
+        // Clear param from URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+  }, [tasks]);
+
   const handleAccept = async (taskId: number) => {
     const result = await Swal.fire({
       title: 'Accept Task?',
@@ -192,7 +206,8 @@ const FacultyTasks: React.FC = () => {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ delay: idx * 0.05 }}
                 key={task.id}
-                className="bg-white rounded-[2.5rem] border border-[#7C3AED]/10 p-7 flex flex-col shadow-sm hover:shadow-2xl hover:shadow-[#7C3AED]/10 transition-all group relative overflow-hidden"
+                onClick={() => setSelectedTaskFiles(task)}
+                className="bg-white rounded-[2.5rem] border border-[#7C3AED]/10 p-7 flex flex-col shadow-sm hover:shadow-2xl hover:shadow-[#7C3AED]/10 transition-all group relative overflow-hidden cursor-pointer"
               >
                 <div className="absolute -top-12 -right-12 w-24 h-24 bg-[#7C3AED]/5 rounded-full blur-2xl group-hover:bg-[#7C3AED]/10 transition-colors" />
 
@@ -243,6 +258,7 @@ const FacultyTasks: React.FC = () => {
                       href={task.task_link}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className="w-full flex items-center justify-between p-3.5 bg-emerald-50/50 border border-emerald-100/50 rounded-2xl hover:bg-emerald-50 transition-all group/link shadow-sm"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -255,14 +271,14 @@ const FacultyTasks: React.FC = () => {
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleAccept(task.id)}
+                      onClick={(e) => { e.stopPropagation(); handleAccept(task.id); }}
                       className="flex-1 py-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#7C3AED]/20 transition-all flex items-center justify-center gap-2 active:scale-95"
                     >
                       Accept
                       <ArrowRight className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleReject(task.id)}
+                      onClick={(e) => { e.stopPropagation(); handleReject(task.id); }}
                       className="p-4 bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-2xl transition-all shadow-sm active:scale-95"
                     >
                       <ThumbsDown className="w-4 h-4" />
@@ -297,7 +313,7 @@ const FacultyTasks: React.FC = () => {
         </div>
       )}
 
-      {/* Resource Modal */}
+      {/* Task Details & Resource Modal */}
       <AnimatePresence>
         {selectedTaskFiles && (
           <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
@@ -306,62 +322,181 @@ const FacultyTasks: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedTaskFiles(null)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-[#1E184B]/60 backdrop-blur-md"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white rounded-[2.5rem] w-full max-w-3xl p-8 md:p-10 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar border border-slate-100"
             >
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-start mb-8 border-b border-slate-100 pb-5">
                 <div>
-                  <h2 className="text-2xl font-black text-[#1E184B]">Task Resources</h2>
-                  <p className="text-xs font-bold text-[#1E184B]/40 uppercase tracking-widest mt-1">Review attached documentation</p>
+                  <span className="text-[9px] font-black text-[#7C3AED] bg-[#7C3AED]/5 px-3 py-1 rounded-lg uppercase tracking-[0.2em] inline-block mb-2">
+                    Department Broadcast Mission Briefing
+                  </span>
+                  <h2 className="text-2xl md:text-3xl font-black text-[#1E184B] leading-tight mt-1">{selectedTaskFiles.title}</h2>
                 </div>
-                <button onClick={() => setSelectedTaskFiles(null)} className="p-2 hover:bg-slate-100 rounded-xl">
+                <button onClick={() => setSelectedTaskFiles(null)} className="p-2.5 hover:bg-slate-100 rounded-xl transition-all shrink-0">
                   <X className="w-6 h-6 text-slate-400" />
                 </button>
               </div>
 
-              <div className="space-y-3">
-                {selectedTaskFiles.attachments.map((att: any) => (
-                  <div key={att.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-[#7C3AED]/20 transition-all group">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                        <FileText className="w-5 h-5 text-[#7C3AED]" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Left Column: Briefing details */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5">Mission Origin</h3>
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 p-3.5 rounded-2xl">
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 shadow-sm">
+                        {selectedTaskFiles.assigned_by_pic ? (
+                          <img 
+                            src={`${import.meta.env.VITE_API_URL}/${selectedTaskFiles.assigned_by_pic}`} 
+                            alt={selectedTaskFiles.assigned_by_name} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-5 h-5 text-slate-300" />
+                        )}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs font-black text-[#1E184B] truncate max-w-[150px]">{att.file_name}</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reference File</span>
+                        <span className="text-xs font-black text-[#1E184B]">{selectedTaskFiles.assigned_by_name}</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Department HOD</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => handlePreview(att)}
-                        className="p-2.5 bg-white text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
-                        title="Preview"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <a 
-                        href={getDownloadUrl(att.file_path)} 
-                        download
-                        className="p-2.5 bg-white text-[#7C3AED] rounded-xl hover:bg-[#7C3AED] hover:text-white transition-all shadow-sm"
-                      >
-                        <Download className="w-4 h-4" />
-                      </a>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Priority</h3>
+                      <span className={cn(
+                        "px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border block text-center",
+                        getPriorityColor(selectedTaskFiles.priority)
+                      )}>
+                        {selectedTaskFiles.priority} Priority
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Joined</h3>
+                      <div className="px-3 py-2 bg-indigo-50/50 text-[#7C3AED] rounded-xl text-[10px] font-black uppercase tracking-widest text-center border border-indigo-100/50">
+                        {selectedTaskFiles.participant_count} Operatives
+                      </div>
                     </div>
                   </div>
-                ))}
+
+                  <div>
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Mission Timeline</h3>
+                    <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-100 flex items-center gap-3 text-rose-600">
+                      <Clock className="w-5 h-5 shrink-0 animate-pulse text-rose-600" />
+                      <div className="flex flex-col">
+                        <span className="text-[8px] font-black uppercase tracking-[0.1em] text-rose-400">Submission Deadline</span>
+                        <span className="text-sm font-black text-rose-600">
+                          {formatDate(selectedTaskFiles.deadline)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Mission Briefing Parameters</h3>
+                    <div className="p-5 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-semibold text-[#1E184B]/80 leading-relaxed max-h-[220px] overflow-y-auto custom-scrollbar">
+                      {selectedTaskFiles.description || "No specific instructions provided."}
+                    </div>
+                  </div>
+
+                  {selectedTaskFiles.task_link && (
+                    <div>
+                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">External Platform Link</h3>
+                      <a 
+                        href={selectedTaskFiles.task_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full flex items-center justify-between p-4 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-100 rounded-2xl transition-all group shadow-sm text-emerald-800 font-black text-[10px] uppercase tracking-widest"
+                      >
+                        <span className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-emerald-600" />
+                          Launch External Workspace
+                        </span>
+                        <ArrowRight className="w-4 h-4 text-emerald-600 group-hover:translate-x-1 transition-transform" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column: Attachments */}
+                <div className="flex flex-col">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3.5">
+                    Mission Resources ({selectedTaskFiles.attachment_count})
+                  </h3>
+                  
+                  {selectedTaskFiles.attachment_count > 0 ? (
+                    <div className="space-y-3 flex-1 overflow-y-auto max-h-[360px] pr-1 custom-scrollbar">
+                      {selectedTaskFiles.attachments.map((att: any) => (
+                        <div key={att.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-[#7C3AED]/20 transition-all group">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 shrink-0">
+                              <FileText className="w-5 h-5 text-[#7C3AED]" />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-black text-[#1E184B] truncate max-w-[150px]" title={att.file_name}>
+                                {att.file_name}
+                              </span>
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Reference File</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button 
+                              onClick={() => handlePreview(att)}
+                              className="p-2.5 bg-white text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-slate-150"
+                              title="Preview File"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <a 
+                              href={getDownloadUrl(att.file_path)} 
+                              download
+                              className="p-2.5 bg-white text-[#7C3AED] rounded-xl hover:bg-[#7C3AED] hover:text-white transition-all shadow-sm border border-slate-150"
+                              title="Download File"
+                            >
+                              <Download className="w-4 h-4" />
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex-1 border-2 border-dashed border-slate-100 rounded-[2rem] p-8 text-center flex flex-col items-center justify-center bg-slate-50/20 min-h-[220px]">
+                      <FileText className="w-8 h-8 text-slate-300 mb-3 opacity-30" />
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No attached assets</p>
+                      <p className="text-[9px] font-bold text-slate-400 mt-1 max-w-[180px]">No additional files were uploaded for this briefing.</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <button
-                onClick={() => setSelectedTaskFiles(null)}
-                className="w-full mt-8 py-4 bg-slate-100 hover:bg-slate-200 text-[#1E184B] rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
-              >
-                Close Gallery
-              </button>
+              {/* Action buttons footer */}
+              <div className="flex flex-wrap items-center gap-4 mt-10 pt-6 border-t border-slate-100">
+                <button
+                  onClick={() => { setSelectedTaskFiles(null); handleAccept(selectedTaskFiles.id); }}
+                  className="flex-1 min-w-[200px] py-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#7C3AED]/20 transition-all flex items-center justify-center gap-2 active:scale-95"
+                >
+                  Accept Mission Briefing
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => { setSelectedTaskFiles(null); handleReject(selectedTaskFiles.id); }}
+                  className="px-6 py-4 bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                  title="Decline Mission"
+                >
+                  <ThumbsDown className="w-4.5 h-4.5" />
+                </button>
+                <button
+                  onClick={() => setSelectedTaskFiles(null)}
+                  className="py-4 px-6 bg-slate-100 hover:bg-slate-200 text-[#1E184B] rounded-2xl font-black uppercase tracking-widest text-xs transition-all"
+                >
+                  Close Briefing
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

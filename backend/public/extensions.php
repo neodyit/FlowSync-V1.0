@@ -42,7 +42,7 @@ try {
         $notifier->send(
             $task['assigned_by_id'],
             'EXTENSION_REQUESTED',
-            "{$task['faculty_name']} requested a deadline extension for '{$task['title']}' to " . date('d/m/Y H:i', strtotime($data['requested_deadline'])),
+            "{$task['faculty_name']} requested a deadline extension for '{$task['title']}' to " . date('d/m/Y h:i A', strtotime($data['requested_deadline'])),
             $data['task_id'],
             $data['user_id']
         );

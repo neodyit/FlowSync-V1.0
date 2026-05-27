@@ -116,8 +116,12 @@ const FacultyNotifications: React.FC = () => {
     }
   };
 
-  const handleTaskLink = (taskId: number) => {
-    navigate(`/faculty/my-tasks?taskId=${taskId}`);
+  const handleTaskLink = (type: string, taskId: number) => {
+    if (type === 'TASK_ASSIGNED') {
+      navigate(`/faculty/tasks?taskId=${taskId}`);
+    } else {
+      navigate(`/faculty/my-tasks?taskId=${taskId}`);
+    }
   };
 
   return (
@@ -218,12 +222,12 @@ const FacultyNotifications: React.FC = () => {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleTaskLink(notif.task_id!);
+                          handleTaskLink(notif.type, notif.task_id!);
                         }}
                         className="inline-flex items-center gap-2 text-[10px] font-black text-[#7C3AED] uppercase tracking-widest hover:underline bg-white px-4 py-2 rounded-xl border border-[#7C3AED]/10 hover:border-[#7C3AED]/30 transition-all shadow-sm"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
-                        Go to My Tasks: {notif.task_title || 'View Progress'}
+                        {notif.type === 'TASK_ASSIGNED' ? 'Go to Tasks & Projects' : 'Go to My Tasks'}: {notif.task_title || 'View Progress'}
                       </button>
                     )}
                     

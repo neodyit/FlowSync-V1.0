@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { 
   LayoutGrid, 
   Users, 
+  Layers,
   Settings, 
   LogOut, 
   Menu, 
@@ -70,6 +71,7 @@ export default function HODLayout() {
     { name: 'Dashboard', icon: LayoutGrid, path: '/hod/dashboard' },
     { name: 'My Department', icon: Building2, path: '/hod/department' },
     { name: 'Faculty Members', icon: Users, path: '/hod/faculty' },
+    { name: 'Faculty Groups', icon: Layers, path: '/hod/groups' },
     { name: 'Tasks & Projects', icon: CheckSquare, path: '/hod/tasks' },
     { name: 'Notifications', icon: Bell, path: '/hod/notifications' },
     { name: 'Leaderboard', icon: Trophy, path: '/hod/leaderboard' },

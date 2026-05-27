@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $deptId = $dept['id'];
 
         // 1. Verify task exists and belongs to HOD's department
-        $check = $db->prepare("SELECT id, title FROM tasks WHERE id = :id AND department_id = :dept_id");
+        $check = $db->prepare("SELECT id, title, assignment_mode FROM tasks WHERE id = :id AND department_id = :dept_id");
         $check->execute(['id' => $taskId, 'dept_id' => $deptId]);
         $task = $check->fetch();
 
@@ -42,16 +42,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Task not found or access denied.");
         }
 
-        // 2. Check assignment status - Do not send if already submitted or completed
+        $isBroadcast = ($task['assignment_mode'] === 'broadcast');
+
+        // 2. Check assignment status
         $checkAssign = $db->prepare("SELECT status FROM task_assignments WHERE task_id = :tid AND user_id = :uid");
         $checkAssign->execute(['tid' => $taskId, 'uid' => $userId]);
         $assign = $checkAssign->fetch();
 
-        if (!$assign) {
+        if (!$assign && !$isBroadcast) {
             throw new Exception("Faculty is not assigned to this task.");
         }
 
-        if (in_array($assign['status'], ['Submitted', 'Under Review', 'Approved', 'Completed'])) {
+        if ($assign && in_array($assign['status'], ['Submitted', 'Under Review', 'Approved', 'Completed'])) {
             throw new Exception("Cannot send reminder: Work has already been submitted or completed.");
         }
 
@@ -71,7 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $notifType = 'TASK_REMINDER';
         if ($type === 'Warning') $notifType = 'TASK_WARNING';
         
-        $notifier->send($userId, $notifType, "[$type] For mission '{$task['title']}': Please prioritize this task.", $taskId);
+        if ($isBroadcast && !$assign) {
+            $notifier->send($userId, 'TASK_ASSIGNED', "Reminder: New department broadcast task '{$task['title']}' is available. Please accept it now.", $taskId);
+        } else {
+            $notifier->send($userId, $notifType, "[$type] For mission '{$task['title']}': Please prioritize this task.", $taskId);
+        }
 
         echo json_encode(['status' => 'success', 'message' => "$type sent successfully."]);
 
