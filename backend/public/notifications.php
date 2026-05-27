@@ -58,7 +58,7 @@ try {
         if ($user) {
             $taskQuery = "";
             $params = [];
-            
+
             if ($user['role_id'] == 2) { // HOD
                 $taskQuery = "
                     SELECT title, status, deadline 
@@ -101,7 +101,7 @@ try {
             'status' => 'success',
             'data' => [
                 'notifications' => $notifications,
-                'unread_count' => (int)$unreadCount,
+                'unread_count' => (int) $unreadCount,
                 'active_task' => $activeTask,
                 'settings' => $userSettings
             ]
@@ -130,10 +130,14 @@ try {
                         $updateStmt = $db->prepare("UPDATE notifications SET is_read = 1, is_actioned = 1 WHERE id = :id");
                         $updateStmt->execute(['id' => $notifId]);
 
-                        // Add points
-                        $pointsStmt = $db->prepare("UPDATE leaderboard_points SET total_points = total_points + :points WHERE user_id = :user_id");
-                        $pointsStmt->execute(['points' => $notif['points'], 'user_id' => $userId]);
-                        
+                        // Add points using INSERT ON DUPLICATE KEY UPDATE so it works even if the user has 0 points initially
+                        $pointsStmt = $db->prepare("
+                            INSERT INTO leaderboard_points (user_id, total_points, tasks_completed) 
+                            VALUES (:user_id, :points1, 0) 
+                            ON DUPLICATE KEY UPDATE total_points = total_points + :points2
+                        ");
+                        $pointsStmt->execute(['points1' => $notif['points'], 'points2' => $notif['points'], 'user_id' => $userId]);
+
                         $db->commit();
                         echo json_encode(['status' => 'success', 'message' => 'Points claimed successfully!', 'points_awarded' => $notif['points']]);
                         exit;

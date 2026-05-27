@@ -25,28 +25,41 @@ try {
     }
     $departmentId = $dept['id'];
 
-    $json = file_get_contents('php://input');
-    $data = json_decode($json, true);
-
-    $title = $data['title'] ?? '';
-    $message = $data['message'] ?? '';
-    $points = (int)($data['points'] ?? 0);
-    $targetType = $data['targetType'] ?? 'ALL';
-    $selectedFaculties = $data['selectedFaculties'] ?? [];
+    // Handle multipart/form-data
+    $title = $_POST['title'] ?? '';
+    $message = $_POST['message'] ?? '';
+    $points = (int)($_POST['points'] ?? 0);
+    $targetType = $_POST['targetType'] ?? 'ALL';
+    $selectedFaculties = isset($_POST['selectedFaculties']) ? json_decode($_POST['selectedFaculties'], true) : [];
 
     if (empty($title) || empty($message)) {
         throw new Exception("Title and details are required.");
     }
 
-    if ($points < 1 || $points > 5) {
-        throw new Exception("Points must be between 1 and 5.");
+    if ($points < 0 || $points > 5) {
+        throw new Exception("Points must be between 0 and 5.");
+    }
+
+    // Handle file upload
+    $attachmentUrl = null;
+    if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = __DIR__ . '/../uploads/push_notices/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        $fileExtension = pathinfo($_FILES['attachment']['name'], PATHINFO_EXTENSION);
+        $fileName = uniqid('push_') . '.' . $fileExtension;
+        
+        if (move_uploaded_file($_FILES['attachment']['tmp_name'], $uploadDir . $fileName)) {
+            $attachmentUrl = '/uploads/push_notices/' . $fileName;
+        } else {
+            throw new Exception("Failed to upload attachment.");
+        }
     }
 
     $targetFacultyIds = [];
 
     if ($targetType === 'ALL') {
-        // Fetch all faculties in this HOD's department
-        // A user is a faculty if they have role_id = 3 and are in the HOD's department
         $stmt = $db->prepare("
             SELECT u.id 
             FROM users u
@@ -56,7 +69,6 @@ try {
         $stmt->execute(['dept_id' => $departmentId]);
         $targetFacultyIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
     } else {
-        // Validate that provided IDs belong to the HOD's department
         if (empty($selectedFaculties)) {
             throw new Exception("Please select at least one faculty member.");
         }
@@ -78,9 +90,26 @@ try {
 
     $db->beginTransaction();
 
+    // Insert into push_notices table
+    $insertPushStmt = $db->prepare("
+        INSERT INTO push_notices (hod_id, department_id, title, message, points, attachment_url, target_type)
+        VALUES (:hod_id, :department_id, :title, :message, :points, :attachment_url, :target_type)
+    ");
+    $insertPushStmt->execute([
+        'hod_id' => $session['user_id'],
+        'department_id' => $departmentId,
+        'title' => $title,
+        'message' => $message,
+        'points' => $points,
+        'attachment_url' => $attachmentUrl,
+        'target_type' => $targetType
+    ]);
+    
+    $pushNoticeId = $db->lastInsertId();
+
     $insertStmt = $db->prepare("
-        INSERT INTO notifications (user_id, type, title, message, points, trigger_user_id, is_read, is_actioned)
-        VALUES (:user_id, 'HOD_PUSH', :title, :message, :points, :trigger_user_id, 0, 0)
+        INSERT INTO notifications (user_id, type, title, message, points, trigger_user_id, is_read, is_actioned, push_notice_id, attachment_url)
+        VALUES (:user_id, 'HOD_PUSH', :title, :message, :points, :trigger_user_id, 0, 0, :push_notice_id, :attachment_url)
     ");
 
     foreach ($targetFacultyIds as $facultyId) {
@@ -89,7 +118,9 @@ try {
             'title' => $title,
             'message' => $message,
             'points' => $points,
-            'trigger_user_id' => $session['user_id']
+            'trigger_user_id' => $session['user_id'],
+            'push_notice_id' => $pushNoticeId,
+            'attachment_url' => $attachmentUrl
         ]);
     }
 
@@ -98,7 +129,8 @@ try {
     $logger->log($session['user_id'], 'HOD_PUSH_NOTIFICATION', 'SYSTEM', null, [
         'title' => $title,
         'points' => $points,
-        'recipients_count' => count($targetFacultyIds)
+        'recipients_count' => count($targetFacultyIds),
+        'push_notice_id' => $pushNoticeId
     ]);
 
     echo json_encode([
@@ -113,3 +145,4 @@ try {
     http_response_code(500);
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }
+

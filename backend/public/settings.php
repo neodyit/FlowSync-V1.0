@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             SELECT SUM(points + bonus_points) as current_month_points
             FROM tasks 
             WHERE assigned_to_id = :user_id
-            AND status IN ('Completed', 'Approved')
+            AND CAST(status AS CHAR) IN ('Completed', 'Approved')
             AND COALESCE(completed_at, updated_at) >= DATE_FORMAT(NOW() ,'%Y-%m-01')
         ");
         $points_stmt->execute(['user_id' => $userId]);

@@ -18,6 +18,7 @@ import Settings from './pages/admin/Settings';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ControlsPage from './pages/admin/ControlsPage';
 import Feedbacks from './pages/admin/Feedbacks';
+import EngagementTracker from './pages/admin/EngagementTracker';
 
 // HOD Pages
 import HODLayout from './layouts/HODLayout';
@@ -25,7 +26,10 @@ import HODDashboard from './pages/hod/Dashboard';
 import HODDepartment from './pages/hod/Department';
 import HODFaculty from './pages/hod/Faculty';
 import HODTasks from './pages/hod/Tasks';
+import HODTaskForm from './pages/hod/TaskForm';
+import HODTaskDetails from './pages/hod/TaskDetails';
 import HODNotifications from './pages/hod/Notifications';
+import HODGroups from './pages/hod/Groups';
 import HODLeaderboard from './pages/hod/Leaderboard';
 import HODSettings from './pages/hod/Settings';
 import HODReports from './pages/hod/Reports';
@@ -60,9 +64,17 @@ const RootRedirect = () => {
   return <Navigate to="/login" replace />;
 };
 
+import { useEngagementTracker } from './hooks/useEngagementTracker';
+
+const GlobalTracker = () => {
+  useEngagementTracker();
+  return null;
+};
+
 function App() {
   return (
     <Router>
+      <GlobalTracker />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/maintenance" element={<Maintenance />} />
@@ -85,6 +97,7 @@ function App() {
             <Route path="audit" element={<AuditLogs />} />
             <Route path="controls" element={<ControlsPage />} />
             <Route path="feedbacks" element={<Feedbacks />} />
+            <Route path="engagement" element={<EngagementTracker />} />
           </Route>
         </Route>
 
@@ -95,7 +108,11 @@ function App() {
             <Route path="dashboard" element={<HODDashboard />} />
             <Route path="department" element={<HODDepartment />} />
             <Route path="faculty" element={<HODFaculty />} />
+            <Route path="groups" element={<HODGroups />} />
             <Route path="tasks" element={<HODTasks />} />
+            <Route path="tasks/new" element={<HODTaskForm />} />
+            <Route path="tasks/edit/:id" element={<HODTaskForm />} />
+            <Route path="tasks/:id" element={<HODTaskDetails />} />
             <Route path="notifications" element={<HODNotifications />} />
             <Route path="leaderboard" element={<HODLeaderboard />} />
             <Route path="reports" element={<HODReports />} />
