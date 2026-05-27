@@ -159,6 +159,21 @@ const FacultyMyTasks: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const taskIdParam = params.get('taskId');
+    if (taskIdParam && tasks.length > 0) {
+      const foundTask = tasks.find(t => t.id === parseInt(taskIdParam));
+      if (foundTask) {
+        setSelectedTask(foundTask);
+        setIsDetailModalOpen(true);
+        // Clear param from URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+  }, [tasks]);
+
   const handleRequestExtension = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTask || !extensionDate || !extensionReason) return;

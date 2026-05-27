@@ -384,9 +384,37 @@ try {
 
         case 'DELETE':
             $taskId = $_GET['id'] ?? null;
-            $stmt = $db->prepare("DELETE FROM tasks WHERE id = :id AND department_id = :dept_id");
-            $stmt->execute(['id' => $taskId, 'dept_id' => $deptId]);
-            echo json_encode(['status' => 'success', 'message' => 'Task deleted']);
+            $userId = $_GET['user_id'] ?? null;
+            
+            // Verify task ownership by HOD
+            $check = $db->prepare("SELECT id FROM tasks WHERE id = :id AND department_id = :dept_id");
+            $check->execute(['id' => $taskId, 'dept_id' => $deptId]);
+            if (!$check->fetch()) {
+                throw new Exception("Task not found or access denied.");
+            }
+            
+            if ($userId) {
+                // Delete specific assignment
+                $stmt = $db->prepare("DELETE FROM task_assignments WHERE task_id = :task_id AND user_id = :user_id");
+                $stmt->execute(['task_id' => $taskId, 'user_id' => $userId]);
+                
+                // Recalculate task aggregated points
+                $syncStmt = $db->prepare("
+                    UPDATE tasks t 
+                    SET 
+                        t.points = (SELECT COALESCE(SUM(points), 0) FROM task_assignments WHERE task_id = t.id),
+                        t.bonus_points = (SELECT COALESCE(SUM(bonus_points), 0) FROM task_assignments WHERE task_id = t.id)
+                    WHERE t.id = :tid
+                ");
+                $syncStmt->execute(['tid' => $taskId]);
+                
+                echo json_encode(['status' => 'success', 'message' => 'Faculty member removed from task']);
+            } else {
+                // Delete entire task
+                $stmt = $db->prepare("DELETE FROM tasks WHERE id = :id AND department_id = :dept_id");
+                $stmt->execute(['id' => $taskId, 'dept_id' => $deptId]);
+                echo json_encode(['status' => 'success', 'message' => 'Task deleted']);
+            }
             break;
     }
 } catch (Exception $e) {
