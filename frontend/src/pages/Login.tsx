@@ -62,118 +62,145 @@ const Login: React.FC = () => {
   };
 
   const features = [
-    { icon: Zap, title: "Swift Tasking", desc: "Automated distribution." },
-    { icon: Target, title: "Metrics", desc: "Performance tracking." },
-    { icon: Users, title: "Unified", desc: "Seamless communication." }
+    { icon: Zap, title: "Swift Tasking", desc: "Automated distribution workflows." },
+    { icon: Target, title: "Precision Metrics", desc: "Real-time analytics dashboards." },
+    { icon: Users, title: "Unified Sync", desc: "Seamless inter-department syncing." }
   ];
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-[#FDFCFE] font-sans selection:bg-[#7C3AED]/10 overflow-hidden">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#0B091B] font-sans selection:bg-[#7C3AED]/20 py-8 px-4 md:py-12 relative overflow-y-auto">
       <SEO title="Secure Workspace Login" description="Access the FlowSync institutional portal to manage academic workflows and departmental synchronization." />
+      
+      {/* Premium Background Mesh Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute w-[300px] h-[300px] sm:w-[600px] sm:h-[600px] rounded-full bg-gradient-to-tr from-[#7C3AED]/30 to-[#EC4899]/30 blur-3xl -top-32 -left-32 sm:-top-64 sm:-left-64 animate-blob" style={{ animationDelay: '0s' }} />
+        <div className="absolute w-[250px] h-[250px] sm:w-[500px] sm:h-[500px] rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 blur-3xl -bottom-24 sm:-bottom-48 right-0 animate-blob" style={{ animationDelay: '2s' }} />
+      </div>
+
       <motion.div 
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-[950px] h-[580px] flex bg-white rounded-[32px] shadow-[0_20px_60px_rgba(124,58,237,0.06)] overflow-hidden border border-[#7C3AED]/5 mx-4"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, type: "spring", stiffness: 60 }}
+        className="w-full max-w-[1000px] min-h-[500px] md:h-[620px] flex flex-col md:flex-row bg-white/5 backdrop-blur-2xl rounded-[2rem] sm:rounded-[3rem] shadow-[0_30px_100px_rgba(0,0,0,0.5)] overflow-hidden border border-white/10 relative z-10"
       >
-        {/* Left Side - Branding (Split Screen) */}
-        <div className="hidden md:flex w-[45%] bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] p-10 relative overflow-hidden flex-col justify-between">
-          {/* Subtle background glow */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20" />
-          
+        {/* Left Side - Branding Panel (Frosted Glow) - Hidden on phones, visible on tablets (md) and desktops */}
+        <div className="hidden md:flex w-[44%] bg-gradient-to-br from-[#1E1B4B]/80 via-[#3B0764]/80 to-[#0F0829]/90 p-10 lg:p-12 relative overflow-hidden flex-col justify-between border-r border-white/5">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute -top-32 -left-32 w-80 h-80 bg-[#7C3AED]/20 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Header Branding */}
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-12">
-              <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 overflow-hidden">
-                <img src="/logo.png" alt="FlowSync Logo" className="w-6 h-6 object-contain" />
+            <div className="flex items-center gap-3.5 mb-14">
+              <div className="w-11 h-11 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/10 shadow-inner hover:scale-105 transition-all cursor-pointer">
+                <img src="/logo.png" alt="FlowSync Logo" className="w-6 h-6 object-contain filter brightness-110" />
               </div>
-              <span className="text-xl font-bold tracking-tight text-white">FlowSync</span>
+              <span className="text-lg font-black tracking-tight text-white flex items-center gap-1.5">
+                FlowSync
+                <span className="text-[9px] bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">v1.1.1</span>
+              </span>
             </div>
 
             <div className="space-y-4">
-              <h1 className="text-4xl font-bold text-white leading-tight">
+              <h1 className="text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight">
                 Institutional <br />
-                <span className="text-purple-200">Efficiency.</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-300 via-purple-300 to-pink-300">Synchronicity</span>
               </h1>
-              <p className="text-[15px] text-purple-100/70 leading-relaxed max-w-[240px]">
-                Orchestrating academic workflows into a singular, intuitive experience.
+              <p className="text-[13px] lg:text-[14px] font-bold text-slate-300/80 leading-relaxed max-w-[280px]">
+                Orchestrating academic missions and task parameters into a single high-fidelity administrative experience.
               </p>
             </div>
           </div>
 
-          <div className="relative z-10 space-y-6">
-            {features.map((f) => (
-              <div key={f.title} className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-white/10">
-                  <f.icon className="w-4 h-4 text-purple-200" />
+          {/* Frosted glass feature checklist */}
+          <div className="relative z-10 space-y-5">
+            {features.map((f, i) => (
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.1 + 0.3 }}
+                key={f.title} 
+                className="flex items-center gap-4 bg-white/5 backdrop-blur-md border border-white/5 p-3 rounded-2xl hover:bg-white/10 hover:border-white/10 hover:scale-[1.02] transition-all duration-300 group cursor-default"
+              >
+                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md">
+                  <f.icon className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-sm">{f.title}</h3>
-                  <p className="text-purple-200/40 text-[11px] leading-none mt-1">{f.desc}</p>
+                  <h3 className="text-white font-bold text-xs group-hover:text-violet-300 transition-colors">{f.title}</h3>
+                  <p className="text-slate-400 text-[10px] mt-0.5 leading-none">{f.desc}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 
-          <div className="relative z-10 flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <p className="text-[10px] font-bold text-purple-200/30 uppercase tracking-widest">v2.4 Ready</p>
+          {/* Footer Metrics */}
+          <div className="relative z-10 flex items-center gap-2 bg-emerald-500/5 border border-emerald-500/10 px-4 py-2 rounded-xl w-fit">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
+            <p className="text-[9px] font-black text-emerald-300 uppercase tracking-widest">Platform Core Online</p>
           </div>
         </div>
 
-        {/* Right Side - Login */}
-        <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-12">
-          {/* Mobile/Small Screen Branding */}
-          <div className="md:hidden flex items-center gap-2 mb-8">
-             <div className="w-8 h-8 bg-[#7C3AED] rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/20 overflow-hidden">
-                <img src="/logo.png" alt="FlowSync Logo" className="w-5 h-5 object-contain" />
-              </div>
-              <span className="text-lg font-bold tracking-tight text-gray-900">FlowSync</span>
+        {/* Right Side - Login Panel */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 md:p-12 lg:p-14 bg-slate-950/40 backdrop-blur-xl relative w-full h-auto md:h-full">
+          {/* Subtle reflection overlay */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/[0.02] via-transparent to-transparent pointer-events-none" />
+
+          {/* Mobile/Small Screen Branding (Shown only on small screens) */}
+          <div className="md:hidden flex items-center gap-3.5 mb-8">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 overflow-hidden">
+              <img src="/logo.png" alt="FlowSync Logo" className="w-5 h-5 object-contain" />
+            </div>
+            <span className="text-xl font-black tracking-tight text-white flex items-center gap-1.5">
+              FlowSync
+              <span className="text-[9px] bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">v1.1.1</span>
+            </span>
           </div>
 
-          <div className="w-full max-w-sm">
-            <div className="mb-10 text-center md:text-left">
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-2">Workspace Login</h2>
-              <p className="text-gray-400 text-sm font-medium">Enter your credentials to continue</p>
+          <div className="w-full max-w-sm relative z-10">
+            <div className="mb-8 md:mb-10 text-center md:text-left">
+              <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-2">Workspace Access</h2>
+              <p className="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Provide security credentials to sync</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-1.5">
-                <label className="text-[12px] font-bold text-gray-600 ml-1">Email Address</label>
+            <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
+              {/* Email Input */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Mail className="h-4.5 w-4.5 text-gray-300 group-focus-within:text-[#7C3AED] transition-colors" strokeWidth={2} />
+                  <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
+                    <Mail className="h-4.5 w-4.5 text-slate-400 group-focus-within:text-violet-400 transition-colors" strokeWidth={2.5} />
                   </div>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-[#7C3AED] transition-all text-gray-900 text-[14px] placeholder:text-gray-300"
+                    className="w-full pl-12 pr-4 py-3.5 md:py-4 bg-white/5 border border-white/10 rounded-2xl outline-none text-white text-xs font-bold focus:bg-slate-900/60 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all placeholder:text-slate-500"
                     placeholder="name@institution.edu"
                     required
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
+              {/* Password Input */}
+              <div className="space-y-2">
                 <div className="flex justify-between items-center ml-1">
-                  <label className="text-[12px] font-bold text-gray-600">Security Password</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Security Password</label>
                 </div>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="h-4.5 w-4.5 text-gray-300 group-focus-within:text-[#7C3AED] transition-colors" strokeWidth={2} />
+                  <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
+                    <Lock className="h-4.5 w-4.5 text-slate-400 group-focus-within:text-violet-400 transition-colors" strokeWidth={2.5} />
                   </div>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-11 pr-12 py-3 bg-gray-50/50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-[#7C3AED] transition-all text-gray-900 text-[14px] placeholder:text-gray-300"
+                    className="w-full pl-12 pr-12 py-3.5 md:py-4 bg-white/5 border border-white/10 rounded-2xl outline-none text-white text-xs font-bold focus:bg-slate-900/60 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all placeholder:text-slate-500"
                     placeholder="••••••••"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-300 hover:text-[#7C3AED] transition-colors"
+                    className="absolute inset-y-0 right-0 pr-4.5 flex items-center text-slate-400 hover:text-violet-400 transition-colors"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4.5 w-4.5" strokeWidth={2} />
@@ -184,58 +211,79 @@ const Login: React.FC = () => {
                 </div>
               </div>
 
+              {/* Warnings and Alerts */}
               <AnimatePresence mode="wait">
                 {error && (
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="bg-rose-50 text-rose-600 p-3 rounded-xl text-[12px] flex items-center gap-2 border border-rose-100"
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="bg-rose-500/10 text-rose-300 p-4 rounded-2xl text-[11px] font-bold flex items-center gap-2.5 border border-rose-500/20"
                   >
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    <span className="font-semibold">{error}</span>
+                    <AlertCircle className="w-4.5 h-4.5 text-rose-400 flex-shrink-0" />
+                    <span>{error}</span>
                   </motion.div>
                 )}
                 {success && (
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="bg-emerald-50 text-emerald-600 p-3 rounded-xl text-[12px] flex items-center gap-2 border border-emerald-100"
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="bg-emerald-500/10 text-emerald-300 p-4 rounded-2xl text-[11px] font-bold flex items-center gap-2.5 border border-emerald-500/20"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span className="font-semibold">Authenticated. Redirecting...</span>
+                    <CheckCircle2 className="w-4.5 h-4.5 text-emerald-400 flex-shrink-0" />
+                    <span>Identity Verified. Synchronizing Session...</span>
                   </motion.div>
                 )}
               </AnimatePresence>
 
+              {/* Submit Button */}
               <motion.button
                 whileHover={{ scale: 1.005 }}
                 whileTap={{ scale: 0.995 }}
                 type="submit"
                 disabled={isLoading || success}
-                className="w-full py-3 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-500/10 transition-all flex items-center justify-center gap-2 disabled:opacity-70 mt-2"
+                className="w-full py-3.5 md:py-4 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-600/10 hover:shadow-indigo-600/20 transition-all flex items-center justify-center gap-2.5 disabled:opacity-70 mt-4"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-[2.5px] border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
-                    Sign In
-                    <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
+                    Establish Connection
+                    <ArrowRight className="w-4 h-4 text-violet-200" strokeWidth={3} />
                   </>
                 )}
               </motion.button>
             </form>
 
-            <div className="mt-10 text-center">
-              <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-1.5">
-                FlowSync Institutional • © 2026
+            {/* Bottom Credits */}
+            <div className="mt-8 md:mt-12 text-center">
+              <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1.5">
+                FlowSync Institutional Core • © 2026
               </p>
-              <p className="text-[9px] font-semibold text-gray-400/60 uppercase tracking-wider">
-                Created and Managed by <a href="https://neodyit.in" target="_blank" rel="noopener noreferrer" className="text-[#8B5CF6] hover:text-[#A78BFA] transition-colors font-bold">Neody IT</a>
+              <p className="text-[8px] font-black text-slate-400/40 uppercase tracking-wider flex items-center justify-center gap-1">
+                Engineered by 
+                <a href="https://neodyit.in" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 transition-colors font-bold underline">
+                  Neody IT
+                </a>
               </p>
             </div>
           </div>
         </div>
       </motion.div>
+      
+      {/* CSS Styles for Animated meshes */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(20px, -30px) scale(1.05); }
+          66% { transform: translate(-10px, 15px) scale(0.98); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob {
+          animation: blob 8s infinite alternate ease-in-out;
+        }
+      `}} />
     </div>
   );
 };
