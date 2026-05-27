@@ -151,39 +151,62 @@ export function ProfileCard({
         )}
       </div>
 
-      {/* Role Badge */}
-      <div className="mt-6 flex justify-center">
+      {/* Role & Status Badge */}
+      <div className="mt-6 flex flex-col items-center gap-2">
         <span className="px-4 py-1.5 bg-[#7C3AED] text-white text-[10px] font-black rounded-xl uppercase tracking-[0.2em] shadow-lg shadow-purple-500/20 group-hover:scale-105 transition-transform">
           {role}
         </span>
+        {id !== 1 && (
+          status === "offline" ? (
+            <span className="px-3 py-1 bg-rose-50 border border-rose-100 text-rose-600 text-[9px] font-black rounded-lg uppercase tracking-wider">
+              Inactive
+            </span>
+          ) : (
+            <span className="px-3 py-1 bg-emerald-50 border border-emerald-100 text-emerald-600 text-[9px] font-black rounded-lg uppercase tracking-wider">
+              Active
+            </span>
+          )
+        )}
       </div>
 
       {/* Action Buttons */}
       <div className="mt-8 flex gap-3 relative z-10">
-        <button 
-          onClick={onEdit}
-          className="flex-1 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-[#7C3AED] hover:border-[#7C3AED] hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-300 hover:scale-95 active:scale-90"
-        >
-          <Edit2 className="h-4 w-4" />
-        </button>
-        <button 
-          onClick={onToggleStatus}
-          className="flex-1 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300 hover:scale-95 active:scale-90"
-        >
-          <Power className="h-4 w-4" />
-        </button>
-        <button 
-          onClick={onLogs}
-          className="flex-1 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-[#7C3AED] hover:border-[#7C3AED] hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-300 hover:scale-95 active:scale-90"
-        >
-          <History className="h-4 w-4" />
-        </button>
-        <button 
-          onClick={onDelete}
-          className="flex-1 h-12 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-300 hover:text-rose-500 hover:bg-rose-500 hover:text-white hover:shadow-lg hover:shadow-rose-500/20 transition-all duration-300 hover:scale-95 active:scale-90"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        {onEdit && (
+          <button 
+            onClick={onEdit}
+            title="Edit User"
+            className="flex-1 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-[#7C3AED] hover:border-[#7C3AED] hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-300 hover:scale-95 active:scale-90"
+          >
+            <Edit2 className="h-4 w-4" />
+          </button>
+        )}
+        {onToggleStatus && (
+          <button 
+            onClick={onToggleStatus}
+            title="Toggle Active Status"
+            className="flex-1 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300 hover:scale-95 active:scale-90"
+          >
+            <Power className="h-4 w-4" />
+          </button>
+        )}
+        {onLogs && (
+          <button 
+            onClick={onLogs}
+            title="View Logs"
+            className="flex-1 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-[#7C3AED] hover:border-[#7C3AED] hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-300 hover:scale-95 active:scale-90"
+          >
+            <History className="h-4 w-4" />
+          </button>
+        )}
+        {onDelete && (
+          <button 
+            onClick={onDelete}
+            title="Delete User"
+            className="flex-1 h-12 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-300 hover:text-rose-500 hover:bg-rose-500 hover:text-white hover:shadow-lg hover:shadow-rose-500/20 transition-all duration-300 hover:scale-95 active:scale-90"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Animated border on hover */}

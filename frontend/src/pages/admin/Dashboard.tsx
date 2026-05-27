@@ -275,7 +275,7 @@ const AdminDashboard: React.FC = () => {
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-black text-[#1E1B4B]">Live Logs</h3>
               <button 
-                onClick={() => navigate('/admin/audit-logs')}
+                onClick={() => navigate('/admin/audit')}
                 className="text-[10px] font-black text-[#7C3AED] uppercase tracking-widest hover:underline"
               >
                 View Audit
