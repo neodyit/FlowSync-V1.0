@@ -38,9 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
         $email = $data['email'] ?? '';
         $password = $data['password'] ?? '';
+        $fingerprint = $data['fingerprint'] ?? '';
 
         $auth = new \FlowSync\Auth\AuthService();
-        $result = $auth->login($email, $password);
+        $result = $auth->login($email, $password, $fingerprint);
 
         if ($result['status'] === 'success') {
             echo json_encode($result);

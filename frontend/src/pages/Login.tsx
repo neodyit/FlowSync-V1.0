@@ -24,19 +24,38 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
+  const getDeviceFingerprint = (): string => {
+    const parts = [
+      navigator.userAgent,
+      navigator.language,
+      screen.colorDepth,
+      screen.width + "x" + screen.height,
+      new Date().getTimezoneOffset(),
+      !!window.sessionStorage,
+      !!window.localStorage
+    ];
+    const str = parts.join("###");
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 33) ^ str.charCodeAt(i);
+    }
+    return (hash >>> 0).toString(16);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
+      const fingerprint = getDeviceFingerprint();
       const response = await fetch(`${import.meta.env.VITE_API_URL}/login.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, fingerprint }),
       });
 
       const data = await response.json();
