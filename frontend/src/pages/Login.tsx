@@ -282,7 +282,7 @@ const Login: React.FC = () => {
               </p>
               <p className="text-[8px] font-black text-slate-400/40 uppercase tracking-wider flex items-center justify-center gap-1">
                 Engineered by 
-                <a href="https://neodyit.in" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 transition-colors font-bold underline">
+                <a href="https://dev.neodyit.in" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 transition-colors font-bold underline">
                   Neody IT
                 </a>
               </p>
