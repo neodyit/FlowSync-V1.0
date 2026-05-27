@@ -29,7 +29,7 @@ class AuthService {
 
             if (password_verify($password, $user['password_hash'])) {
                 $sessionId = bin2hex(random_bytes(16));
-                $expiryTime = time() + (int)getenv('JWT_EXPIRY');
+                $expiryTime = time() + (int)(getenv('JWT_EXPIRY') ?: 86400);
 
                 // Save session to database
                 $stmt = $this->db->prepare("
@@ -58,6 +58,8 @@ class AuthService {
                 $token = JWT::encode($payload);
 
                 $cookieName = getenv('COOKIE_NAME') ?: 'flowsync_session';
+                $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+                            (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
                 setcookie(
                     $cookieName,
                     $token,
@@ -65,8 +67,8 @@ class AuthService {
                         'expires' => $expiryTime,
                         'path' => '/',
                         'httponly' => true,
-                        'secure' => true,
-                        'samesite' => 'None'
+                        'secure' => $isSecure,
+                        'samesite' => $isSecure ? 'None' : 'Lax'
                     ]
                 );
 
@@ -108,9 +110,12 @@ class AuthService {
             SELECT s.*, u.is_active 
             FROM sessions s
             JOIN users u ON s.user_id = u.id
-            WHERE s.token_id = :jti AND s.expires_at > DATE_SUB(NOW(), INTERVAL 1 MINUTE) AND u.is_active = 1
+            WHERE s.token_id = :jti AND s.expires_at > FROM_UNIXTIME(:now_minus_grace) AND u.is_active = 1
         ");
-        $stmt->execute(['jti' => $payload['jti']]);
+        $stmt->execute([
+            'jti' => $payload['jti'],
+            'now_minus_grace' => time() - 60 // 1 minute grace period from web-server time
+        ]);
         $dbSession = $stmt->fetch();
 
         if (!$dbSession) {
@@ -135,12 +140,14 @@ class AuthService {
             }
         }
         
+        $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
         setcookie($cookieName, '', [
             'expires' => time() - 3600,
             'path' => '/',
             'httponly' => true,
-            'secure' => true,
-            'samesite' => 'None'
+            'secure' => $isSecure,
+            'samesite' => $isSecure ? 'None' : 'Lax'
         ]);
 
         if ($payload && isset($payload['user_id'])) {
