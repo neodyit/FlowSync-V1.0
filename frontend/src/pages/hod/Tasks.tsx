@@ -114,9 +114,22 @@ const HODTasks: React.FC = () => {
   const [facultyList, setFacultyList] = useState<Faculty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'All' | 'Assigned' | 'Group' | 'Broadcasted' | 'Review Pending' | 'Active' | 'Completed' | 'Extensions' | 'Drafts'>('All');
+  type TabType = 'All' | 'Individual' | 'Group' | 'Broadcasted' | 'Pending Submissions' | 'Review Pending' | 'Active' | 'Completed' | 'Extensions' | 'Drafts';
+  const [activeTab, setActiveTab] = useState<TabType>(
+    (searchParams.get('tab') as TabType) || 'All'
+  );
+
+  useEffect(() => {
+    setSearchParams(prev => {
+      if (activeTab === 'All') prev.delete('tab');
+      else prev.set('tab', activeTab);
+      return prev;
+    }, { replace: true });
+  }, [activeTab, setSearchParams]);
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterModes, setFilterModes] = useState<string[]>([]);
+  const [isModeFilterOpen, setIsModeFilterOpen] = useState(false);
   const [extensionRequests, setExtensionRequests] = useState<ExtensionRequest[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openSelect, setOpenSelect] = useState<'priority' | 'faculty' | 'category' | 'group' | null>(null);
@@ -387,10 +400,17 @@ const HODTasks: React.FC = () => {
       if (new Date(t.created_at) > end) return false;
     }
 
+    if (filterModes.length > 0) {
+      const mode = t.assignment_mode || (t.status === 'Broadcasted' ? 'broadcast' : 'individual');
+      if (!filterModes.includes(mode)) return false;
+    }
+
     switch (activeTab) {
-      case 'Assigned': return t.assignment_mode === 'individual';
-      case 'Group': return t.assignment_mode === 'group';
-      case 'Broadcasted': return t.status === 'Broadcasted';
+      case 'Individual': return t.assignment_mode === 'individual' && !['Completed', 'Approved'].includes(t.status);
+      case 'Pending Submissions':
+        return t.assignments.some(a => !['Submitted', 'Under Review', 'Approved', 'Completed'].includes(a.status)) && !['Completed', 'Approved', 'Draft'].includes(t.status);
+      case 'Group': return t.assignment_mode === 'group' && !['Completed', 'Approved'].includes(t.status);
+      case 'Broadcasted': return t.status === 'Broadcasted' && !['Completed', 'Approved'].includes(t.status);
       case 'Review Pending': 
         return ['Submitted', 'Under Review'].includes(t.status) || 
                t.assignments.some(a => ['Submitted', 'Under Review'].includes(a.status));
@@ -419,10 +439,18 @@ const HODTasks: React.FC = () => {
         end.setHours(23, 59, 59, 999);
         if (new Date(t.created_at) > end) return false;
       }
+      
+      if (filterModes.length > 0) {
+        const mode = t.assignment_mode || (t.status === 'Broadcasted' ? 'broadcast' : 'individual');
+        if (!filterModes.includes(mode)) return false;
+      }
+
       switch (tab) {
-        case 'Assigned': return t.assignment_mode === 'individual';
-        case 'Group': return t.assignment_mode === 'group';
-        case 'Broadcasted': return t.status === 'Broadcasted';
+        case 'Individual': return t.assignment_mode === 'individual' && !['Completed', 'Approved'].includes(t.status);
+        case 'Pending Submissions':
+          return t.assignments.some(a => !['Submitted', 'Under Review', 'Approved', 'Completed'].includes(a.status)) && !['Completed', 'Approved', 'Draft'].includes(t.status);
+        case 'Group': return t.assignment_mode === 'group' && !['Completed', 'Approved'].includes(t.status);
+        case 'Broadcasted': return t.status === 'Broadcasted' && !['Completed', 'Approved'].includes(t.status);
         case 'Review Pending': 
           return ['Submitted', 'Under Review'].includes(t.status) || 
                  t.assignments.some(a => ['Submitted', 'Under Review'].includes(a.status));
@@ -441,10 +469,11 @@ const HODTasks: React.FC = () => {
 
   const tabs: {id: typeof activeTab, label: string, count: number}[] = [
     { id: 'All', label: 'All Tasks', count: filterCount('All') },
-    { id: 'Assigned', label: 'Assigned', count: filterCount('Assigned') },
+    { id: 'Individual', label: 'Individual', count: filterCount('Individual') },
     { id: 'Group', label: 'Group', count: filterCount('Group') },
     { id: 'Broadcasted', label: 'Broadcasted', count: filterCount('Broadcasted') },
     { id: 'Active', label: 'Active', count: filterCount('Active') },
+    { id: 'Pending Submissions', label: 'Pending Submissions', count: filterCount('Pending Submissions') },
     { id: 'Review Pending', label: 'Review Pending', count: filterCount('Review Pending') },
     { id: 'Extensions', label: 'Extensions', count: extensionRequests.filter(r => {
       if (r.status !== 'Pending') return false;
@@ -616,6 +645,54 @@ const HODTasks: React.FC = () => {
               </button>
             )}
           </div>
+
+          <div className="relative">
+            <button 
+              onClick={() => setIsModeFilterOpen(!isModeFilterOpen)}
+              className="px-6 py-4 h-full bg-white border border-slate-100 rounded-3xl text-sm font-bold text-[#1E184B] hover:border-[#7C3AED]/30 transition-all flex items-center gap-2"
+            >
+              <Layers className="w-4 h-4 text-slate-400" />
+              Mode Filter
+              {filterModes.length > 0 && (
+                <span className="ml-1 px-2 py-0.5 bg-[#7C3AED] text-white text-[10px] rounded-full">{filterModes.length}</span>
+              )}
+            </button>
+            
+            <AnimatePresence>
+              {isModeFilterOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute right-0 mt-2 w-56 bg-white border border-slate-100 shadow-xl rounded-2xl p-3 z-50 flex flex-col gap-2"
+                >
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1">Filter by Mode</p>
+                  {['individual', 'group', 'broadcast'].map(mode => (
+                    <label key={mode} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors">
+                      <input 
+                        type="checkbox"
+                        checked={filterModes.includes(mode)}
+                        onChange={(e) => {
+                          if (e.target.checked) setFilterModes([...filterModes, mode]);
+                          else setFilterModes(filterModes.filter(m => m !== mode));
+                        }}
+                        className="w-4 h-4 rounded text-[#7C3AED] focus:ring-[#7C3AED]/20"
+                      />
+                      <span className="text-sm font-bold text-[#1E184B] capitalize">{mode}</span>
+                    </label>
+                  ))}
+                  {filterModes.length > 0 && (
+                    <button 
+                      onClick={() => setFilterModes([])}
+                      className="mt-2 text-[10px] font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest text-center py-2 bg-rose-50 rounded-lg transition-colors"
+                    >
+                      Clear Modes
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
@@ -739,7 +816,11 @@ const HODTasks: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
             {filteredTasks.map((task, idx) => {
-              const config = getStatusConfig(task.status);
+              let displayStatus = task.status;
+              if (task.assignment_mode === 'individual' && task.assignments && task.assignments.length > 0) {
+                displayStatus = task.assignments[0].status;
+              }
+              const config = getStatusConfig(displayStatus);
               const flag = getFlagConfig(task.flag_color);
               return (
                 <motion.div
@@ -758,7 +839,7 @@ const HODTasks: React.FC = () => {
 
                   <div className="flex items-start justify-between mb-5">
                     <div className={cn("px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border", config.bg.replace('bg-', 'text-'), config.bg.replace('bg-', 'bg-').replace('500', '50'))}>
-                      {task.status}
+                      {displayStatus}
                     </div>
                     <div className="flex items-center gap-1">
                       <button 
