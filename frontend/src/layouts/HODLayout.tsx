@@ -356,7 +356,7 @@ export default function HODLayout() {
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 w-72 bg-white dark:bg-[#110A24] border-r border-[#7C3AED]/10 dark:border-[#8B5CF6]/10 z-[200] transition-transform duration-300 lg:translate-x-0 lg:static
+        fixed inset-y-0 left-0 w-72 bg-white/20 dark:bg-[#110A24]/10 backdrop-blur-md border-r border-[#7C3AED]/10 dark:border-[#8B5CF6]/10 z-[200] transition-transform duration-300 lg:translate-x-0 lg:static shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-violet-950/20
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="h-full flex flex-col">

@@ -545,7 +545,7 @@ export default function FacultyLayout() {
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 w-72 bg-white dark:bg-[#110A24] border-r border-[#7C3AED]/10 dark:border-violet-500/10 z-[200] transition-transform duration-300 lg:translate-x-0 lg:static
+        fixed inset-y-0 left-0 w-72 bg-white/20 dark:bg-[#110A24]/10 backdrop-blur-md border-r border-[#7C3AED]/10 dark:border-violet-500/10 z-[200] transition-transform duration-300 lg:translate-x-0 lg:static shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-violet-950/20
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="h-full flex flex-col">
@@ -662,7 +662,7 @@ export default function FacultyLayout() {
               </button>
 
               {isNotificationsOpen && (
-                <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-80 bg-white dark:bg-[#1A0F35] rounded-3xl shadow-2xl border border-[#7C3AED]/10 dark:border-violet-500/20 overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-80 bg-white/99 dark:bg-[#1A0F35]/99 backdrop-blur-md rounded-3xl shadow-2xl border border-[#7C3AED]/10 dark:border-violet-500/20 overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="p-5 bg-[#7C3AED]/5 dark:bg-violet-950/30 border-b border-[#7C3AED]/10 dark:border-violet-500/20 flex items-center justify-between">
                     <div>
                       <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">Inbox</p>

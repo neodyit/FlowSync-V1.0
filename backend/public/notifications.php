@@ -65,17 +65,18 @@ try {
                     FROM tasks 
                     WHERE department_id = :dept_id 
                     AND status NOT IN ('Completed', 'Approved', 'Rejected', 'Expired', 'Draft')
-                    ORDER BY deadline ASC 
+                    ORDER BY deadline DESC 
                     LIMIT 1
                 ";
                 $params = ['dept_id' => $user['department_id']];
             } else if ($user['role_id'] == 3) { // Faculty
                 $taskQuery = "
-                    SELECT title, status, deadline 
-                    FROM tasks 
-                    WHERE assigned_to_id = :user_id 
-                    AND status NOT IN ('Completed', 'Approved', 'Rejected', 'Expired', 'Draft')
-                    ORDER BY deadline ASC 
+                    SELECT t.title, ta.status, t.deadline 
+                    FROM tasks t
+                    JOIN task_assignments ta ON t.id = ta.task_id
+                    WHERE ta.user_id = :user_id 
+                    AND ta.status NOT IN ('Completed', 'Approved', 'Rejected', 'Expired', 'Draft')
+                    ORDER BY t.deadline DESC 
                     LIMIT 1
                 ";
                 $params = ['user_id' => $userId];
