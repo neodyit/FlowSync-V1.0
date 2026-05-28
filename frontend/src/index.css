@@ -37,8 +37,12 @@
       background-color: var(--card-bg) !important;
     }
 
-    .bg-slate-50, .bg-slate-50\/50 {
+    .bg-slate-50, .bg-slate-50\/50, .hover\:bg-slate-50:hover {
       background-color: var(--bg-secondary) !important;
+    }
+
+    .bg-indigo-50\/50 {
+      background-color: rgba(139, 92, 246, 0.15) !important;
     }
 
     /* Wildcard match to capture all border-slate-X and custom brand borders */
