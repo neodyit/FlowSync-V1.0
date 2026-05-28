@@ -29,7 +29,7 @@ export function formatDate(dateInput: string | Date | null | undefined): string 
     hours = hours ? hours : 12; // the hour '0' should be '12'
     const formattedHours = String(hours).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${day}/${month}/${year} ${formattedHours}:${minutes} ${ampm}`;
+    return `${day}/${month}/${year} · ${formattedHours}:${minutes} ${ampm}`;
   }
   
   return `${day}/${month}/${year}`;

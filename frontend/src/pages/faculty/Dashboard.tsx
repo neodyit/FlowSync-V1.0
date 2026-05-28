@@ -77,10 +77,10 @@ const FacultyDashboard: React.FC = () => {
   }, []);
 
   const statCards = [
-    { label: 'Total Merit', value: stats.total_points, icon: Trophy, color: 'text-emerald-500', bg: 'bg-emerald-50', trend: 'Lifetime Earnings' },
-    { label: 'Completed', value: stats.completed_tasks, icon: Award, color: 'text-blue-500', bg: 'bg-blue-50', trend: 'Missions Finalized' },
-    { label: 'Active Missions', value: stats.active_tasks, icon: Zap, color: 'text-[#7C3AED]', bg: 'bg-[#7C3AED]/5', trend: 'Current Focus' },
-    { label: 'Monthly Goal', value: `${stats.goal_progress}%`, icon: Target, color: 'text-rose-500', bg: 'bg-rose-50', trend: 'Merit Progress' },
+    { label: 'Total Merit', value: stats.total_points, icon: Trophy, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/20', trend: 'Lifetime Earnings' },
+    { label: 'Completed', value: stats.completed_tasks, icon: Award, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/20', trend: 'Missions Finalized' },
+    { label: 'Active Missions', value: stats.active_tasks, icon: Zap, color: 'text-[#7C3AED] dark:text-violet-400', bg: 'bg-[#7C3AED]/5 dark:bg-violet-950/20', trend: 'Current Focus' },
+    { label: 'Monthly Goal', value: `${stats.goal_progress}%`, icon: Target, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-950/20', trend: 'Merit Progress' },
   ];
 
   const quickActions = [
@@ -97,19 +97,19 @@ const FacultyDashboard: React.FC = () => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2 text-[#7C3AED] mb-2">
+          <div className="flex items-center gap-2 text-[#7C3AED] dark:text-violet-400 mb-2">
             <Zap className="w-4 h-4" />
             <span className="text-[10px] font-black uppercase tracking-widest">
               {formatDate(new Date())}
             </span>
           </div>
-          <h1 className="text-4xl font-black text-[#1E184B] tracking-tight">Mission Control</h1>
-          <p className="text-[#1E184B]/40 font-bold mt-1">Accelerate your academic impact and track your progress.</p>
+          <h1 className="text-4xl font-black text-[#1E184B] dark:text-indigo-100 tracking-tight">Mission Control</h1>
+          <p className="text-[#1E184B]/40 dark:text-violet-400/60 font-bold mt-1">Accelerate your academic impact and track your progress.</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right hidden sm:block">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Month Points</p>
-            <p className="text-xl font-black text-[#1E184B]">{stats.month_points} <span className="text-xs text-slate-300">/ {stats.merit_goal}</span></p>
+            <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/50 uppercase tracking-widest">Month Points</p>
+            <p className="text-xl font-black text-[#1E184B] dark:text-indigo-100">{stats.month_points} <span className="text-xs text-slate-300 dark:text-violet-500/40">/ {stats.merit_goal}</span></p>
           </div>
           <button 
             onClick={() => navigate('/faculty/tasks')}
@@ -131,18 +131,18 @@ const FacultyDashboard: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
               key={stat.label}
-              className="bg-white p-6 rounded-[2rem] border border-[#7C3AED]/10 shadow-sm group hover:shadow-2xl hover:shadow-[#7C3AED]/5 transition-all relative overflow-hidden"
+              className="bg-white dark:bg-[#1A0F35]/80 p-6 rounded-[2rem] border border-[#7C3AED]/10 dark:border-violet-500/15 shadow-sm group hover:shadow-2xl hover:shadow-[#7C3AED]/5 dark:hover:shadow-violet-500/[0.03] transition-all relative overflow-hidden"
             >
               <div className="flex items-center justify-between mb-4 relative z-10">
                 <div className={cn("p-3 rounded-2xl", stat.bg)}>
                   <Icon className={cn("w-6 h-6", stat.color)} />
                 </div>
-                <TrendingUp className="w-4 h-4 text-slate-200 group-hover:text-[#7C3AED]/20 transition-colors" />
+                <TrendingUp className="w-4 h-4 text-slate-200 dark:text-violet-500/20 group-hover:text-[#7C3AED]/20 dark:group-hover:text-violet-400/20 transition-colors" />
               </div>
               <div className="relative z-10">
-                <p className="text-[10px] font-black text-[#1E184B]/40 uppercase tracking-[0.2em]">{stat.label}</p>
-                <h3 className="text-3xl font-black text-[#1E184B] mt-1">{isLoading ? '...' : stat.value}</h3>
-                <p className="text-[9px] font-bold text-slate-400 mt-2 flex items-center gap-1">
+                <p className="text-[10px] font-black text-[#1E184B]/40 dark:text-violet-400/50 uppercase tracking-[0.2em]">{stat.label}</p>
+                <h3 className="text-3xl font-black text-[#1E184B] dark:text-indigo-100 mt-1">{isLoading ? '...' : stat.value}</h3>
+                <p className="text-[9px] font-bold text-slate-400 dark:text-violet-400/40 mt-2 flex items-center gap-1">
                   <span className="w-1 h-1 rounded-full bg-emerald-500" />
                   {stat.trend}
                 </p>
@@ -156,9 +156,9 @@ const FacultyDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Quick Actions */}
         <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-xl font-black text-[#1E184B] flex items-center gap-3">
+          <h2 className="text-xl font-black text-[#1E184B] dark:text-indigo-100 flex items-center gap-3">
             Navigation
-            <span className="h-px flex-1 bg-[#7C3AED]/10" />
+            <span className="h-px flex-1 bg-[#7C3AED]/10 dark:bg-violet-500/10" />
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {quickActions.map((action, idx) => {
@@ -170,29 +170,29 @@ const FacultyDashboard: React.FC = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4 + idx * 0.1 }}
                   onClick={() => navigate(action.path)}
-                  className="group flex items-center gap-5 p-5 bg-white border border-slate-100 rounded-3xl hover:border-[#7C3AED]/30 hover:shadow-xl hover:shadow-[#7C3AED]/5 transition-all text-left"
+                  className="group flex items-center gap-5 p-5 bg-white dark:bg-[#1A0F35]/80 border border-slate-100 dark:border-violet-500/15 rounded-3xl hover:border-[#7C3AED]/30 dark:hover:border-violet-400/40 hover:shadow-xl hover:shadow-[#7C3AED]/5 transition-all text-left"
                 >
                   <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0 group-hover:scale-110 transition-transform", action.color)}>
                     <Icon className="w-6 h-6" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-black text-[#1E184B]">{action.name}</p>
-                    <p className="text-[10px] font-bold text-slate-400 mt-0.5 line-clamp-1">{action.desc}</p>
+                    <p className="text-sm font-black text-[#1E184B] dark:text-indigo-100">{action.name}</p>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-violet-400/60 mt-0.5 line-clamp-1">{action.desc}</p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-slate-200 group-hover:text-[#7C3AED] group-hover:translate-x-1 transition-all ml-auto" />
+                  <ArrowRight className="w-4 h-4 text-slate-200 dark:text-violet-500/30 group-hover:text-[#7C3AED] dark:group-hover:text-violet-400 group-hover:translate-x-1 transition-all ml-auto" />
                 </motion.button>
               );
             })}
           </div>
 
           {/* Goal Progress Section */}
-          <div className="bg-[#1E184B] rounded-[2.5rem] p-8 text-white relative overflow-hidden group">
+          <div className="bg-[#1E184B] dark:bg-[#150B30] border border-transparent dark:border-violet-500/20 rounded-[2.5rem] p-8 text-white relative overflow-hidden group">
             <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
               <div className="flex-1">
                 <h3 className="text-lg font-black tracking-tight mb-2 text-rose-400 uppercase tracking-widest text-xs">Monthly Merit Goal</h3>
                 <h2 className="text-3xl font-black mb-4">{stats.goal_progress}% of target reached</h2>
-                <p className="text-white/40 text-xs font-bold mb-6 max-w-sm">Achieve your monthly goal to climb the departmental leaderboard and earn prestige badges.</p>
-                <div className="h-4 w-full bg-white/10 rounded-full overflow-hidden p-1 border border-white/5">
+                <p className="text-white/40 dark:text-violet-400/60 text-xs font-bold mb-6 max-w-sm">Achieve your monthly goal to climb the departmental leaderboard and earn prestige badges.</p>
+                <div className="h-4 w-full bg-white/10 dark:bg-white/5 rounded-full overflow-hidden p-1 border border-white/5 dark:border-violet-500/10">
                   <motion.div 
                     initial={{ width: 0 }} 
                     animate={{ width: `${Math.min(stats.goal_progress, 100)}%` }} 
@@ -216,15 +216,15 @@ const FacultyDashboard: React.FC = () => {
 
         {/* Recent Activity */}
         <div className="space-y-6">
-          <h2 className="text-xl font-black text-[#1E184B] flex items-center gap-3">
+          <h2 className="text-xl font-black text-[#1E184B] dark:text-indigo-100 flex items-center gap-3">
             Mission Timeline
-            <span className="h-px flex-1 bg-[#7C3AED]/10" />
+            <span className="h-px flex-1 bg-[#7C3AED]/10 dark:bg-violet-500/10" />
           </h2>
-          <div className="bg-white rounded-[2.5rem] border border-[#7C3AED]/10 overflow-hidden">
+          <div className="bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] border border-[#7C3AED]/10 dark:border-violet-500/15 overflow-hidden">
             <div className="p-6">
               {activities.length === 0 ? (
                 <div className="py-20 text-center space-y-4">
-                  <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto">
+                  <div className="w-12 h-12 bg-slate-50 dark:bg-[#110A24] rounded-2xl flex items-center justify-center mx-auto">
                     <CheckSquare className="w-6 h-6 text-slate-200" />
                   </div>
                   <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No Missions Logged</p>
@@ -235,22 +235,22 @@ const FacultyDashboard: React.FC = () => {
                     <div key={idx} className="flex gap-4 group cursor-pointer" onClick={() => navigate('/faculty/tasks')}>
                       <div className="relative">
                         <div className={cn(
-                          "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 transition-all group-hover:border-[#7C3AED]/30 shadow-sm",
-                          activity.status === 'Completed' ? 'bg-emerald-50 text-emerald-500' : 
-                          activity.status === 'Under Review' ? 'bg-amber-50 text-amber-500' : 'bg-blue-50 text-blue-500'
+                          "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 dark:border-violet-500/10 transition-all group-hover:border-[#7C3AED]/30 dark:group-hover:border-violet-400/40 shadow-sm",
+                          activity.status === 'Completed' ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-500' : 
+                          activity.status === 'Under Review' ? 'bg-amber-50 dark:bg-amber-950/20 text-amber-500' : 'bg-blue-50 dark:bg-blue-950/20 text-blue-500'
                         )}>
                           {activity.status === 'Completed' ? <ShieldCheck className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
                         </div>
                         {idx !== activities.length - 1 && (
-                          <div className="absolute top-10 left-1/2 -translate-x-1/2 w-px h-6 bg-slate-100" />
+                          <div className="absolute top-10 left-1/2 -translate-x-1/2 w-px h-6 bg-slate-100 dark:bg-violet-500/10" />
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-black text-[#1E184B] truncate group-hover:text-[#7C3AED] transition-colors">{activity.title}</p>
-                        <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-tighter">
+                        <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 truncate group-hover:text-[#7C3AED] dark:group-hover:text-violet-400 transition-colors">{activity.title}</p>
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-violet-400/50 mt-0.5 uppercase tracking-tighter">
                           Status: <span className="text-[#7C3AED]">{activity.status}</span>
                         </p>
-                        <p className="text-[8px] font-black text-slate-300 mt-1 uppercase">
+                        <p className="text-[8px] font-black text-slate-300 dark:text-violet-500/40 mt-1 uppercase">
                           {formatDate(activity.updated_at)} at {new Date(activity.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
@@ -261,7 +261,7 @@ const FacultyDashboard: React.FC = () => {
             </div>
             <button 
               onClick={() => navigate('/faculty/tasks')}
-              className="w-full py-4 bg-slate-50 border-t border-slate-100 text-[10px] font-black text-[#1E184B]/40 hover:text-[#7C3AED] uppercase tracking-[0.2em] transition-all"
+              className="w-full py-4 bg-slate-50 dark:bg-[#110A24]/40 border-t border-slate-100 dark:border-violet-500/10 text-[10px] font-black text-[#1E184B]/40 dark:text-violet-400/50 hover:text-[#7C3AED] dark:hover:text-violet-400 uppercase tracking-[0.2em] transition-all"
             >
               Full Mission Log
             </button>
