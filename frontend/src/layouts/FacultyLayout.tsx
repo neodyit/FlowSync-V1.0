@@ -15,13 +15,17 @@ import {
   User,
   History,
   Trash2,
-  MessageSquare
+  MessageSquare,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { checkSession } from '../utils/auth';
 import { cn, formatDate } from "@/lib/utils";
 import Swal from 'sweetalert2';
+import { useTheme } from '../components/ThemeProvider';
 
 export default function FacultyLayout() {
+  const { theme, toggleTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -530,7 +534,7 @@ export default function FacultyLayout() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#F8FAFC] dark:bg-[#0E0820] overflow-hidden font-sans">
       {/* Sidebar Backdrop */}
       {isSidebarOpen && (
         <div 
@@ -541,7 +545,7 @@ export default function FacultyLayout() {
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 w-72 bg-white border-r border-[#7C3AED]/10 z-[200] transition-transform duration-300 lg:translate-x-0 lg:static
+        fixed inset-y-0 left-0 w-72 bg-white/20 dark:bg-[#110A24]/10 backdrop-blur-md border-r border-[#7C3AED]/10 dark:border-violet-500/10 z-[200] transition-transform duration-300 lg:translate-x-0 lg:static shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-violet-950/20
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="h-full flex flex-col">
@@ -551,11 +555,11 @@ export default function FacultyLayout() {
               <div className="w-10 h-10 bg-white border border-[#7C3AED]/15 rounded-xl flex items-center justify-center shadow-md overflow-hidden">
                 <img src="/logo.png" alt="FlowSync" className="w-8 h-8 object-contain" />
               </div>
-              <span className="text-xl font-black tracking-tight text-[#1E184B] font-display">
-                FlowSync <span className="text-xs font-bold text-[#7C3AED] uppercase tracking-widest block -mt-1 opacity-60">Faculty Portal</span>
+              <span className="text-xl font-black tracking-tight text-[#1E184B] dark:text-indigo-100 font-display">
+                FlowSync <span className="text-xs font-bold text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest block -mt-1 opacity-60">Faculty Portal</span>
               </span>
             </div>
-            <button className="lg:hidden p-2 text-[#1E184B]" onClick={() => setIsSidebarOpen(false)}>
+            <button className="lg:hidden p-2 text-[#1E184B] dark:text-indigo-100" onClick={() => setIsSidebarOpen(false)}>
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -570,7 +574,7 @@ export default function FacultyLayout() {
                   onClick={() => setIsSidebarOpen(false)}
                   className={({ isActive }) => `
                     flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all relative
-                    ${isActive ? 'bg-[#7C3AED] text-white shadow-lg' : 'text-[#1E184B]/60 hover:bg-[#7C3AED]/10 hover:text-[#7C3AED]'}
+                    ${isActive ? 'bg-[#7C3AED] text-white shadow-lg dark:shadow-violet-950/20' : 'text-[#1E184B]/60 dark:text-violet-400/60 hover:bg-[#7C3AED]/10 dark:hover:bg-violet-950/30 hover:text-[#7C3AED] dark:hover:text-violet-400'}
                   `}
                 >
                   <Icon className="w-5 h-5" />
@@ -585,22 +589,22 @@ export default function FacultyLayout() {
             })}
           </nav>
 
-          <div className="p-6 border-t border-[#7C3AED]/10">
-            <div className="p-4 rounded-2xl bg-[#7C3AED]/5 border border-[#7C3AED]/10 space-y-3">
+          <div className="p-6 border-t border-[#7C3AED]/10 dark:border-violet-500/10">
+            <div className="p-4 rounded-2xl bg-[#7C3AED]/5 dark:bg-violet-950/30 border border-[#7C3AED]/10 dark:border-violet-500/20 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-[#1E184B]/40 uppercase tracking-widest">Task Status</span>
+                <span className="text-[10px] font-black text-[#1E184B]/40 dark:text-violet-400/40 uppercase tracking-widest">Task Status</span>
                 <span className={cn("w-2 h-2 rounded-full", activeTask ? "bg-[#7C3AED] animate-pulse" : "bg-slate-300")} />
               </div>
               {activeTask ? (
                 <div className="space-y-1">
-                  <p className="text-[10px] font-black text-[#1E184B] truncate">{activeTask.title}</p>
+                  <p className="text-[10px] font-black text-[#1E184B] dark:text-indigo-100 truncate">{activeTask.title}</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-[9px] font-bold text-[#7C3AED] uppercase tracking-tighter">{activeTask.status}</p>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Due: {formatDate(activeTask.deadline)}</p>
+                    <p className="text-[9px] font-bold text-[#7C3AED] dark:text-violet-400 uppercase tracking-tighter">{activeTask.status}</p>
+                    <p className="text-[9px] font-bold text-slate-400 dark:text-violet-400/40 uppercase tracking-tighter">Due: {formatDate(activeTask.deadline)}</p>
                   </div>
                 </div>
               ) : (
-                <p className="text-[10px] font-bold text-[#1E184B]/60 uppercase tracking-tighter">No active missions</p>
+                <p className="text-[10px] font-bold text-[#1E184B]/60 dark:text-violet-400/40 uppercase tracking-tighter">No active missions</p>
               )}
             </div>
           </div>
@@ -610,25 +614,38 @@ export default function FacultyLayout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Header */}
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-[#7C3AED]/10 sticky top-0 z-[100] px-6 md:px-10 flex items-center justify-between">
+        <header className="h-20 bg-white/80 dark:bg-[#0E0820]/80 backdrop-blur-md border-b border-[#7C3AED]/10 dark:border-violet-500/10 sticky top-0 z-[100] px-6 md:px-10 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <button 
-              className="lg:hidden p-2.5 rounded-xl bg-white text-[#1E184B] shadow-sm border border-[#7C3AED]/10"
+              className="lg:hidden p-2.5 rounded-xl bg-white dark:bg-[#110A24] text-[#1E184B] dark:text-indigo-100 shadow-sm border border-[#7C3AED]/10 dark:border-violet-500/10"
               onClick={() => setIsSidebarOpen(true)}
             >
               <Menu className="w-6 h-6" />
             </button>
             <div className="hidden md:flex relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#1E184B]/30" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#1E184B]/30 dark:text-violet-400/30" />
               <input 
                 type="text" 
                 placeholder="Search resources..." 
-                className="pl-12 pr-6 py-2.5 bg-[#7C3AED]/5 border border-[#7C3AED]/10 rounded-xl text-sm font-medium focus:bg-white focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/5 transition-all w-80 text-[#1E184B]"
+                className="pl-12 pr-6 py-2.5 bg-[#7C3AED]/5 dark:bg-violet-950/30 border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-xl text-sm font-medium focus:bg-white dark:focus:bg-[#150D2E] focus:border-[#7C3AED] dark:focus:border-violet-500 focus:ring-4 focus:ring-[#7C3AED]/5 dark:focus:ring-violet-500/5 transition-all w-80 text-[#1E184B] dark:text-indigo-100 outline-none"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-5">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2.5 rounded-xl border border-[#7C3AED]/10 dark:border-[#8B5CF6]/20 text-[#1E184B]/40 dark:text-[#A78BFA] hover:text-[#7C3AED] dark:hover:text-[#8B5CF6] hover:border-[#7C3AED]/20 dark:hover:border-[#8B5CF6]/30 transition-all cursor-pointer bg-white dark:bg-[#110A24]"
+              aria-label="Toggle Theme"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-5 h-5 animate-pulse text-amber-400" />
+              ) : (
+                <Moon className="w-5 h-5 text-indigo-600" />
+              )}
+            </button>
+
             <div className="relative">
               <button 
                 onClick={(e) => {
@@ -636,24 +653,24 @@ export default function FacultyLayout() {
                   setIsNotificationsOpen(!isNotificationsOpen);
                   setIsProfileOpen(false);
                 }}
-                className="p-2.5 rounded-xl border border-[#7C3AED]/10 text-[#1E184B]/40 hover:text-[#7C3AED] hover:border-[#7C3AED]/20 transition-all relative"
+                className="p-2.5 rounded-xl border border-[#7C3AED]/10 dark:border-violet-500/20 text-[#1E184B]/40 dark:text-violet-400/60 hover:text-[#7C3AED] dark:hover:text-violet-400 hover:border-[#7C3AED]/20 dark:hover:border-violet-500/40 transition-all bg-white dark:bg-[#110A24] relative"
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
+                  <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-[#110A24] animate-pulse"></span>
                 )}
               </button>
 
               {isNotificationsOpen && (
-                <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-80 bg-white rounded-3xl shadow-2xl border border-[#7C3AED]/10 overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="p-5 bg-[#7C3AED]/5 border-b border-[#7C3AED]/10 flex items-center justify-between">
+                <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-80 bg-white/99 dark:bg-[#1A0F35]/99 backdrop-blur-md rounded-3xl shadow-2xl border border-[#7C3AED]/10 dark:border-violet-500/20 overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="p-5 bg-[#7C3AED]/5 dark:bg-violet-950/30 border-b border-[#7C3AED]/10 dark:border-violet-500/20 flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-black text-[#1E184B] uppercase tracking-widest">Inbox</p>
-                      <p className="text-[10px] text-[#7C3AED] font-bold">{unreadCount} Unread Alerts</p>
+                      <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">Inbox</p>
+                      <p className="text-[10px] text-[#7C3AED] dark:text-violet-400 font-bold">{unreadCount} Unread Alerts</p>
                     </div>
                     <div className="flex items-center gap-3">
                       {unreadCount > 0 && (
-                        <button onClick={markAllRead} className="text-[9px] font-black text-[#7C3AED] hover:underline uppercase tracking-widest">Mark All Read</button>
+                        <button onClick={markAllRead} className="text-[9px] font-black text-[#7C3AED] dark:text-violet-400 hover:underline uppercase tracking-widest">Mark All Read</button>
                       )}
                       {notifications.length > 0 && (
                         <button onClick={deleteAllNotifications} className="text-[9px] font-black text-rose-500 hover:underline uppercase tracking-widest flex items-center gap-1">
@@ -666,38 +683,38 @@ export default function FacultyLayout() {
                   <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
                     {notifications.length === 0 ? (
                       <div className="p-10 text-center">
-                        <Bell className="w-8 h-8 text-slate-200 mx-auto mb-3" />
-                        <p className="text-xs font-bold text-slate-400">All caught up!</p>
+                        <Bell className="w-8 h-8 text-slate-200 dark:text-violet-400/20 mx-auto mb-3" />
+                        <p className="text-xs font-bold text-slate-400 dark:text-violet-400/40">All caught up!</p>
                       </div>
                     ) : (
                       notifications.map((notif) => (
                         <div 
-                          key={notif.id} 
-                          onClick={(e) => { e.stopPropagation(); toggleReadStatus(notif.id, notif.is_read == 1); }}
-                          className={cn(
-                            "p-4 border-b border-[#7C3AED]/5 flex gap-3 hover:bg-slate-50 transition-colors cursor-pointer relative group",
-                            notif.is_read != 1 && "bg-[#7C3AED]/[0.02]"
-                          )}
+                           key={notif.id} 
+                           onClick={(e) => { e.stopPropagation(); toggleReadStatus(notif.id, notif.is_read == 1); }}
+                           className={cn(
+                             "p-4 border-b border-[#7C3AED]/5 dark:border-violet-500/5 flex gap-3 hover:bg-slate-50 dark:hover:bg-violet-950/30 transition-colors cursor-pointer relative group",
+                             notif.is_read != 1 && "bg-[#7C3AED]/[0.02] dark:bg-violet-950/10"
+                           )}
                         >
                           <div className={cn(
                             "w-8 h-8 rounded-full shrink-0 flex items-center justify-center",
-                            notif.is_read == 1 ? "bg-slate-100 text-slate-400" : "bg-[#7C3AED]/10 text-[#7C3AED]"
+                            notif.is_read == 1 ? "bg-slate-100 dark:bg-[#150D2E] text-slate-400 dark:text-violet-400/40" : "bg-[#7C3AED]/10 dark:bg-violet-950/30 text-[#7C3AED] dark:text-violet-400"
                           )}>
                             <Bell className="w-4 h-4" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className={cn("text-[11px] leading-relaxed line-clamp-2", notif.is_read == 1 ? "text-slate-500 font-medium" : "text-[#1E184B] font-bold")}>
+                            <p className={cn("text-[11px] leading-relaxed line-clamp-2", notif.is_read == 1 ? "text-slate-500 dark:text-violet-400/50 font-medium" : "text-[#1E184B] dark:text-indigo-100 font-bold")}>
                               {notif.message}
                             </p>
-                            <p className="text-[9px] font-medium text-slate-400 mt-1">
+                            <p className="text-[9px] font-medium text-slate-400 dark:text-violet-400/40 mt-1">
                               {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(notif.created_at).toLocaleDateString()}
                             </p>
                           </div>
                           <div className="flex flex-col items-center gap-2">
-                            {notif.is_read != 1 && <div className="w-2 h-2 rounded-full bg-[#7C3AED] shadow-sm shadow-[#7C3AED]/40" />}
+                            {notif.is_read != 1 && <div className="w-2 h-2 rounded-full bg-[#7C3AED] dark:bg-violet-500 shadow-sm shadow-[#7C3AED]/40" />}
                             <button 
                               onClick={(e) => deleteNotification(e, notif.id)}
-                              className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-rose-50 hover:text-rose-500 rounded-lg transition-all"
+                              className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg transition-all"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -708,7 +725,7 @@ export default function FacultyLayout() {
                   </div>
                   <button 
                     onClick={() => navigate('/faculty/notifications')}
-                    className="w-full py-3 bg-[#7C3AED] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#6D28D9] transition-all"
+                    className="w-full py-3 bg-[#7C3AED] dark:bg-violet-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#6D28D9] dark:hover:bg-violet-700 transition-all"
                   >
                     View All Notifications
                   </button>
@@ -716,7 +733,7 @@ export default function FacultyLayout() {
               )}
             </div>
 
-            <div className="h-8 w-px bg-[#7C3AED]/10 mx-1" />
+            <div className="h-8 w-px bg-[#7C3AED]/10 dark:bg-violet-500/10 mx-1" />
 
             <div className="relative">
               <button 
@@ -724,11 +741,11 @@ export default function FacultyLayout() {
                   e.stopPropagation();
                   setIsProfileOpen(!isProfileOpen);
                 }}
-                className="flex items-center gap-3 p-0 sm:p-1.5 sm:pl-4 rounded-2xl bg-transparent sm:bg-[#7C3AED]/5 border-0 sm:border sm:border-[#7C3AED]/10 hover:border-[#7C3AED]/30 transition-all"
+                className="flex items-center gap-3 p-0 sm:p-1.5 sm:pl-4 rounded-2xl bg-transparent sm:bg-[#7C3AED]/5 dark:sm:bg-violet-950/30 border-0 sm:border sm:border-[#7C3AED]/10 dark:sm:border-violet-500/20 hover:border-[#7C3AED]/30 dark:hover:border-violet-500/40 transition-all"
               >
                 <div className="text-right hidden sm:block">
-                  <p className="text-xs font-black text-[#1E184B] tracking-tight">{user.name}</p>
-                  <p className="text-[9px] font-black text-[#7C3AED] uppercase tracking-widest opacity-60">Faculty</p>
+                  <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 tracking-tight">{user.name}</p>
+                  <p className="text-[9px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest opacity-60">Faculty</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white overflow-hidden flex items-center justify-center font-bold text-sm">
                   {user.profile_pic ? (
@@ -740,27 +757,27 @@ export default function FacultyLayout() {
               </button>
 
               {isProfileOpen && (
-                <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-64 bg-white rounded-2xl shadow-2xl border border-[#7C3AED]/10 overflow-hidden z-[110]">
-                  <div className="p-5 bg-[#7C3AED]/5 border-b border-[#7C3AED]/10">
-                    <p className="text-xs font-black text-[#1E184B] uppercase tracking-widest">{user.name}</p>
-                    <p className="text-[10px] text-[#7C3AED] mt-1 font-bold">Academic Member</p>
+                <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-64 bg-white dark:bg-[#1A0F35] rounded-2xl shadow-2xl border border-[#7C3AED]/10 dark:border-violet-500/20 overflow-hidden z-[110]">
+                  <div className="p-5 bg-[#7C3AED]/5 dark:bg-violet-950/30 border-b border-[#7C3AED]/10 dark:border-violet-500/20">
+                    <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">{user.name}</p>
+                    <p className="text-[10px] text-[#7C3AED] dark:text-violet-400 mt-1 font-bold">Academic Member</p>
                   </div>
                   <div className="p-2">
                     <button 
                       onClick={() => navigate('/faculty/profile')}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] hover:bg-[#7C3AED]/5 transition-all"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-100 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/30 transition-all"
                     >
-                      <User className="w-4 h-4 text-[#7C3AED]" />
+                      <User className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" />
                       Mission Profile
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] hover:bg-[#7C3AED]/5 transition-all">
-                      <History className="w-4 h-4 text-[#7C3AED]" />
+                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-100 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/30 transition-all">
+                      <History className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" />
                       Activity Log
                     </button>
-                    <div className="h-px bg-[#7C3AED]/5 my-2" />
+                    <div className="h-px bg-[#7C3AED]/5 dark:bg-violet-500/10 my-2" />
                     <button 
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-50 transition-all"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all"
                     >
                       <LogOut className="w-4 h-4" />
                       Sign Out
