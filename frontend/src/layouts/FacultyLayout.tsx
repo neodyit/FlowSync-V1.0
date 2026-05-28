@@ -781,18 +781,18 @@ export default function FacultyLayout() {
             <footer className="mt-20 pt-12 pb-12 border-t border-[#7C3AED]/10 text-center">
               <div className="flex flex-col items-center gap-6">
                 {/* Branding Mark */}
-                <div className="flex items-center gap-3 opacity-20 grayscale brightness-0 mb-2">
+                <div className="flex items-center gap-3 opacity-25 grayscale brightness-0 mb-2 dark:opacity-60 dark:grayscale-0 dark:brightness-100 text-[#1E184B] dark:text-indigo-300">
                   <LayoutGrid className="w-5 h-5" />
-                  <span className="text-sm font-black tracking-[0.3em] uppercase text-[#1E184B]">FlowSync</span>
+                  <span className="text-sm font-black tracking-[0.3em] uppercase">FlowSync</span>
                 </div>
                 
                 {/* Credits Section */}
                 <div className="space-y-3">
-                  <p className="text-[11px] font-black text-[#1E184B]/60 uppercase tracking-[0.15em]">
+                  <p className="text-[11px] font-black text-[#1E184B]/60 dark:text-indigo-200/60 uppercase tracking-[0.15em]">
                     Made with <span className="text-rose-500 animate-pulse mx-1">❤️</span> by 
                     <span className="ml-1.5 space-x-1">
-                      <a href="https://mayank.neodyit.in/" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors">Mayank Tiwari</a>,
-                      <a href="" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors">Saurabh Upadhyay</a>
+                      <a href="https://mayank.neodyit.in/" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Mayank Tiwari</a>,
+                      <a href="" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Saurabh Upadhyay</a>
                     </span>
                   </p>
                   
@@ -821,9 +821,9 @@ export default function FacultyLayout() {
 
                 {/* Protocol Links */}
                 <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mt-2">
-                  <span className="text-[9px] font-bold text-[#7C3AED]/40 uppercase tracking-widest cursor-pointer hover:text-[#7C3AED] transition-colors">Privacy Protocol</span>
-                  <span className="text-[9px] font-bold text-[#7C3AED]/40 uppercase tracking-widest cursor-pointer hover:text-[#7C3AED] transition-colors">Compliance Standards</span>
-                  <span className="text-[9px] font-bold text-[#7C3AED]/40 uppercase tracking-widest cursor-pointer hover:text-[#7C3AED] transition-colors">System Support</span>
+                  <span className="text-[9px] font-bold text-[#7C3AED]/40 dark:text-indigo-400/40 uppercase tracking-widest cursor-pointer hover:text-[#7C3AED] dark:hover:text-indigo-300 transition-colors">Privacy Protocol</span>
+                  <span className="text-[9px] font-bold text-[#7C3AED]/40 dark:text-indigo-400/40 uppercase tracking-widest cursor-pointer hover:text-[#7C3AED] dark:hover:text-indigo-300 transition-colors">Compliance Standards</span>
+                  <span className="text-[9px] font-bold text-[#7C3AED]/40 dark:text-indigo-400/40 uppercase tracking-widest cursor-pointer hover:text-[#7C3AED] dark:hover:text-indigo-300 transition-colors">System Support</span>
                 </div>
               </div>
             </footer>

@@ -37,7 +37,7 @@
       background-color: var(--card-bg) !important;
     }
 
-    .bg-slate-50, .bg-slate-50\/50, .hover\:bg-slate-50:hover {
+    .bg-slate-50, .bg-slate-50\/50, .hover\:bg-slate-50:hover, .hover\:bg-slate-50\/50:hover {
       background-color: var(--bg-secondary) !important;
     }
 
@@ -74,16 +74,33 @@
       background-color: rgba(139, 92, 246, 0.1) !important;
     }
 
-    .bg-blue-50 {
-      background-color: rgba(59, 130, 246, 0.1) !important;
+    /* Clean up notification card light backgrounds in dark mode */
+    .bg-slate-50\/30 {
+      background-color: rgba(19, 12, 36, 0.4) !important;
     }
 
-    .bg-emerald-50 {
-      background-color: rgba(16, 185, 129, 0.1) !important;
+    .bg-blue-50, .bg-blue-100 {
+      background-color: rgba(59, 130, 246, 0.12) !important;
     }
 
-    .bg-amber-50 {
-      background-color: rgba(245, 158, 11, 0.1) !important;
+    .bg-emerald-50, .bg-emerald-100 {
+      background-color: rgba(16, 185, 129, 0.12) !important;
+    }
+
+    .bg-amber-50, .bg-amber-100 {
+      background-color: rgba(245, 158, 11, 0.12) !important;
+    }
+
+    .bg-rose-50, .bg-rose-100 {
+      background-color: rgba(244, 63, 94, 0.12) !important;
+    }
+
+    .bg-indigo-50, .bg-indigo-100 {
+      background-color: rgba(139, 92, 246, 0.12) !important;
+    }
+
+    .bg-purple-50, .bg-purple-100 {
+      background-color: rgba(147, 51, 234, 0.12) !important;
     }
 
     /* SweetAlert2 Elegant overrides */
@@ -101,6 +118,15 @@
       background-color: var(--bg-secondary) !important;
       border-color: var(--card-border) !important;
       color: var(--text-main) !important;
+    }
+
+    /* Clean up and blend glowing shadows in dark mode to avoid light grey halos */
+    [class*="shadow-"] {
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+    }
+    
+    [class*="shadow-[#7C3AED]"] {
+      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.12) !important;
     }
   }
 
@@ -174,6 +200,19 @@
 }
 ::-webkit-scrollbar-thumb {
   @apply bg-[var(--accent)]/20 hover:bg-[var(--accent)]/40 rounded-full transition-colors;
+}
+
+/* Date Picker Native Calendar Icon Override */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 4px;
+  filter: invert(0.3) sepia(1) saturate(3) hue-rotate(230deg); /* Violet brand color tint for light mode */
+  transition: all 0.2s ease;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.95) !important; /* Crisp white/silver in dark mode */
 }
 
 

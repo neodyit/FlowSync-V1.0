@@ -569,7 +569,7 @@ const HODTaskForm: React.FC = () => {
                                 initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
                                 className="space-y-2 relative pl-2 border-l-2 border-slate-100"
                               >
-                                <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Target Operative</label>
+                                <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Target Faculty</label>
                                 <div className="relative group dropdown-container">
                                   <button
                                     type="button"
@@ -578,7 +578,7 @@ const HODTaskForm: React.FC = () => {
                                   >
                                     <span className={formData.assigned_to_ids.length > 0 ? "text-[#1E184B]" : "text-slate-400"}>
                                       {formData.assigned_to_ids.length > 0 
-                                        ? `${formData.assigned_to_ids.length} operative${formData.assigned_to_ids.length > 1 ? 's' : ''} enlisted` 
+                                        ? `${formData.assigned_to_ids.length} Facult${formData.assigned_to_ids.length > 1 ? 'ies' : 'y'} enlisted` 
                                         : "Select personnel..."}
                                     </span>
                                     <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", openSelect === 'faculty' && "rotate-180")} />
@@ -642,7 +642,7 @@ const HODTaskForm: React.FC = () => {
                           </AnimatePresence>
                         </div>
 
-                        {/* Squadron Option */}
+                        {/* Group Option */}
                         <div className="space-y-3">
                           <button 
                             type="button"
@@ -661,7 +661,7 @@ const HODTaskForm: React.FC = () => {
                               <Users className="w-5 h-5" />
                             </div>
                             <div>
-                              <p className={cn("text-xs font-black uppercase tracking-widest", formData.assignment_mode === 'group' ? "text-[#1E184B]" : "text-slate-400")}>Squadron</p>
+                              <p className={cn("text-xs font-black uppercase tracking-widest", formData.assignment_mode === 'group' ? "text-[#1E184B]" : "text-slate-400")}>Group</p>
                               <p className="text-[9px] font-bold text-slate-400 mt-0.5">Pre-defined group</p>
                             </div>
                           </button>
@@ -672,7 +672,7 @@ const HODTaskForm: React.FC = () => {
                                 initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
                                 className="space-y-2 relative pl-2 border-l-2 border-slate-100"
                               >
-                                <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Target Squadron</label>
+                                <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Target Group</label>
                                 <div className="relative group dropdown-container">
                                   <button
                                     type="button"
@@ -681,8 +681,8 @@ const HODTaskForm: React.FC = () => {
                                   >
                                     <span className={formData.assigned_to_ids.length > 0 ? "text-[#1E184B]" : "text-slate-400"}>
                                       {formData.assigned_to_ids.length > 0 
-                                        ? `${formData.assigned_to_ids.length} operative${formData.assigned_to_ids.length > 1 ? 's' : ''} enlisted` 
-                                        : "Select squadron..."}
+                                        ? `${formData.assigned_to_ids.length} Faculty${formData.assigned_to_ids.length > 1 ? 's' : ''} enlisted` 
+                                        : "Select Group..."}
                                     </span>
                                     <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", openSelect === 'group' && "rotate-180")} />
                                   </button>
@@ -696,7 +696,7 @@ const HODTaskForm: React.FC = () => {
                                         >
                                           <div className="p-2 overflow-y-auto custom-scrollbar">
                                             {groups.length === 0 ? (
-                                              <div className="py-8 text-center text-[10px] font-black text-slate-300 uppercase tracking-widest">No squadrons available</div>
+                                              <div className="py-8 text-center text-[10px] font-black text-slate-300 uppercase tracking-widest">No Groups available</div>
                                             ) : (
                                               groups.map((g) => {
                                                 const isSelected = g.members.length > 0 && g.members.every(m => formData.assigned_to_ids.includes(m.id.toString())) && g.members.length === formData.assigned_to_ids.length;
@@ -725,7 +725,7 @@ const HODTaskForm: React.FC = () => {
                                             )}
                                             <div className="px-2 pt-2 pb-1 border-t border-slate-50 mt-1">
                                               <a href="/hod/groups" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                                                <Plus className="w-3.5 h-3.5" /> Assemble Squadron
+                                                <Plus className="w-3.5 h-3.5" /> Manage Group
                                               </a>
                                             </div>
                                           </div>
@@ -770,8 +770,8 @@ const HODTaskForm: React.FC = () => {
 
                   {/* Materials Upload Box */}
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1 flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-[#7C3AED]" /> Material Assets
+                    <label className="text-[10px] font-black text-[#1E184B] dark:text-indigo-300 uppercase tracking-widest ml-1 flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" /> Material Assets
                     </label>
                     <div className="relative group">
                       <input 
@@ -782,14 +782,14 @@ const HODTaskForm: React.FC = () => {
                         }}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                       />
-                      <div className="px-6 py-10 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] flex flex-col items-center justify-center gap-4 group-hover:border-[#7C3AED]/40 transition-all group-hover:bg-[#7C3AED]/5 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-100/50" />
-                        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200/50 text-slate-400 group-hover:text-[#7C3AED] group-hover:scale-110 transition-all relative z-10">
+                      <div className="px-6 py-10 bg-slate-50 dark:bg-[#1A0F35]/60 border-2 border-dashed border-slate-200 dark:border-violet-500/20 rounded-[2rem] flex flex-col items-center justify-center gap-4 group-hover:border-[#7C3AED]/40 dark:group-hover:border-violet-500/50 transition-all group-hover:bg-[#7C3AED]/5 dark:group-hover:bg-violet-500/10 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-100/50 dark:to-violet-900/10" />
+                        <div className="w-14 h-14 bg-white dark:bg-[#130C24] rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200/50 dark:shadow-violet-900/40 text-slate-400 dark:text-violet-400/50 group-hover:text-[#7C3AED] dark:group-hover:text-violet-400 group-hover:scale-110 transition-all relative z-10 border border-transparent dark:border-violet-500/10">
                           <Plus className="w-6 h-6" />
                         </div>
                         <div className="text-center relative z-10">
-                          <p className="text-[11px] font-black text-[#1E184B] uppercase tracking-widest">Transmit Documents</p>
-                          <p className="text-[10px] font-bold text-slate-400 mt-1.5">Drop files to attach to this mission</p>
+                          <p className="text-[11px] font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">Transmit Documents</p>
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-violet-400/60 mt-1.5">Drop files to attach to this mission</p>
                         </div>
                       </div>
                     </div>
@@ -801,21 +801,21 @@ const HODTaskForm: React.FC = () => {
                             <motion.div 
                               initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                               key={`${file.name}-${idx}`} 
-                              className="flex items-center justify-between p-3.5 bg-white border-2 border-slate-100 rounded-[1.25rem] shadow-sm hover:border-slate-200 transition-colors"
+                              className="flex items-center justify-between p-3.5 bg-white dark:bg-[#130C24] border-2 border-slate-100 dark:border-violet-500/15 rounded-[1.25rem] shadow-sm hover:border-slate-200 dark:hover:border-violet-500/30 transition-colors"
                             >
                               <div className="flex items-center gap-4">
-                                <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                                <div className="p-2.5 bg-indigo-50 dark:bg-violet-900/30 text-indigo-600 dark:text-violet-400 rounded-xl">
                                   <FileText className="w-4 h-4" />
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="text-xs font-black text-[#1E184B] truncate max-w-[180px] sm:max-w-[240px]">{file.name}</span>
-                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{(file.size / 1024).toFixed(1)} KB</span>
+                                  <span className="text-xs font-black text-[#1E184B] dark:text-indigo-100 truncate max-w-[180px] sm:max-w-[240px]">{file.name}</span>
+                                  <span className="text-[9px] font-bold text-slate-400 dark:text-violet-400/60 uppercase tracking-widest mt-0.5">{(file.size / 1024).toFixed(1)} KB</span>
                                 </div>
                               </div>
                               <button 
                                 type="button"
                                 onClick={() => setFormData(prev => ({...prev, attachments: prev.attachments.filter((_, i) => i !== idx)}))}
-                                className="p-2 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-xl transition-all"
+                                className="p-2 bg-slate-50 dark:bg-[#1A0F35] hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 dark:text-violet-400/50 hover:text-rose-500 dark:hover:text-rose-400 rounded-xl transition-all"
                               >
                                 <X className="w-4 h-4" />
                               </button>
@@ -830,23 +830,23 @@ const HODTaskForm: React.FC = () => {
               </div>
 
               {/* ----------------- BOTTOM ACTION BAR ----------------- */}
-              <div className="bg-slate-50 border-t border-slate-100 p-6 lg:px-10 lg:py-6 flex flex-col sm:flex-row items-center justify-between gap-6 rounded-b-[2.5rem]">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" /> All systems ready for deployment
+              <div className="bg-slate-50 dark:bg-[#0E0820] border-t border-slate-100 dark:border-violet-500/10 p-6 lg:px-10 lg:py-6 flex flex-col sm:flex-row items-center justify-between gap-6 rounded-b-[2.5rem]">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-violet-400/60 uppercase tracking-widest flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400" /> All systems ready for deployment
                 </p>
                 <div className="flex w-full sm:w-auto gap-3">
                   <button 
                     type="button"
                     onClick={(e) => handleCreateOrUpdate(e as any, true)}
                     disabled={isSubmitting}
-                    className="flex-1 sm:flex-none px-8 py-4 bg-white text-slate-600 hover:text-[#7C3AED] rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 active:scale-95 border-2 border-slate-200 hover:border-[#7C3AED]/30 shadow-sm hover:shadow-md"
+                    className="flex-1 sm:flex-none px-8 py-4 bg-white dark:bg-[#130C24] text-slate-600 dark:text-indigo-300 hover:text-[#7C3AED] dark:hover:text-violet-300 rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 active:scale-95 border-2 border-slate-200 dark:border-violet-500/20 hover:border-[#7C3AED]/30 dark:hover:border-violet-500/40 shadow-sm hover:shadow-md"
                   >
                     {isSubmitting ? 'Processing...' : formData.id ? 'Save Draft' : 'Save as Draft'}
                   </button>
                   <button 
                     type="submit"
                     disabled={isSubmitting || (systemSettings.pause_new_tasks === 'true' && (!formData.id || tasks.find(t=>t.id===formData.id)?.status === 'Draft'))}
-                    className="flex-[2] sm:flex-none px-10 py-4 bg-gradient-to-r from-[#7C3AED] to-[#6D28D9] text-white rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#7C3AED]/25 hover:shadow-2xl hover:shadow-[#7C3AED]/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none active:scale-95 flex items-center justify-center gap-2"
+                    className="flex-[2] sm:flex-none px-10 py-4 bg-gradient-to-r from-[#7C3AED] to-[#6D28D9] text-white rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#7C3AED]/25 dark:shadow-violet-900/50 hover:shadow-2xl hover:shadow-[#7C3AED]/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none active:scale-95 flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
                       <>

@@ -213,7 +213,8 @@ const Reports: React.FC = () => {
                       Elite Faculty Ranking
                     </h3>
                   </div>
-                  <div className="overflow-x-auto">
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left">
                       <thead>
                         <tr className="bg-slate-50/50">
@@ -223,7 +224,7 @@ const Reports: React.FC = () => {
                           <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Intel Score</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-50">
+                      <tbody className="divide-y divide-slate-50 dark:divide-slate-800/40">
                         {data.faculty_performance.slice(0, 5).map((faculty) => {
                           const adherence = faculty.tasks_completed > 0 
                             ? Math.round((faculty.on_time_count / faculty.tasks_completed) * 100)
@@ -232,7 +233,7 @@ const Reports: React.FC = () => {
                             <tr key={faculty.id} className="hover:bg-slate-50/50 transition-all group">
                               <td className="px-8 py-5">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+                                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#1A1235] border border-slate-200 dark:border-slate-800">
                                     {faculty.profile_pic ? (
                                       <img src={`${import.meta.env.VITE_API_URL}/${faculty.profile_pic}`} alt={faculty.name} className="w-full h-full object-cover" />
                                     ) : (
@@ -240,29 +241,68 @@ const Reports: React.FC = () => {
                                     )}
                                   </div>
                                   <div>
-                                    <p className="text-sm font-black text-[#1E184B]">{faculty.name}</p>
+                                    <p className="text-sm font-black text-[#1E184B] dark:text-white">{faculty.name}</p>
                                     <p className="text-[10px] font-bold text-slate-400 italic">Faculty Lead</p>
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-8 py-5 text-center font-black text-xs text-[#1E184B]">{faculty.tasks_completed}</td>
+                              <td className="px-8 py-5 text-center font-black text-xs text-[#1E184B] dark:text-white">{faculty.tasks_completed}</td>
                               <td className="px-8 py-5">
                                 <div className="flex flex-col items-center gap-1">
                                   <span className={cn(
                                     "text-[10px] font-black",
                                     adherence >= 80 ? "text-emerald-500" : adherence >= 50 ? "text-amber-500" : "text-rose-500"
                                   )}>{adherence}%</span>
-                                  <div className="w-16 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                  <div className="w-16 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                     <div className={cn("h-full", adherence >= 80 ? "bg-emerald-500" : adherence >= 50 ? "bg-amber-500" : "bg-rose-500")} style={{width: `${adherence}%`}} />
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-8 py-5 text-right font-black text-sm text-[#7C3AED]">{faculty.total_points || 0}</td>
+                              <td className="px-8 py-5 text-right font-black text-sm text-[#7C3AED] dark:text-[#A78BFA]">{faculty.total_points || 0}</td>
                             </tr>
                           );
                         })}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* Mobile Card List View */}
+                  <div className="block md:hidden divide-y divide-slate-50 dark:divide-slate-800/40">
+                    {data.faculty_performance.slice(0, 5).map((faculty, idx) => {
+                      const adherence = faculty.tasks_completed > 0 
+                        ? Math.round((faculty.on_time_count / faculty.tasks_completed) * 100)
+                        : 0;
+                      return (
+                        <div key={faculty.id} className="p-5 flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="text-[10px] font-black text-slate-400 shrink-0">#{idx + 1}</span>
+                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#1A1235] border border-slate-200 dark:border-slate-800 shrink-0">
+                              {faculty.profile_pic ? (
+                                <img src={`${import.meta.env.VITE_API_URL}/${faculty.profile_pic}`} alt={faculty.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center font-black text-slate-400 text-xs">{faculty.name.charAt(0)}</div>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-black text-[#1E184B] dark:text-white truncate">{faculty.name}</p>
+                              <div className="flex items-center gap-2 mt-0.5 text-[9px] font-bold text-slate-400">
+                                <span>{faculty.tasks_completed} Done</span>
+                                <span>•</span>
+                                <span className={cn(
+                                  "font-black",
+                                  adherence >= 80 ? "text-emerald-500" : adherence >= 50 ? "text-amber-500" : "text-rose-500"
+                                )}>{adherence}% Adherence</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="text-right shrink-0">
+                            <span className="text-xs font-black text-[#7C3AED] dark:text-[#A78BFA] block">{faculty.total_points || 0}</span>
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mt-0.5">Intel Score</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 

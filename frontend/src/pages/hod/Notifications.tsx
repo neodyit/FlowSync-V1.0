@@ -365,7 +365,7 @@ const HODNotifications: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5" />
-                        {formatDate(notif.created_at)} • {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {formatDate(notif.created_at)}
                       </span>
                       {notif.trigger_user_name && (
                         <span className="text-[10px] font-black text-[#7C3AED] bg-[#7C3AED]/5 px-2.5 py-1 rounded-lg flex items-center gap-1.5">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  CheckCircle2, Clock, Users, ArrowLeft, Loader2, X, Download, Eye, FileText, BookOpen, Layers, Bell, AlertTriangle, RotateCcw, Info, MessageSquare, Send, ChevronDown, Check, Flag, Award, Calendar
+  CheckCircle2, Clock, Users, ArrowLeft, Loader2, X, Download, Eye, FileText, BookOpen, Layers, Bell, AlertTriangle, RotateCcw, Info, MessageSquare, Send, ChevronDown, Check, Flag, Award, Calendar, ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Swal from 'sweetalert2';
@@ -742,11 +742,11 @@ export default function HODTaskDetails() {
                 <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
                   {task.task_link && (
                     <div className="p-2.5 bg-white border border-slate-100 rounded-xl flex items-center justify-between gap-2">
-                      <a href={task.task_link} target="_blank" rel="noreferrer" className="text-[11px] font-black text-[#7C3AED] hover:underline truncate max-w-[150px]">
+                      <a href={task.task_link} target="_blank" rel="noreferrer" className="text-[11px] font-black text-[#7C3AED] dark:text-[#A78BFA] hover:underline truncate max-w-[150px]">
                         {task.task_link}
                       </a>
-                      <a href={task.task_link} target="_blank" rel="noreferrer" className="p-1 text-slate-400 hover:text-[#7C3AED]">
-                        <Eye className="w-3.5 h-3.5" />
+                      <a href={task.task_link} target="_blank" rel="noreferrer" className="p-1 text-slate-400 dark:text-slate-500 hover:text-[#7C3AED] dark:hover:text-[#8B5CF6]">
+                        <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
                   )}
@@ -774,36 +774,44 @@ export default function HODTaskDetails() {
         
         {/* Left Column (5/12 width): Operative Roster */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white rounded-[2rem] border-2 border-slate-100 p-4 sm:p-6 shadow-xl shadow-slate-200/20">
+          <div className="bg-white dark:bg-[#130C24] rounded-[2rem] border-2 border-slate-100 dark:border-violet-500/15 p-4 sm:p-6 shadow-xl shadow-slate-200/20 dark:shadow-violet-900/20">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#7C3AED]" />
+              <h3 className="text-[10px] font-black text-slate-400 dark:text-violet-400/70 uppercase tracking-widest flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" />
                 Operative Assignment Roster
               </h3>
-              <span className="bg-indigo-50 text-[#7C3AED] px-3 py-1 rounded-xl text-[10px] font-black">
+              <span className="bg-indigo-50 dark:bg-violet-500/15 text-[#7C3AED] dark:text-violet-300 px-3 py-1 rounded-xl text-[10px] font-black">
                 {task.assignments.length} Assigned
               </span>
             </div>
 
             {/* Bulk Controls Expansion Board (Compact Roster Header Check) */}
             {task.assignments.length > 0 && (
-              <div className="mb-4 p-3 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between">
-                <label className="flex items-center gap-2.5 cursor-pointer text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  <input 
-                    type="checkbox"
-                    checked={
-                      selectedAssignmentIds.length > 0 &&
-                      selectedAssignmentIds.length === task.assignments.length
-                    }
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedAssignmentIds(task.assignments.map(a => a.user_id));
-                      } else {
+              <div className="mb-4 p-3 bg-slate-50 dark:bg-[#1A0F35] border border-slate-100 dark:border-violet-500/15 rounded-2xl flex items-center justify-between">
+                <label className="flex items-center gap-2.5 cursor-pointer text-[10px] font-black text-slate-500 dark:text-violet-400/70 uppercase tracking-widest">
+                  {/* Custom checkbox */}
+                  <span
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (selectedAssignmentIds.length > 0 && selectedAssignmentIds.length === task.assignments.length) {
                         setSelectedAssignmentIds([]);
+                      } else {
+                        setSelectedAssignmentIds(task.assignments.map(a => a.user_id));
                       }
                     }}
-                    className="w-4 h-4 rounded text-[#7C3AED] border-slate-300 focus:ring-[#7C3AED]"
-                  />
+                    className={cn(
+                      "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 cursor-pointer transition-all",
+                      selectedAssignmentIds.length > 0 && selectedAssignmentIds.length === task.assignments.length
+                        ? "bg-[#7C3AED] border-[#7C3AED]"
+                        : "bg-white dark:bg-[#130C24] border-slate-300 dark:border-violet-500/40"
+                    )}
+                  >
+                    {selectedAssignmentIds.length > 0 && selectedAssignmentIds.length === task.assignments.length && (
+                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </span>
                   <span>Select All Operatives</span>
                 </label>
                 {selectedAssignmentIds.length > 0 && (
@@ -824,37 +832,53 @@ export default function HODTaskDetails() {
                     className={cn(
                       "cursor-pointer flex flex-col p-4 border-2 rounded-2xl gap-3 transition-all hover:shadow-md",
                       // Background colors
-                      ['Submitted', 'Under Review'].includes(assign.status) ? "bg-orange-50/10" :
-                      (assign.status === 'Approved' || assign.status === 'Completed') ? "bg-emerald-50/10" :
-                      selectedAssignmentId === assign.user_id ? "bg-white" : "bg-slate-50/50",
+                      ['Submitted', 'Under Review'].includes(assign.status)
+                        ? "bg-orange-50/10 dark:bg-orange-900/10"
+                        : (assign.status === 'Approved' || assign.status === 'Completed')
+                          ? "bg-emerald-50/10 dark:bg-emerald-900/10"
+                          : selectedAssignmentId === assign.user_id
+                            ? "bg-white dark:bg-[#1A0F35]"
+                            : "bg-slate-50/50 dark:bg-[#1A0F35]/50",
                       
                       // Border colors
                       ['Submitted', 'Under Review'].includes(assign.status)
                         ? "border-orange-400 hover:border-orange-500" 
                         : (assign.status === 'Approved' || assign.status === 'Completed')
                           ? "border-emerald-500 hover:border-emerald-600" 
-                          : selectedAssignmentId === assign.user_id ? "border-[#7C3AED]" : "border-slate-100",
+                          : selectedAssignmentId === assign.user_id
+                            ? "border-[#7C3AED] dark:border-violet-500"
+                            : "border-slate-100 dark:border-violet-500/10",
                       
                       // Selected shadow/ring focus indicator
-                      selectedAssignmentId === assign.user_id && "ring-2 ring-offset-1 ring-[#7C3AED]/30 shadow-lg"
+                      selectedAssignmentId === assign.user_id && "ring-2 ring-offset-2 ring-[#7C3AED]/40 dark:ring-violet-400/70 ring-offset-white dark:ring-offset-[#130C24] shadow-lg dark:shadow-violet-500/20"
                     )}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <input 
-                          type="checkbox"
-                          checked={selectedAssignmentIds.includes(assign.user_id)}
-                          onClick={(e) => e.stopPropagation()} 
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedAssignmentIds(prev => [...prev, assign.user_id]);
-                            } else {
+                        {/* Custom checkbox */}
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (selectedAssignmentIds.includes(assign.user_id)) {
                               setSelectedAssignmentIds(prev => prev.filter(id => id !== assign.user_id));
+                            } else {
+                              setSelectedAssignmentIds(prev => [...prev, assign.user_id]);
                             }
                           }}
-                          className="w-4 h-4 rounded text-[#7C3AED] border-slate-300 focus:ring-[#7C3AED] shrink-0"
-                        />
-                        <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center font-black text-indigo-600 shadow-sm border border-slate-100 overflow-hidden shrink-0">
+                          className={cn(
+                            "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 cursor-pointer transition-all",
+                            selectedAssignmentIds.includes(assign.user_id)
+                              ? "bg-[#7C3AED] border-[#7C3AED]"
+                              : "bg-white dark:bg-[#130C24] border-slate-300 dark:border-violet-500/40"
+                          )}
+                        >
+                          {selectedAssignmentIds.includes(assign.user_id) && (
+                            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </span>
+                        <div className="w-9 h-9 bg-white dark:bg-[#1A0F35] rounded-xl flex items-center justify-center font-black text-indigo-600 dark:text-violet-400 shadow-sm border border-slate-100 dark:border-violet-500/20 overflow-hidden shrink-0">
                           {assign.faculty_pic ? (
                             <img src={`${import.meta.env.VITE_API_URL}/${assign.faculty_pic}`} alt={assign.faculty_name} className="w-full h-full object-cover" />
                           ) : (
@@ -862,8 +886,8 @@ export default function HODTaskDetails() {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-black text-[#1E184B] truncate">{assign.faculty_name}</p>
-                          <p className="text-[9px] font-bold text-slate-400 truncate max-w-[130px]">{assign.faculty_email}</p>
+                          <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 truncate">{assign.faculty_name}</p>
+                          <p className="text-[9px] font-bold text-slate-400 dark:text-violet-400/60 truncate max-w-[130px]">{assign.faculty_email}</p>
                         </div>
                       </div>
 
@@ -871,8 +895,8 @@ export default function HODTaskDetails() {
                         <span className={cn("text-[9px] font-black uppercase px-2 py-0.5 rounded-lg border shadow-sm", 
                           assign.status === 'Approved' || assign.status === 'Completed' ? 'bg-emerald-500 border-emerald-600 text-white animate-pulse' :
                           ['Submitted', 'Under Review'].includes(assign.status) ? 'bg-orange-500 border-orange-600 text-white' :
-                          assign.status === 'Rework Required' ? 'bg-rose-50 border-rose-100 text-rose-500' :
-                          'bg-indigo-50 border-indigo-100 text-indigo-500'
+                          assign.status === 'Rework Required' ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-500/20 text-rose-500 dark:text-rose-400' :
+                          'bg-indigo-50 dark:bg-violet-900/20 border-indigo-100 dark:border-violet-500/20 text-indigo-500 dark:text-violet-300'
                         )}>
                           {['Submitted', 'Under Review'].includes(assign.status) ? 'Review Pending' : 
                            assign.status === 'Approved' || assign.status === 'Completed' ? 'Reviewed' : 
@@ -884,15 +908,15 @@ export default function HODTaskDetails() {
                             e.stopPropagation();
                             handleRemoveFaculty(task.id, assign.user_id, assign.faculty_name);
                           }}
-                          className="px-2 py-0.5 text-rose-600 hover:bg-rose-50 rounded text-[8px] font-black uppercase tracking-wider transition-all border border-rose-100/50 flex items-center gap-0.5 shadow-sm bg-white"
+                          className="px-2 py-0.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded text-[8px] font-black uppercase tracking-wider transition-all border border-rose-100/50 dark:border-rose-500/20 flex items-center gap-0.5 shadow-sm bg-white dark:bg-[#130C24]"
                           title="Remove faculty member from task"
                         >
                           <X className="w-2.5 h-2.5" /> Remove
                         </button>
                         <div className="flex items-center gap-1.5 mt-1.5">
-                          <span className="text-[8px] font-bold text-slate-400">{assign.progress}%</span>
-                          <div className="w-12 h-1 bg-slate-200 rounded-full overflow-hidden">
-                            <div className="h-full bg-[#7C3AED]" style={{ width: `${assign.progress}%` }} />
+                          <span className="text-[8px] font-bold text-slate-400 dark:text-violet-400/50">{assign.progress}%</span>
+                          <div className="w-12 h-1 bg-slate-200 dark:bg-violet-900/40 rounded-full overflow-hidden">
+                            <div className="h-full bg-[#7C3AED] dark:bg-violet-500" style={{ width: `${assign.progress}%` }} />
                           </div>
                         </div>
                       </div>
@@ -900,9 +924,9 @@ export default function HODTaskDetails() {
                   </div>
                 ))
               ) : (
-                <div className="p-8 border-2 border-dashed border-slate-200 rounded-3xl text-center">
-                  <Users className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No assignments found</p>
+                <div className="p-8 border-2 border-dashed border-slate-200 dark:border-violet-500/15 rounded-3xl text-center">
+                  <Users className="w-8 h-8 text-slate-300 dark:text-violet-900/60 mx-auto mb-3" />
+                  <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/50 uppercase tracking-widest">No assignments found</p>
                 </div>
               )}
             </div>
@@ -1125,18 +1149,18 @@ export default function HODTaskDetails() {
 
                     {/* Delay & Timeline metrics */}
                     {currentAssign.submitted_at && (
-                      <div className="p-4 bg-indigo-50/20 border border-indigo-100/50 rounded-2xl flex items-center justify-between">
+                      <div className="p-4 bg-indigo-50/20 dark:bg-indigo-950/15 border border-indigo-100/50 dark:border-indigo-900/35 rounded-2xl flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                          <Clock className="w-4 h-4 text-indigo-500" />
+                          <Clock className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
                           <div>
-                            <p className="text-[8px] font-black text-indigo-900 uppercase tracking-widest">Submitted Date</p>
-                            <p className="text-[10px] font-bold text-indigo-700/70">{formatDate(currentAssign.submitted_at)}</p>
+                            <p className="text-[8px] font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-widest">Submitted Date</p>
+                            <p className="text-[10px] font-bold text-indigo-700/70 dark:text-indigo-400/80">{formatDate(currentAssign.submitted_at)}</p>
                           </div>
                         </div>
                         {currentAssign.is_delayed === 1 && (
                           <div className="text-right">
-                            <span className="px-2 py-0.5 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-[8px] font-black uppercase tracking-widest">Delay Checked</span>
-                            <p className="text-[10px] font-bold text-rose-500/70 mt-1">
+                            <span className="px-2 py-0.5 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/35 text-rose-600 dark:text-rose-400 rounded-lg text-[8px] font-black uppercase tracking-widest">Delay Checked</span>
+                            <p className="text-[10px] font-bold text-rose-500/70 dark:text-rose-400/80 mt-1">
                               {Math.max(1, Math.ceil((new Date(currentAssign.submitted_at).getTime() - new Date(task.deadline).getTime()) / (1000 * 3600 * 24)))} Days Late
                             </p>
                           </div>
@@ -1213,14 +1237,14 @@ export default function HODTaskDetails() {
                   </div>
 
                   {/* Active Assessment Controls & Sliders */}
-                  <div className="bg-white rounded-[2rem] border-2 border-slate-100 p-6 md:p-8 shadow-xl shadow-slate-200/20 space-y-6">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Award className="w-4 h-4 text-[#7C3AED]" /> Assessment Configurator & Triggers</h3>
+                  <div className="bg-white dark:bg-[#130C24] rounded-[2rem] border-2 border-slate-100 dark:border-violet-500/15 p-6 md:p-8 shadow-xl shadow-slate-200/20 dark:shadow-violet-900/20 space-y-6">
+                    <h3 className="text-[10px] font-black text-slate-400 dark:text-violet-400/70 uppercase tracking-widest flex items-center gap-1.5"><Award className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" /> Assessment Configurator & Triggers</h3>
                     
                     {!['Submitted', 'Under Review', 'Approved', 'Completed'].includes(currentAssign.status) ? (
-                      <div className="p-6 bg-amber-50/20 border-2 border-dashed border-amber-200/60 rounded-2xl text-center space-y-3">
-                        <Clock className="w-8 h-8 text-amber-500 mx-auto animate-pulse" />
-                        <h4 className="text-xs font-black text-[#1E184B] uppercase tracking-widest">Awaiting Operative Submission</h4>
-                        <p className="text-[10px] font-bold text-slate-400 max-w-xs mx-auto">
+                      <div className="p-6 bg-amber-50/20 dark:bg-amber-900/10 border-2 border-dashed border-amber-200/60 dark:border-amber-500/25 rounded-2xl text-center space-y-3">
+                        <Clock className="w-8 h-8 text-amber-500 dark:text-amber-400 mx-auto animate-pulse" />
+                        <h4 className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">Awaiting Operative Submission</h4>
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-violet-400/60 max-w-xs mx-auto">
                           Merit scoring, bonus allocations, and review buttons are locked. Awaiting operative's deliverables before assessment can be executed.
                         </p>
                       </div>
@@ -1246,17 +1270,17 @@ export default function HODTaskDetails() {
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-center flex items-center justify-center gap-3">
-                              <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0 animate-bounce" />
+                            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl text-center flex items-center justify-center gap-3">
+                              <CheckCircle2 className="w-6 h-6 text-emerald-500 dark:text-emerald-400 shrink-0 animate-bounce" />
                               <div className="text-left">
-                                <p className="text-[10px] font-black text-emerald-900 uppercase tracking-widest">Contribution Approved</p>
-                                <p className="text-[8px] font-bold text-emerald-600">Finalized metrics recorded in database.</p>
+                                <p className="text-[10px] font-black text-emerald-900 dark:text-emerald-300 uppercase tracking-widest">Contribution Approved</p>
+                                <p className="text-[8px] font-bold text-emerald-600 dark:text-emerald-400/70">Finalized metrics recorded in database.</p>
                               </div>
                             </div>
                             <button 
                               type="button"
                               onClick={() => updateReviewStatus(task.id, { status: 'Rework Required' }, currentAssign.user_id)} 
-                              className="w-full py-3.5 bg-orange-50/50 text-orange-600 border border-orange-100 rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                              className="w-full py-3.5 bg-orange-50/50 dark:bg-orange-900/15 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-500/20 rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-orange-500 dark:hover:bg-orange-600 hover:text-white transition-all flex items-center justify-center gap-2"
                             >
                               <RotateCcw className="w-4 h-4" /> Revoke & Ask for Rework
                             </button>
@@ -1267,27 +1291,27 @@ export default function HODTaskDetails() {
 
                     {/* Push Alerts triggers if not approved and not submitted */}
                     {!['Approved', 'Completed', 'Submitted', 'Under Review'].includes(currentAssign.status) && (
-                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
-                        <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Bell className="w-3.5 h-3.5 text-amber-500" /> Dispatch Push Reminders</h4>
+                      <div className="p-4 bg-slate-50 dark:bg-[#1A0F35] rounded-2xl border border-slate-100 dark:border-violet-500/15 space-y-3">
+                        <h4 className="text-[9px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest flex items-center gap-1.5"><Bell className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" /> Dispatch Push Reminders</h4>
                         <div className="grid grid-cols-3 gap-2">
                           <button 
                             type="button"
                             onClick={() => handleSendReminder(task.id, currentAssign.user_id, 'Gentle Reminder')}
-                            className="py-2 px-1 bg-white hover:bg-indigo-600 hover:text-white text-indigo-600 border border-slate-200 rounded-xl text-[8px] font-black uppercase tracking-wider transition-all flex flex-col items-center gap-1 shadow-sm"
+                            className="py-2 px-1 bg-white dark:bg-[#130C24] hover:bg-indigo-600 dark:hover:bg-indigo-600 hover:text-white text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-violet-500/15 rounded-xl text-[8px] font-black uppercase tracking-wider transition-all flex flex-col items-center gap-1 shadow-sm"
                           >
                             <Info className="w-3.5 h-3.5" /> Gentle
                           </button>
                           <button 
                             type="button"
                             onClick={() => handleSendReminder(task.id, currentAssign.user_id, 'Reminder')}
-                            className="py-2 px-1 bg-white hover:bg-amber-500 hover:text-white text-amber-600 border border-slate-200 rounded-xl text-[8px] font-black uppercase tracking-wider transition-all flex flex-col items-center gap-1 shadow-sm"
+                            className="py-2 px-1 bg-white dark:bg-[#130C24] hover:bg-amber-500 dark:hover:bg-amber-600 hover:text-white text-amber-600 dark:text-amber-400 border border-slate-200 dark:border-violet-500/15 rounded-xl text-[8px] font-black uppercase tracking-wider transition-all flex flex-col items-center gap-1 shadow-sm"
                           >
                             <Bell className="w-3.5 h-3.5" /> Reminder
                           </button>
                           <button 
                             type="button"
                             onClick={() => handleSendReminder(task.id, currentAssign.user_id, 'Warning')}
-                            className="py-2 px-1 bg-white hover:bg-rose-600 hover:text-white text-rose-600 border border-slate-200 rounded-xl text-[8px] font-black uppercase tracking-wider transition-all flex flex-col items-center gap-1 shadow-sm"
+                            className="py-2 px-1 bg-white dark:bg-[#130C24] hover:bg-rose-600 dark:hover:bg-rose-700 hover:text-white text-rose-600 dark:text-rose-400 border border-slate-200 dark:border-violet-500/15 rounded-xl text-[8px] font-black uppercase tracking-wider transition-all flex flex-col items-center gap-1 shadow-sm"
                           >
                             <AlertTriangle className="w-3.5 h-3.5" /> Warning
                           </button>
@@ -1300,8 +1324,8 @@ export default function HODTaskDetails() {
                       <div className="space-y-4 pt-2">
                         <div>
                           <div className="flex justify-between mb-1.5">
-                            <label className="text-[9px] font-black text-[#1E184B] uppercase tracking-widest">Merit Score</label>
-                            <span className="text-[10px] font-black text-[#7C3AED] bg-[#7C3AED]/10 px-2 py-0.5 rounded-lg">{currentAssign.points || 0} / 50</span>
+                            <label className="text-[9px] font-black text-[#1E184B] dark:text-indigo-200 uppercase tracking-widest">Merit Score</label>
+                            <span className="text-[10px] font-black text-[#7C3AED] dark:text-violet-400 bg-[#7C3AED]/10 dark:bg-violet-500/15 px-2 py-0.5 rounded-lg">{currentAssign.points || 0} / 50</span>
                           </div>
                           <input 
                             type="range" min="0" max="50" step="5" 
@@ -1321,14 +1345,14 @@ export default function HODTaskDetails() {
                                 pts === 0 ? 0 : currentAssign.bonus_points
                               );
                             }}
-                            className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#7C3AED]" 
+                            className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#7C3AED] dark:accent-[#8B5CF6]" 
                           />
                         </div>
 
                         <div>
                           <div className="flex justify-between mb-1.5">
-                            <label className="text-[9px] font-black text-[#1E184B] uppercase tracking-widest">Incentive Bonus</label>
-                            <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg">+{currentAssign.bonus_points || 0} pts</span>
+                            <label className="text-[9px] font-black text-[#1E184B] dark:text-indigo-200 uppercase tracking-widest">Incentive Bonus</label>
+                            <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-lg">+{currentAssign.bonus_points || 0} pts</span>
                           </div>
                           <input 
                             type="range" min="0" max="5" step="1" 
@@ -1351,13 +1375,13 @@ export default function HODTaskDetails() {
                             }}
                             className={cn(
                               "w-full h-1.5 rounded-lg appearance-none cursor-pointer transition-all",
-                              currentAssign.points === 0 ? "bg-slate-50 accent-slate-200 cursor-not-allowed opacity-50" : "bg-slate-100 accent-amber-500"
+                              currentAssign.points === 0 ? "bg-slate-50 dark:bg-slate-900 accent-slate-200 dark:accent-slate-800 cursor-not-allowed opacity-50" : "bg-slate-100 dark:bg-slate-800 accent-amber-500"
                             )}
                           />
                         </div>
 
                         <div className="space-y-2 pt-2">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Individual Evaluation Feedback</label>
+                          <label className="text-[9px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest ml-1">Individual Evaluation Feedback</label>
                           <textarea 
                             placeholder="Provide specific feedback remarks for this operative..."
                             value={currentAssign.remarks || ''}
@@ -1369,7 +1393,7 @@ export default function HODTaskDetails() {
                               setTask({ ...task, assignments: updatedAssignments });
                             }}
                             onBlur={(e) => updateReviewStatus(task.id, { remarks: e.target.value }, currentAssign.user_id)}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:outline-none focus:bg-white focus:border-[#7C3AED] transition-all min-h-[80px] resize-none"
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-[#1A0F35] border border-slate-100 dark:border-violet-500/15 rounded-2xl text-xs font-bold text-[#1E184B] dark:text-indigo-100 placeholder:text-slate-400 dark:placeholder:text-violet-400/40 focus:outline-none focus:bg-white dark:focus:bg-[#1A0F35] focus:border-[#7C3AED] dark:focus:border-violet-500 transition-all min-h-[80px] resize-none"
                           />
                         </div>
                       </div>
@@ -1377,20 +1401,20 @@ export default function HODTaskDetails() {
                   </div>
 
                   {/* Collaborative Discussion Chain & Flags (Intel Center) */}
-                  <div className="bg-white rounded-[2rem] border-2 border-slate-100 p-6 md:p-8 shadow-xl shadow-slate-200/20 space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                      <h3 className="text-xs font-black text-[#1E184B] uppercase tracking-widest flex items-center gap-1.5">
-                        <MessageSquare className="w-4 h-4 text-[#7C3AED]" />
+                  <div className="bg-white dark:bg-[#130C24] rounded-[2rem] border-2 border-slate-100 dark:border-violet-500/15 p-6 md:p-8 shadow-xl shadow-slate-200/20 dark:shadow-violet-900/20 space-y-6">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-violet-500/15 pb-4">
+                      <h3 className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest flex items-center gap-1.5">
+                        <MessageSquare className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" />
                         Discussion Intel Chain
                       </h3>
-                      <span className="px-2.5 py-0.5 bg-[#7C3AED]/10 text-[#7C3AED] text-[8px] font-black rounded-full uppercase">
+                      <span className="px-2.5 py-0.5 bg-[#7C3AED]/10 dark:bg-violet-500/15 text-[#7C3AED] dark:text-violet-400 text-[8px] font-black rounded-full uppercase">
                         {(task.comments?.length || 0)} Entries
                       </span>
                     </div>
 
                     {/* Overall flag control */}
-                    <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                      <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Overall Task Flag Color</h4>
+                    <div className="space-y-3 bg-slate-50 dark:bg-[#1A0F35] p-4 rounded-2xl border border-slate-100 dark:border-violet-500/15">
+                      <h4 className="text-[9px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-[0.2em]">Overall Task Flag Color</h4>
                       <div className="grid grid-cols-5 gap-2">
                         {[
                           { color: null, label: 'None', bg: 'bg-slate-200' },
@@ -1416,14 +1440,14 @@ export default function HODTaskDetails() {
                     </div>
 
                     {/* Comments bubble list */}
-                    <div className="space-y-4 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                    <div className="space-y-4 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar bg-slate-50/50 dark:bg-[#0E0820]/50 p-4 rounded-2xl border border-slate-100 dark:border-violet-500/10">
                       {task.comments && task.comments.length > 0 ? (
                         task.comments.map((com) => (
                           <div key={`com-${com.id}`} className={cn(
                             "p-3 rounded-2xl space-y-1.5 border animate-in fade-in slide-in-from-bottom-2",
                             com.user_id === user.id 
                               ? "bg-[#7C3AED] border-[#7C3AED] ml-6 text-white shadow-md shadow-[#7C3AED]/10" 
-                              : "bg-white border-slate-100 mr-6"
+                              : "bg-white dark:bg-[#130C24] border-slate-100 dark:border-violet-500/15 mr-6"
                           )}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1.5">
@@ -1549,8 +1573,8 @@ export default function HODTaskDetails() {
                       <div 
                         key={`unaccepted-${fac.id}`}
                         className={cn(
-                          "p-4 border-2 rounded-2xl flex items-center justify-between gap-3 bg-slate-50/30 transition-all hover:shadow-sm",
-                          selectedUnacceptedFacultyIds.includes(fac.id) ? "border-amber-400 bg-amber-50/5" : "border-slate-100"
+                          "p-4 border-2 rounded-2xl flex items-center justify-between gap-3 bg-slate-50/30 dark:bg-[#110A24]/40 transition-all hover:shadow-sm",
+                          selectedUnacceptedFacultyIds.includes(fac.id) ? "border-amber-400 dark:border-amber-500 bg-amber-50/5 dark:bg-amber-500/5" : "border-slate-100 dark:border-slate-800/80"
                         )}
                       >
                         <div className="flex items-center gap-3 min-w-0">
@@ -1566,7 +1590,7 @@ export default function HODTaskDetails() {
                             }}
                             className="w-4 h-4 rounded text-amber-500 border-slate-300 focus:ring-amber-500 shrink-0"
                           />
-                          <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center font-black text-indigo-600 shadow-sm border border-slate-100 overflow-hidden shrink-0">
+                          <div className="w-9 h-9 bg-white dark:bg-[#1A1235] rounded-xl flex items-center justify-center font-black text-[#7C3AED] dark:text-[#A78BFA] shadow-sm border border-slate-100 dark:border-slate-800/80 overflow-hidden shrink-0">
                             {fac.profile_pic ? (
                               <img src={`${import.meta.env.VITE_API_URL}/${fac.profile_pic}`} alt={fac.name} className="w-full h-full object-cover" />
                             ) : (
