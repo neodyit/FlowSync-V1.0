@@ -197,7 +197,7 @@ const HODFaculty: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
         {/* Left Column: Faculty List - Hidden on mobile when a faculty member is selected */}
-        <div className={cn("lg:col-span-4 space-y-4", selectedFaculty && "hidden lg:block")}>
+        <div className={cn("lg:col-span-4 space-y-4 max-h-[calc(100vh-240px)] overflow-y-auto pr-2 custom-scrollbar", selectedFaculty && "hidden lg:block")}>
           {isLoading ? (
             [1, 2, 3].map(i => <div key={i} className="h-24 bg-white rounded-3xl animate-pulse border border-slate-100" />)
           ) : filteredFaculty.length === 0 ? (
