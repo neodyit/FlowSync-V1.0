@@ -643,39 +643,40 @@ const HODTasks: React.FC = () => {
 
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 relative group">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-[#7C3AED] transition-colors" />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-slate-400 group-focus-within:text-[#7C3AED] transition-colors" />
             <input 
               type="text" 
               placeholder={activeTab === 'Extensions' ? "Search requests or faculty..." : "Search tasks, faculty, or IDs..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-14 pr-6 py-4 bg-white border border-slate-100 rounded-3xl text-sm font-bold text-[#1E184B] focus:outline-none focus:ring-4 focus:ring-[#7C3AED]/10 focus:border-[#7C3AED] transition-all placeholder:text-slate-300"
+              className="w-full pl-12 pr-6 py-3.5 md:py-4 bg-white border border-slate-100 rounded-2xl md:rounded-3xl text-xs md:text-sm font-bold text-[#1E184B] focus:outline-none focus:ring-4 focus:ring-[#7C3AED]/10 focus:border-[#7C3AED] transition-all placeholder:text-slate-300 shadow-sm"
             />
           </div>
-          <div className="flex items-center gap-2 bg-white border border-slate-100 rounded-3xl p-1.5 focus-within:border-[#7C3AED] focus-within:ring-4 focus-within:ring-[#7C3AED]/10 transition-all">
-            <div className="relative px-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 bg-white border border-slate-100 rounded-2xl md:rounded-3xl p-1.5 focus-within:border-[#7C3AED] focus-within:ring-4 focus-within:ring-[#7C3AED]/10 transition-all shadow-sm">
+            <div className="relative px-2 w-full sm:w-auto">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase tracking-widest pointer-events-none">From</span>
               <input 
                 type="date"
                 value={filterStartDate}
                 onChange={(e) => setFilterStartDate(e.target.value)}
-                className="pl-14 pr-4 py-2.5 bg-transparent text-sm font-bold text-[#1E184B] focus:outline-none cursor-pointer"
+                className="w-full sm:w-auto pl-14 pr-4 py-2 bg-transparent text-xs md:text-sm font-bold text-[#1E184B] focus:outline-none cursor-pointer"
               />
             </div>
-            <div className="w-px h-6 bg-slate-200"></div>
-            <div className="relative px-2">
+            <div className="hidden sm:block w-px h-6 bg-slate-200"></div>
+            <div className="sm:hidden h-px w-full bg-slate-200 my-0.5"></div>
+            <div className="relative px-2 w-full sm:w-auto">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase tracking-widest pointer-events-none">To</span>
               <input 
                 type="date"
                 value={filterEndDate}
                 onChange={(e) => setFilterEndDate(e.target.value)}
-                className="pl-10 pr-4 py-2.5 bg-transparent text-sm font-bold text-[#1E184B] focus:outline-none cursor-pointer"
+                className="w-full sm:w-auto pl-10 pr-4 py-2 bg-transparent text-xs md:text-sm font-bold text-[#1E184B] focus:outline-none cursor-pointer"
               />
             </div>
             {(filterStartDate || filterEndDate) && (
               <button 
                 onClick={() => { setFilterStartDate(''); setFilterEndDate(''); }}
-                className="p-2 mr-1 hover:bg-rose-50 text-rose-500 rounded-full transition-colors"
+                className="p-2 self-end sm:self-auto hover:bg-rose-50 text-rose-500 rounded-full transition-colors shrink-0"
                 title="Clear Dates"
               >
                 <X className="w-4 h-4" />
@@ -683,10 +684,10 @@ const HODTasks: React.FC = () => {
             )}
           </div>
 
-          <div className="relative">
+          <div className="relative w-full lg:w-auto">
             <button 
               onClick={() => setIsModeFilterOpen(!isModeFilterOpen)}
-              className="px-6 py-4 h-full bg-white border border-slate-100 rounded-3xl text-sm font-bold text-[#1E184B] hover:border-[#7C3AED]/30 transition-all flex items-center gap-2"
+              className="w-full justify-center px-6 py-3.5 bg-white border border-slate-100 rounded-2xl md:rounded-3xl text-xs md:text-sm font-bold text-[#1E184B] hover:border-[#7C3AED]/30 transition-all flex items-center gap-2 shadow-sm"
             >
               <Layers className="w-4 h-4 text-slate-400" />
               Mode Filter
@@ -701,7 +702,7 @@ const HODTasks: React.FC = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute right-0 mt-2 w-56 bg-white border border-slate-100 shadow-xl rounded-2xl p-3 z-50 flex flex-col gap-2"
+                  className="absolute right-0 mt-2 w-full sm:w-56 bg-white border border-slate-100 shadow-xl rounded-2xl p-3 z-50 flex flex-col gap-2"
                 >
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1">Filter by Mode</p>
                   {['individual', 'group', 'broadcast'].map(mode => (
@@ -710,8 +711,8 @@ const HODTasks: React.FC = () => {
                         type="checkbox"
                         checked={filterModes.includes(mode)}
                         onChange={(e) => {
-                          if (e.target.checked) setFilterModes([...filterModes, mode]);
-                          else setFilterModes(filterModes.filter(m => m !== mode));
+                           if (e.target.checked) setFilterModes([...filterModes, mode]);
+                           else setFilterModes(filterModes.filter(m => m !== mode));
                         }}
                         className="w-4 h-4 rounded text-[#7C3AED] focus:ring-[#7C3AED]/20"
                       />

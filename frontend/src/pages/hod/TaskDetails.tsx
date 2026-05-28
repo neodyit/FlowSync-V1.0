@@ -102,6 +102,9 @@ export default function HODTaskDetails() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<{url: string, name: string, type: string} | null>(null);
 
+  // Debounce ref to keep track of active timeout for score updates
+  const debounceTimeoutRef = React.useRef<any>(null);
+
   const fetchFaculty = async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/hod/faculty.php`, { credentials: 'include' });
@@ -122,9 +125,13 @@ export default function HODTaskDetails() {
         const found = data.data.find((t: Task) => t.id === parseInt(id || '0'));
         setTask(found || null);
         
-        // Auto-select first assignment if available and none selected yet
-        if (found && found.assignments && found.assignments.length > 0 && !selectedAssignmentId) {
-          setSelectedAssignmentId(found.assignments[0].user_id);
+        // Auto-select first assignment if available and none selected yet, keeping track functionally
+        if (found && found.assignments && found.assignments.length > 0) {
+          setSelectedAssignmentId(prev => {
+            const exists = found.assignments.some((a: any) => a.user_id === prev);
+            if (exists) return prev;
+            return found.assignments[0].user_id;
+          });
         }
       }
     } catch (error) {
@@ -143,6 +150,43 @@ export default function HODTaskDetails() {
     }, 8000);
     return () => clearInterval(interval);
   }, [id]);
+
+  const debouncedUpdatePoints = (taskId: number, userId: number, points: number, bonusPoints: number) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    debounceTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/hod/tasks.php`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            id: taskId, 
+            user_id: userId,
+            points: points,
+            bonus_points: bonusPoints
+          })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+          window.dispatchEvent(new CustomEvent('refresh-notifications'));
+          Swal.fire({
+            title: 'Scores Synced',
+            text: 'Merit updated.',
+            icon: 'success',
+            toast: true,
+            position: 'top-end',
+            timer: 1000,
+            showConfirmButton: false
+          });
+        }
+      } catch (error) {
+        console.error("Debounced score update failed:", error);
+      }
+    }, 600); // 600ms debounce window
+  };
 
   const updateReviewStatus = async (taskId: number, updates: any, userId?: number) => {
     try {
@@ -607,45 +651,45 @@ export default function HODTaskDetails() {
     <div className="min-h-screen bg-slate-50/50 pb-32">
       <SEO title={`Mission View: ${task.title}`} />
       
-      {/* Header Sticky Bar */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-8 py-4 shadow-sm">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      {/* Header Bar (Scrolls with page) */}
+      <div className="bg-white border-b border-slate-200/60 px-4 md:px-8 py-4 shadow-sm">
+        <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3 md:gap-4">
             <button 
               onClick={() => navigate('/hod/tasks')}
-              className="p-2.5 bg-slate-50 text-slate-500 hover:text-[#7C3AED] hover:bg-[#7C3AED]/10 rounded-xl transition-all"
+              className="p-2.5 bg-slate-50 text-slate-500 hover:text-[#7C3AED] hover:bg-[#7C3AED]/10 rounded-xl transition-all shrink-0 mt-0.5 sm:mt-0"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div>
-              <h1 className="text-lg md:text-xl font-black text-[#1E184B] truncate max-w-[200px] md:max-w-md">{task.title}</h1>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-1">
-                <span className={cn("px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-sm", getStatusConfig(task.status).bg)}>
+            <div className="min-w-0">
+              <h1 className="text-base md:text-xl font-black text-[#1E184B] truncate max-w-[240px] sm:max-w-md md:max-w-xl" title={task.title}>{task.title}</h1>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                <span className={cn("px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-sm shrink-0", getStatusConfig(task.status).bg)}>
                   {task.status}
                 </span>
-                <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg">
-                  <Calendar className="w-3 h-3 text-[#7C3AED]" /> Task Created: <span className="font-extrabold text-slate-700">{formatDate(task.created_at)}</span>
+                <span className="text-[9px] md:text-[10px] font-bold text-slate-500 flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg shrink-0">
+                  <Calendar className="w-3 h-3 text-[#7C3AED]" /> Created: <span className="font-extrabold text-slate-700">{formatDate(task.created_at)}</span>
                 </span>
-                <span className="text-[10px] font-black text-rose-600 flex items-center gap-1 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-lg">
-                  <Clock className="w-3 h-3 text-rose-500 animate-pulse" /> Mission Deadline: <span className="font-extrabold text-rose-600">{formatDate(task.deadline)}</span>
+                <span className="text-[9px] md:text-[10px] font-black text-rose-600 flex items-center gap-1 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-lg shrink-0">
+                  <Clock className="w-3 h-3 text-rose-500 animate-pulse" /> Deadline: <span className="font-extrabold text-rose-600">{formatDate(task.deadline)}</span>
                 </span>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end sm:justify-start shrink-0">
             {task.status !== 'Completed' && (
               <button 
                 onClick={() => handleManualComplete(task.id)}
-                className="px-4 py-2.5 bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20"
+                className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 bg-emerald-500 text-white rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 whitespace-nowrap"
               >
-                <CheckCircle2 className="w-4 h-4" />
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
                 Finalize Mission
               </button>
             )}
             <button 
               onClick={() => navigate(`/hod/tasks/edit/${task.id}`)}
-              className="px-4 py-2.5 bg-white border-2 border-slate-100 text-slate-600 hover:border-[#7C3AED]/30 hover:text-[#7C3AED] rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 bg-white border-2 border-slate-100 text-slate-600 hover:border-[#7C3AED]/30 hover:text-[#7C3AED] rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest transition-all text-center justify-center flex items-center whitespace-nowrap"
             >
               Edit Mission
             </button>
@@ -654,19 +698,8 @@ export default function HODTaskDetails() {
       </div>
 
       {/* 1. Header Briefing Docket (Full Width) */}
-      <div className="max-w-[1400px] mx-auto px-4 md:px-8 mt-8">
-        <div className="bg-white rounded-[2rem] border-2 border-slate-100 p-6 md:p-8 shadow-xl shadow-slate-200/20">
-          
-          {/* Top timeline row with Created date/time and red pulsing deadline */}
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-6 text-xs">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-[#7C3AED]" /> Created At: <span className="font-bold text-slate-600">{formatDate(task.created_at)}</span>
-            </span>
-            <span className="text-[11px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-1.5 bg-rose-50 border border-rose-100 px-3 py-1 rounded-xl shadow-sm">
-              <Clock className="w-4 h-4 text-rose-500 animate-pulse animate-duration-1000" /> Mission Deadline: <span className="text-rose-600 font-extrabold">{formatDate(task.deadline)}</span>
-            </span>
-          </div>
-
+      <div className="max-w-[1400px] mx-auto px-2 md:px-8 mt-6">
+        <div className="bg-white rounded-[2rem] border-2 border-slate-100 p-4 sm:p-6 md:p-8 shadow-xl shadow-slate-200/20">
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
             <div className="space-y-4 max-w-4xl flex-1">
               <div className="flex items-center gap-2">
@@ -737,11 +770,11 @@ export default function HODTaskDetails() {
       </div>
 
       {/* 2. Workspace Columns */}
-      <div className="max-w-[1400px] mx-auto px-4 md:px-8 pt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="max-w-[1400px] mx-auto px-2 md:px-8 pt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
         
         {/* Left Column (5/12 width): Operative Roster */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white rounded-[2rem] border-2 border-slate-100 p-6 shadow-xl shadow-slate-200/20">
+          <div className="bg-white rounded-[2rem] border-2 border-slate-100 p-4 sm:p-6 shadow-xl shadow-slate-200/20">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <Users className="w-4 h-4 text-[#7C3AED]" />
@@ -888,7 +921,7 @@ export default function HODTaskDetails() {
               }).length;
 
               return (
-                <div className="bg-white rounded-[2rem] border-2 border-slate-100 p-6 md:p-8 shadow-xl shadow-slate-200/20 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+                <div className="bg-white rounded-[2rem] border-2 border-slate-100 p-4 sm:p-6 md:p-8 shadow-xl shadow-slate-200/20 space-y-6 animate-in fade-in zoom-in-95 duration-200">
                   
                   <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                     <div>
@@ -923,37 +956,37 @@ export default function HODTaskDetails() {
                       <div className="space-y-4">
                         <div>
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Review Decision</label>
-                          <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-50 border-2 border-slate-100 rounded-2xl">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 p-1.5 bg-slate-50 border-2 border-slate-100 rounded-2xl">
                             <button 
                               type="button"
                               onClick={() => setBulkReviewData({...bulkReviewData, status: 'Approved'})}
                               className={cn(
-                                "py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2",
+                                "py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap",
                                 bulkReviewData.status === 'Approved' 
                                   ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20" 
                                   : "text-slate-500 hover:text-[#1E184B] hover:bg-slate-100"
                               )}
                             >
-                              <CheckCircle2 className="w-4 h-4" />
+                              <CheckCircle2 className="w-4 h-4 shrink-0" />
                               Approve Selected
                             </button>
                             <button 
                               type="button"
                               onClick={() => setBulkReviewData({...bulkReviewData, status: 'Rework Required'})}
                               className={cn(
-                                "py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2",
+                                "py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap",
                                 bulkReviewData.status === 'Rework Required' 
                                   ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" 
                                   : "text-slate-500 hover:text-[#1E184B] hover:bg-slate-100"
                               )}
                             >
-                              <RotateCcw className="w-4 h-4" />
+                              <RotateCcw className="w-4 h-4 shrink-0" />
                               Request Rework
                             </button>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <div className="flex justify-between items-center mb-1.5">
                               <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest">Merit ({bulkReviewData.points})</label>
@@ -1056,8 +1089,8 @@ export default function HODTaskDetails() {
                 <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
                   
                   {/* Operative Header & Evidence Container */}
-                  <div className="bg-white rounded-[2rem] border-2 border-slate-100 p-6 md:p-8 shadow-xl shadow-slate-200/20 space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div className="bg-white rounded-[2rem] border-2 border-slate-100 p-4 sm:p-6 md:p-8 shadow-xl shadow-slate-200/20 space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center font-black text-indigo-600 shadow-sm overflow-hidden shrink-0">
                           {currentAssign.faculty_pic ? (
@@ -1072,21 +1105,21 @@ export default function HODTaskDetails() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-end gap-1.5 text-right">
+                      <div className="flex flex-wrap sm:flex-col items-center sm:items-end gap-2 text-right justify-between w-full sm:w-auto">
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => handleRemoveFaculty(task.id, currentAssign.user_id, currentAssign.faculty_name)}
-                            className="px-2.5 py-1 text-rose-600 hover:text-white border border-rose-200 hover:bg-rose-600 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 shadow-sm bg-white"
+                            className="px-2.5 py-1 text-rose-600 hover:text-white border border-rose-200 hover:bg-rose-600 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 shadow-sm bg-white whitespace-nowrap"
                             title="Remove faculty member from this task entirely"
                           >
                             <X className="w-3 h-3" /> Remove From Task
                           </button>
-                          <span className={cn("px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-sm", getStatusConfig(currentAssign.status).bg)}>
+                          <span className={cn("px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-sm shrink-0", getStatusConfig(currentAssign.status).bg)}>
                             {currentAssign.status}
                           </span>
                         </div>
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-1.5">Progress: {currentAssign.progress}%</p>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider sm:mt-1.5 shrink-0">Progress: {currentAssign.progress}%</p>
                       </div>
                     </div>
 
@@ -1195,20 +1228,20 @@ export default function HODTaskDetails() {
                       /* Decision Buttons (Approve / Rework) */
                       <div className="space-y-3">
                         {currentAssign.status !== 'Approved' ? (
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <button 
                               type="button" 
                               onClick={() => handleApproveContribution(task.id, currentAssign.user_id, currentAssign.points)} 
-                              className="py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-md shadow-emerald-500/10 transition-all flex items-center justify-center gap-2"
+                              className="py-3.5 sm:py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-md shadow-emerald-500/10 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                             >
-                              <CheckCircle2 className="w-4 h-4" /> Approve Contribution
+                              <CheckCircle2 className="w-4 h-4 shrink-0" /> Approve Contribution
                             </button>
                             <button 
                               type="button" 
                               onClick={() => updateReviewStatus(task.id, { status: 'Rework Required' }, currentAssign.user_id)} 
-                              className="py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-md shadow-orange-500/10 transition-all flex items-center justify-center gap-2"
+                              className="py-3.5 sm:py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-md shadow-orange-500/10 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                             >
-                              <RotateCcw className="w-4 h-4" /> Request Rework
+                              <RotateCcw className="w-4 h-4 shrink-0" /> Request Rework
                             </button>
                           </div>
                         ) : (
@@ -1279,11 +1312,15 @@ export default function HODTaskDetails() {
                                 a.user_id === selectedAssignmentId ? { ...a, points: pts, bonus_points: pts === 0 ? 0 : a.bonus_points } : a
                               );
                               setTask({ ...task, assignments: updatedAssignments });
+                              
+                              // Trigger debounced points & bonus update
+                              debouncedUpdatePoints(
+                                task.id,
+                                currentAssign.user_id,
+                                pts,
+                                pts === 0 ? 0 : currentAssign.bonus_points
+                              );
                             }}
-                            onMouseUp={() => updateReviewStatus(task.id, { 
-                              points: currentAssign.points,
-                              bonus_points: currentAssign.points === 0 ? 0 : currentAssign.bonus_points
-                            }, currentAssign.user_id)}
                             className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#7C3AED]" 
                           />
                         </div>
@@ -1303,8 +1340,15 @@ export default function HODTaskDetails() {
                                 a.user_id === selectedAssignmentId ? { ...a, bonus_points: bonus } : a
                               );
                               setTask({ ...task, assignments: updatedAssignments });
+
+                              // Trigger debounced points & bonus update
+                              debouncedUpdatePoints(
+                                task.id,
+                                currentAssign.user_id,
+                                currentAssign.points,
+                                bonus
+                              );
                             }}
-                            onMouseUp={() => updateReviewStatus(task.id, { bonus_points: currentAssign.bonus_points }, currentAssign.user_id)}
                             className={cn(
                               "w-full h-1.5 rounded-lg appearance-none cursor-pointer transition-all",
                               currentAssign.points === 0 ? "bg-slate-50 accent-slate-200 cursor-not-allowed opacity-50" : "bg-slate-100 accent-amber-500"

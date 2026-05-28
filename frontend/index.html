@@ -12,6 +12,16 @@
     <title>FlowSync | Departmental Command Center</title>
     <meta name="description" content="FlowSync - Premium departmental task management and mission intelligence system. Created and Managed by Neody IT." />
     <meta name="author" content="Neody IT" />
+    <script>
+      (function() {
+        const theme = localStorage.getItem('theme') || 'light';
+        if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

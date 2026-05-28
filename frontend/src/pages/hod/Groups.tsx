@@ -9,7 +9,8 @@ import {
   Trash2,
   Pencil,
   X,
-  Layers
+  Layers,
+  ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
@@ -182,29 +183,29 @@ const HODGroups: React.FC = () => {
     <div className="space-y-8 pb-20">
       <SEO title="Faculty Groups" description="Manage department broadcast lists and faculty groups." />
       
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className={cn("flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6", selectedGroup && "hidden md:flex")}>
         <div>
-          <h1 className="text-4xl font-black text-[#1E184B] tracking-tight">Faculty Groups</h1>
-          <p className="text-[#1E184B]/60 mt-1 font-bold flex items-center gap-2">
+          <h1 className="text-2xl md:text-4xl font-black text-[#1E184B] tracking-tight">Faculty Groups</h1>
+          <p className="text-[#1E184B]/60 mt-1 text-xs md:text-sm font-bold flex items-center gap-2">
             <Layers className="w-4 h-4 text-[#7C3AED]" />
             Manage broadcast lists and team assignments.
           </p>
         </div>
         
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <div className="relative group flex-1 md:w-80">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <div className="relative group w-full md:w-80">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#7C3AED] transition-colors" />
             <input 
               type="text" 
               placeholder="Search groups..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3.5 bg-white border border-[#7C3AED]/10 rounded-2xl outline-none focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold shadow-sm"
+              className="w-full pl-11 pr-4 py-2.5 md:py-3.5 bg-white border border-[#7C3AED]/10 rounded-xl md:rounded-2xl outline-none focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-xs md:text-sm font-bold shadow-sm"
             />
           </div>
           <button 
             onClick={openCreateModal}
-            className="flex items-center gap-2 px-6 py-3.5 bg-[#7C3AED] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#6D28D9] transition-all shadow-xl shadow-[#7C3AED]/20 shrink-0"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-[#7C3AED] text-white rounded-xl md:rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#6D28D9] transition-all shadow-xl shadow-[#7C3AED]/20 shrink-0"
           >
             <Plus className="w-4 h-4" />
             New Group
@@ -212,13 +213,13 @@ const HODGroups: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
         {/* Left Column: Group List */}
-        <div className="lg:col-span-4 space-y-4">
+        <div className={cn("lg:col-span-4 space-y-4", selectedGroup && "hidden lg:block")}>
           {isLoading ? (
             [1, 2, 3].map(i => <div key={i} className="h-24 bg-white rounded-3xl animate-pulse border border-slate-100" />)
           ) : filteredGroups.length === 0 ? (
-            <div className="p-10 text-center bg-white rounded-3xl border border-dashed border-[#7C3AED]/20">
+            <div className="p-10 text-center bg-white rounded-2xl md:rounded-3xl border border-dashed border-[#7C3AED]/20">
               <Users className="w-10 h-10 text-slate-200 mx-auto mb-3" />
               <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">No groups found</p>
             </div>
@@ -227,14 +228,14 @@ const HODGroups: React.FC = () => {
               key={g.id}
               onClick={() => setSelectedGroup(g)}
               className={cn(
-                "w-full p-5 rounded-3xl border transition-all text-left group flex items-center gap-4",
+                "w-full p-4 md:p-5 rounded-2xl md:rounded-3xl border transition-all text-left group flex items-center gap-4",
                 selectedGroup?.id === g.id 
                   ? "bg-[#7C3AED] border-[#7C3AED] shadow-xl shadow-[#7C3AED]/20" 
                   : "bg-white border-slate-100 hover:border-[#7C3AED]/30 hover:shadow-lg"
               )}
             >
               <div className={cn(
-                "w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center font-black text-lg transition-colors shrink-0",
+                "w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl overflow-hidden flex items-center justify-center font-black text-sm md:text-lg transition-colors shrink-0",
                 selectedGroup?.id === g.id ? "bg-white/20 text-white" : "bg-[#7C3AED]/10 text-[#7C3AED]"
               )}>
                 {g.name.charAt(0).toUpperCase()}
@@ -247,7 +248,7 @@ const HODGroups: React.FC = () => {
                   {g.name}
                 </h3>
                 <p className={cn(
-                  "text-[10px] font-bold uppercase tracking-widest mt-1",
+                  "text-[9px] md:text-[10px] font-bold uppercase tracking-widest mt-1",
                   selectedGroup?.id === g.id ? "text-white/70" : "text-slate-400"
                 )}>
                   {g.members.length} Members
@@ -257,14 +258,14 @@ const HODGroups: React.FC = () => {
                 <button 
                   onClick={(e) => handleDeleteGroup(g.id, e)}
                   className={cn(
-                    "p-2 rounded-xl transition-colors opacity-0 group-hover:opacity-100",
+                    "p-2 rounded-xl transition-colors opacity-100 lg:opacity-0 lg:group-hover:opacity-100",
                     selectedGroup?.id === g.id ? "hover:bg-white/20 text-white" : "hover:bg-rose-50 text-rose-400"
                   )}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <ChevronRight className={cn(
-                  "w-5 h-5 transition-transform",
+                  "w-4 h-4 md:w-5 md:h-5 transition-transform shrink-0",
                   selectedGroup?.id === g.id ? "text-white translate-x-1" : "text-slate-300"
                 )} />
               </div>
@@ -273,7 +274,7 @@ const HODGroups: React.FC = () => {
         </div>
 
         {/* Right Column: Group Details */}
-        <div className="lg:col-span-8">
+        <div className={cn("lg:col-span-8", !selectedGroup && "hidden lg:block")}>
           <AnimatePresence mode="wait">
             {selectedGroup ? (
               <motion.div
@@ -281,23 +282,31 @@ const HODGroups: React.FC = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white rounded-[2.5rem] border border-[#7C3AED]/10 p-8 shadow-sm h-full"
+                className="bg-white rounded-2xl md:rounded-[2.5rem] border border-[#7C3AED]/10 p-5 md:p-8 shadow-sm h-full"
               >
-                <div className="flex items-center justify-between mb-10 pb-6 border-b border-slate-100">
-                  <div className="flex items-center gap-5">
-                    <div className="w-16 h-16 bg-[#7C3AED]/10 rounded-[1.5rem] flex items-center justify-center text-[#7C3AED]">
-                      <Users className="w-8 h-8" />
+                {/* Back Button for mobile viewports */}
+                <button 
+                  onClick={() => setSelectedGroup(null)} 
+                  className="lg:hidden flex items-center gap-2 mb-6 text-[#7C3AED] hover:text-[#6D28D9] font-black text-xs uppercase tracking-widest transition-all"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Back to Groups List
+                </button>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 md:mb-10 pb-6 border-b border-slate-100">
+                  <div className="flex items-center gap-4 md:gap-5 min-w-0">
+                    <div className="w-12 h-12 md:w-16 md:h-16 bg-[#7C3AED]/10 rounded-xl md:rounded-[1.5rem] flex items-center justify-center text-[#7C3AED] shrink-0">
+                      <Users className="w-6 h-6 md:w-8 md:h-8" />
                     </div>
-                    <div>
-                      <h2 className="text-2xl font-black text-[#1E184B]">{selectedGroup.name}</h2>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                    <div className="min-w-0">
+                      <h2 className="text-lg md:text-2xl font-black text-[#1E184B] truncate leading-tight">{selectedGroup.name}</h2>
+                      <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
                         Broadcast List • {selectedGroup.members.length} Members
                       </p>
                     </div>
                   </div>
                   <button 
                     onClick={openEditModal}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-xl font-black text-[10px] uppercase tracking-widest transition-colors"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-xl font-black text-[10px] uppercase tracking-widest transition-colors self-start sm:self-auto shrink-0"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     Edit Group
@@ -323,12 +332,12 @@ const HODGroups: React.FC = () => {
                 </div>
               </motion.div>
             ) : (
-              <div className="bg-white rounded-[2.5rem] border border-dashed border-[#7C3AED]/20 p-20 text-center h-full flex flex-col items-center justify-center">
-                <div className="w-20 h-20 bg-[#7C3AED]/5 rounded-3xl flex items-center justify-center mb-6">
-                  <Users className="w-10 h-10 text-[#7C3AED]/20" />
+              <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-dashed border-[#7C3AED]/20 p-10 md:p-20 text-center h-full flex flex-col items-center justify-center">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-[#7C3AED]/5 rounded-2xl md:rounded-3xl flex items-center justify-center mb-6">
+                  <Users className="w-8 h-8 md:w-10 md:h-10 text-[#7C3AED]/20" />
                 </div>
-                <h2 className="text-2xl font-black text-[#1E184B]/20 uppercase tracking-widest">Select a Group</h2>
-                <p className="text-[#1E184B]/30 font-bold mt-2 max-w-xs">Select a group from the list to view its members or create a new one.</p>
+                <h2 className="text-xl md:text-2xl font-black text-[#1E184B]/20 uppercase tracking-widest">Select a Group</h2>
+                <p className="text-[#1E184B]/30 font-bold mt-2 max-w-xs text-xs md:text-sm">Select a group from the list to view its members or create a new one.</p>
               </div>
             )}
           </AnimatePresence>

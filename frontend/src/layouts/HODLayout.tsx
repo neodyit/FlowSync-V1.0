@@ -21,13 +21,17 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { checkSession } from '../utils/auth';
 import { cn, formatDate } from "@/lib/utils";
 import Swal from 'sweetalert2';
+import { useTheme } from '../components/ThemeProvider';
 
 export default function HODLayout() {
+  const { theme, toggleTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -341,29 +345,29 @@ export default function HODLayout() {
   };
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#F8FAFC] dark:bg-[#090514] overflow-hidden font-sans">
       {/* Sidebar Backdrop */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[150] lg:hidden"
+          className="fixed inset-0 bg-slate-900/20 dark:bg-black/40 backdrop-blur-sm z-[150] lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 w-72 bg-white border-r border-[#7C3AED]/10 z-[200] transition-transform duration-300 lg:translate-x-0 lg:static
+        fixed inset-y-0 left-0 w-72 bg-white dark:bg-[#110A24] border-r border-[#7C3AED]/10 dark:border-[#8B5CF6]/10 z-[200] transition-transform duration-300 lg:translate-x-0 lg:static
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="h-full flex flex-col">
           {/* Logo */}
           <div className="p-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#7C3AED] rounded-xl flex items-center justify-center shadow-lg shadow-[#7C3AED]/20 overflow-hidden">
-                <img src="/logo.png" alt="FlowSync" className="w-6 h-6 object-contain" />
+              <div className="w-10 h-10 bg-white dark:bg-[#1A1235] border border-[#7C3AED]/15 dark:border-[#8B5CF6]/20 rounded-xl flex items-center justify-center shadow-md overflow-hidden">
+                <img src="/logo.png" alt="FlowSync" className="w-8 h-8 object-contain" />
               </div>
-              <span className="text-xl font-black tracking-tight text-[#1E184B] font-display">
-                FlowSync <span className="text-xs font-bold text-[#7C3AED] uppercase tracking-widest block -mt-1 opacity-60">HOD Portal</span>
+              <span className="text-xl font-black tracking-tight text-[#1E184B] dark:text-white font-display">
+                FlowSync <span className="text-xs font-bold text-[#7C3AED] dark:text-[#A78BFA] uppercase tracking-widest block -mt-1 opacity-60">HOD Portal</span>
               </span>
             </div>
             <button className="lg:hidden p-2 text-[#1E184B]" onClick={() => setIsSidebarOpen(false)}>
@@ -381,7 +385,7 @@ export default function HODLayout() {
                   onClick={() => setIsSidebarOpen(false)}
                   className={({ isActive }) => `
                     flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all relative
-                    ${isActive ? 'bg-[#7C3AED] text-white shadow-lg' : 'text-[#1E184B]/60 hover:bg-[#7C3AED]/10 hover:text-[#7C3AED]'}
+                    ${isActive ? 'bg-[#7C3AED] dark:bg-[#8B5CF6] text-white shadow-lg shadow-[#7C3AED]/20 dark:shadow-[#8B5CF6]/20' : 'text-[#1E184B]/60 dark:text-white/60 hover:bg-[#7C3AED]/10 dark:hover:bg-[#8B5CF6]/10 hover:text-[#7C3AED] dark:hover:text-[#A78BFA]'}
                   `}
                 >
                   <Icon className="w-5 h-5" />
@@ -396,22 +400,22 @@ export default function HODLayout() {
             })}
           </nav>
 
-          <div className="p-6 border-t border-[#7C3AED]/10">
-            <div className="p-4 rounded-2xl bg-[#7C3AED]/5 border border-[#7C3AED]/10 space-y-3">
+          <div className="p-6 border-t border-[#7C3AED]/10 dark:border-[#8B5CF6]/10">
+            <div className="p-4 rounded-2xl bg-[#7C3AED]/5 dark:bg-[#8B5CF6]/5 border border-[#7C3AED]/10 dark:border-[#8B5CF6]/15 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-[#1E184B]/40 uppercase tracking-widest">Dept Status</span>
-                <span className={cn("w-2 h-2 rounded-full", activeTask ? "bg-emerald-500 animate-pulse" : "bg-slate-300")} />
+                <span className="text-[10px] font-black text-[#1E184B]/40 dark:text-white/40 uppercase tracking-widest">Dept Status</span>
+                <span className={cn("w-2 h-2 rounded-full", activeTask ? "bg-emerald-500 animate-pulse" : "bg-slate-300 dark:bg-slate-700")} />
               </div>
               {activeTask ? (
                 <div className="space-y-1">
-                  <p className="text-[10px] font-black text-[#1E184B] truncate">{activeTask.title}</p>
+                  <p className="text-[10px] font-black text-[#1E184B] dark:text-white truncate">{activeTask.title}</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-[9px] font-bold text-[#7C3AED] uppercase tracking-tighter">{activeTask.status}</p>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Due: {formatDate(activeTask.deadline)}</p>
+                    <p className="text-[9px] font-bold text-[#7C3AED] dark:text-[#A78BFA] uppercase tracking-tighter">{activeTask.status}</p>
+                    <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">Due: {formatDate(activeTask.deadline)}</p>
                   </div>
                 </div>
               ) : (
-                <p className="text-[10px] font-bold text-[#1E184B]/60 uppercase tracking-tighter">All systems nominal</p>
+                <p className="text-[10px] font-bold text-[#1E184B]/60 dark:text-white/60 uppercase tracking-tighter">All systems nominal</p>
               )}
             </div>
           </div>
@@ -421,25 +425,38 @@ export default function HODLayout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Header */}
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-[#7C3AED]/10 sticky top-0 z-[100] px-6 md:px-10 flex items-center justify-between">
+        <header className="h-20 bg-white/80 dark:bg-[#090514]/80 backdrop-blur-md border-b border-[#7C3AED]/10 dark:border-[#8B5CF6]/10 sticky top-0 z-[100] px-6 md:px-10 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <button 
-              className="lg:hidden p-2.5 rounded-xl bg-white text-[#1E184B] shadow-sm border border-[#7C3AED]/10"
+              className="lg:hidden p-2.5 rounded-xl bg-white dark:bg-[#110A24] text-[#1E184B] dark:text-white shadow-sm border border-[#7C3AED]/10 dark:border-[#8B5CF6]/10"
               onClick={() => setIsSidebarOpen(true)}
             >
               <Menu className="w-6 h-6" />
             </button>
             <div className="hidden md:flex relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#1E184B]/30" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#1E184B]/30 dark:text-white/30" />
               <input 
                 type="text" 
                 placeholder="Search department..." 
-                className="pl-12 pr-6 py-2.5 bg-[#7C3AED]/5 border border-[#7C3AED]/10 rounded-xl text-sm font-medium focus:bg-white focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/5 transition-all w-80 text-[#1E184B]"
+                className="pl-12 pr-6 py-2.5 bg-[#7C3AED]/5 dark:bg-[#8B5CF6]/5 border border-[#7C3AED]/10 dark:border-[#8B5CF6]/15 rounded-xl text-sm font-medium focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-[#8B5CF6] focus:ring-4 focus:ring-[#7C3AED]/5 focus:ring-[#8B5CF6]/5 transition-all w-80 text-[#1E184B] dark:text-white outline-none"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-5">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2.5 rounded-xl border border-[#7C3AED]/10 dark:border-[#8B5CF6]/20 text-[#1E184B]/40 dark:text-[#A78BFA] hover:text-[#7C3AED] dark:hover:text-[#8B5CF6] hover:border-[#7C3AED]/20 dark:hover:border-[#8B5CF6]/30 transition-all cursor-pointer bg-white dark:bg-[#110A24]"
+              aria-label="Toggle Theme"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-5 h-5 animate-pulse text-amber-400" />
+              ) : (
+                <Moon className="w-5 h-5 text-indigo-600" />
+              )}
+            </button>
+
             <div className="relative">
               <button 
                 onClick={(e) => {
@@ -447,11 +464,11 @@ export default function HODLayout() {
                   setIsNotificationsOpen(!isNotificationsOpen);
                   setIsProfileOpen(false);
                 }}
-                className="p-2.5 rounded-xl border border-[#7C3AED]/10 text-[#1E184B]/40 hover:text-[#7C3AED] hover:border-[#7C3AED]/20 transition-all relative"
+                className="p-2.5 rounded-xl border border-[#7C3AED]/10 dark:border-[#8B5CF6]/20 text-[#1E184B]/40 dark:text-[#A78BFA] hover:text-[#7C3AED] dark:hover:text-[#8B5CF6] hover:border-[#7C3AED]/20 dark:hover:border-[#8B5CF6]/30 transition-all bg-white dark:bg-[#110A24] relative"
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
+                  <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-[#110A24] animate-pulse"></span>
                 )}
               </button>
 
@@ -539,7 +556,7 @@ export default function HODLayout() {
                   e.stopPropagation();
                   setIsProfileOpen(!isProfileOpen);
                 }}
-                className="flex items-center gap-3 p-1.5 pl-4 rounded-2xl bg-[#7C3AED]/5 border border-[#7C3AED]/10 hover:border-[#7C3AED]/30 transition-all"
+                className="flex items-center gap-3 p-0 sm:p-1.5 sm:pl-4 rounded-2xl bg-transparent sm:bg-[#7C3AED]/5 border-0 sm:border sm:border-[#7C3AED]/10 hover:border-[#7C3AED]/30 transition-all"
               >
                 <div className="text-right hidden sm:block">
                   <p className="text-xs font-black text-[#1E184B] tracking-tight">{user.name}</p>
@@ -588,7 +605,7 @@ export default function HODLayout() {
         </header>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="p-6 md:p-10 min-h-full flex flex-col">
+          <div className="p-4 md:p-10 min-h-full flex flex-col">
             <div className="flex-1">
               <Outlet />
             </div>
