@@ -138,6 +138,17 @@ const HODTasks: React.FC = () => {
   }, [highlightedRequestId]);
 
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const modeFilterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modeFilterRef.current && !modeFilterRef.current.contains(event.target as Node)) {
+        setIsModeFilterOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const activeEl = tabRefs.current[activeTab];
@@ -631,12 +642,16 @@ const HODTasks: React.FC = () => {
               )}
             >
               {tab.label}
-              <span className={cn(
-                "px-2 py-0.5 rounded-lg text-[9px]",
-                activeTab === tab.id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400"
-              )}>
-                {tab.count}
-              </span>
+              {tab.count > 0 && (
+                <span className={cn(
+                  "px-2 py-0.5 rounded-lg text-[9px] font-black tracking-normal transition-all",
+                  activeTab === tab.id 
+                    ? "bg-white text-[#7C3AED] shadow-sm font-black" 
+                    : "bg-[#7C3AED]/15 text-[#7C3AED] dark:bg-[#7C3AED]/25 dark:text-violet-300 font-extrabold border border-[#7C3AED]/20 shadow-[0_0_8px_rgba(124,58,237,0.15)]"
+                )}>
+                  {tab.count}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -684,7 +699,8 @@ const HODTasks: React.FC = () => {
             )}
           </div>
 
-          <div className="relative w-full lg:w-auto">
+          {!['Individual', 'Group', 'Broadcasted'].includes(activeTab) && (
+          <div ref={modeFilterRef} className="relative w-full lg:w-auto">
             <button 
               onClick={() => setIsModeFilterOpen(!isModeFilterOpen)}
               className="w-full justify-center px-6 py-3.5 bg-white border border-slate-100 rounded-2xl md:rounded-3xl text-xs md:text-sm font-bold text-[#1E184B] hover:border-[#7C3AED]/30 transition-all flex items-center gap-2 shadow-sm"
@@ -731,6 +747,7 @@ const HODTasks: React.FC = () => {
               )}
             </AnimatePresence>
           </div>
+          )}
         </div>
       </div>
 
