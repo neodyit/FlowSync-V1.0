@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  CheckCircle2, Clock, Users, ArrowLeft, Loader2, X, Download, Eye, FileText, BookOpen, Layers, Bell, AlertTriangle, RotateCcw, Info, MessageSquare, Send, ChevronDown, Check, Flag, Award, Calendar
+  CheckCircle2, Clock, Users, ArrowLeft, Loader2, X, Download, Eye, FileText, BookOpen, Layers, Bell, AlertTriangle, RotateCcw, Info, MessageSquare, Send, ChevronDown, Check, Flag, Award, Calendar, ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Swal from 'sweetalert2';
@@ -742,11 +742,11 @@ export default function HODTaskDetails() {
                 <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
                   {task.task_link && (
                     <div className="p-2.5 bg-white border border-slate-100 rounded-xl flex items-center justify-between gap-2">
-                      <a href={task.task_link} target="_blank" rel="noreferrer" className="text-[11px] font-black text-[#7C3AED] hover:underline truncate max-w-[150px]">
+                      <a href={task.task_link} target="_blank" rel="noreferrer" className="text-[11px] font-black text-[#7C3AED] dark:text-[#A78BFA] hover:underline truncate max-w-[150px]">
                         {task.task_link}
                       </a>
-                      <a href={task.task_link} target="_blank" rel="noreferrer" className="p-1 text-slate-400 hover:text-[#7C3AED]">
-                        <Eye className="w-3.5 h-3.5" />
+                      <a href={task.task_link} target="_blank" rel="noreferrer" className="p-1 text-slate-400 dark:text-slate-500 hover:text-[#7C3AED] dark:hover:text-[#8B5CF6]">
+                        <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
                   )}
@@ -1125,18 +1125,18 @@ export default function HODTaskDetails() {
 
                     {/* Delay & Timeline metrics */}
                     {currentAssign.submitted_at && (
-                      <div className="p-4 bg-indigo-50/20 border border-indigo-100/50 rounded-2xl flex items-center justify-between">
+                      <div className="p-4 bg-indigo-50/20 dark:bg-indigo-950/15 border border-indigo-100/50 dark:border-indigo-900/35 rounded-2xl flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                          <Clock className="w-4 h-4 text-indigo-500" />
+                          <Clock className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
                           <div>
-                            <p className="text-[8px] font-black text-indigo-900 uppercase tracking-widest">Submitted Date</p>
-                            <p className="text-[10px] font-bold text-indigo-700/70">{formatDate(currentAssign.submitted_at)}</p>
+                            <p className="text-[8px] font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-widest">Submitted Date</p>
+                            <p className="text-[10px] font-bold text-indigo-700/70 dark:text-indigo-400/80">{formatDate(currentAssign.submitted_at)}</p>
                           </div>
                         </div>
                         {currentAssign.is_delayed === 1 && (
                           <div className="text-right">
-                            <span className="px-2 py-0.5 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-[8px] font-black uppercase tracking-widest">Delay Checked</span>
-                            <p className="text-[10px] font-bold text-rose-500/70 mt-1">
+                            <span className="px-2 py-0.5 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/35 text-rose-600 dark:text-rose-400 rounded-lg text-[8px] font-black uppercase tracking-widest">Delay Checked</span>
+                            <p className="text-[10px] font-bold text-rose-500/70 dark:text-rose-400/80 mt-1">
                               {Math.max(1, Math.ceil((new Date(currentAssign.submitted_at).getTime() - new Date(task.deadline).getTime()) / (1000 * 3600 * 24)))} Days Late
                             </p>
                           </div>
@@ -1321,7 +1321,7 @@ export default function HODTaskDetails() {
                                 pts === 0 ? 0 : currentAssign.bonus_points
                               );
                             }}
-                            className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#7C3AED]" 
+                            className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#7C3AED] dark:accent-[#8B5CF6]" 
                           />
                         </div>
 
@@ -1351,7 +1351,7 @@ export default function HODTaskDetails() {
                             }}
                             className={cn(
                               "w-full h-1.5 rounded-lg appearance-none cursor-pointer transition-all",
-                              currentAssign.points === 0 ? "bg-slate-50 accent-slate-200 cursor-not-allowed opacity-50" : "bg-slate-100 accent-amber-500"
+                              currentAssign.points === 0 ? "bg-slate-50 dark:bg-slate-900 accent-slate-200 dark:accent-slate-800 cursor-not-allowed opacity-50" : "bg-slate-100 dark:bg-slate-800 accent-amber-500"
                             )}
                           />
                         </div>
@@ -1549,8 +1549,8 @@ export default function HODTaskDetails() {
                       <div 
                         key={`unaccepted-${fac.id}`}
                         className={cn(
-                          "p-4 border-2 rounded-2xl flex items-center justify-between gap-3 bg-slate-50/30 transition-all hover:shadow-sm",
-                          selectedUnacceptedFacultyIds.includes(fac.id) ? "border-amber-400 bg-amber-50/5" : "border-slate-100"
+                          "p-4 border-2 rounded-2xl flex items-center justify-between gap-3 bg-slate-50/30 dark:bg-[#110A24]/40 transition-all hover:shadow-sm",
+                          selectedUnacceptedFacultyIds.includes(fac.id) ? "border-amber-400 dark:border-amber-500 bg-amber-50/5 dark:bg-amber-500/5" : "border-slate-100 dark:border-slate-800/80"
                         )}
                       >
                         <div className="flex items-center gap-3 min-w-0">
@@ -1566,7 +1566,7 @@ export default function HODTaskDetails() {
                             }}
                             className="w-4 h-4 rounded text-amber-500 border-slate-300 focus:ring-amber-500 shrink-0"
                           />
-                          <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center font-black text-indigo-600 shadow-sm border border-slate-100 overflow-hidden shrink-0">
+                          <div className="w-9 h-9 bg-white dark:bg-[#1A1235] rounded-xl flex items-center justify-center font-black text-[#7C3AED] dark:text-[#A78BFA] shadow-sm border border-slate-100 dark:border-slate-800/80 overflow-hidden shrink-0">
                             {fac.profile_pic ? (
                               <img src={`${import.meta.env.VITE_API_URL}/${fac.profile_pic}`} alt={fac.name} className="w-full h-full object-cover" />
                             ) : (
