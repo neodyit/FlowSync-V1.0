@@ -189,29 +189,29 @@ export default function EngagementTracker() {
     if (stats === null && loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-                <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                <p className="text-xs font-black text-[#1E1B4B] uppercase tracking-widest animate-pulse">Initializing Telemetry Engine...</p>
+                <div className="w-12 h-12 border-4 border-indigo-200 dark:border-violet-950 border-t-indigo-600 dark:border-t-violet-400 rounded-full animate-spin"></div>
+                <p className="text-xs font-black text-[#1E1B4B] dark:text-indigo-100 uppercase tracking-widest animate-pulse">Initializing Telemetry Engine...</p>
             </div>
         );
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-500">
             <SEO title="System Telemetry" description="Glassmorphic real-time telemetry console monitoring administrative engagement levels." />
             
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
                 <div>
-                    <h1 className="text-4xl font-black text-[#1E1B4B] tracking-tight flex items-center gap-3">
-                        <Activity className="w-10 h-10 text-[#7C3AED] animate-pulse" />
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight flex items-center gap-2 sm:gap-3">
+                        <Activity className="w-7 h-7 sm:w-10 sm:h-10 text-[#7C3AED] dark:text-violet-400 animate-pulse" />
                         Engagement Telemetry
                     </h1>
-                    <p className="text-[#4C1D95]/60 mt-1 font-medium">Real-time background console monitoring administrative session active metrics.</p>
+                    <p className="text-[#4C1D95]/60 dark:text-violet-400/60 mt-1 font-medium text-sm">Real-time background console monitoring administrative session active metrics.</p>
                 </div>
                 <button 
                     onClick={fetchStats}
                     disabled={loading}
-                    className="flex items-center gap-2 px-6 py-3 bg-white border border-[#7C3AED]/10 rounded-2xl text-sm font-bold text-[#7C3AED] hover:bg-[#7C3AED]/5 transition-all active:scale-95 shadow-sm disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-2xl text-sm font-bold text-[#7C3AED] dark:text-violet-400 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/40 transition-all active:scale-95 shadow-sm disabled:opacity-50 w-full md:w-auto"
                 >
                     <RefreshCcw className={cn("w-4 h-4", loading && "animate-spin")} />
                     Sync Feed
@@ -219,11 +219,11 @@ export default function EngagementTracker() {
             </div>
 
             {/* Filter control panel (Glassmorphic dashboard style) */}
-            <div className="bg-white/80 backdrop-blur-xl border border-slate-100 p-6 rounded-[2.5rem] shadow-sm space-y-4 relative overflow-hidden">
+            <div className="bg-white/80 dark:bg-[#1A0F35]/20 backdrop-blur-xl border border-slate-100 dark:border-violet-500/20 p-6 rounded-[2.5rem] shadow-sm space-y-4 relative overflow-hidden">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <SlidersHorizontal className="w-4 h-4 text-indigo-500" />
-                        <h2 className="text-xs font-black text-[#1E1B4B] uppercase tracking-widest">Advanced Telemetry Filters</h2>
+                        <SlidersHorizontal className="w-4 h-4 text-indigo-500 dark:text-violet-405" />
+                        <h2 className="text-xs font-black text-[#1E1B4B] dark:text-indigo-100 uppercase tracking-widest">Advanced Telemetry Filters</h2>
                     </div>
                     {hasFiltersActive && (
                         <motion.button
@@ -231,7 +231,7 @@ export default function EngagementTracker() {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
                             onClick={handleResetFilters}
-                            className="text-[10px] font-black text-[#7C3AED] hover:text-[#4C1D95] uppercase tracking-widest bg-[#7C3AED]/5 px-3 py-1.5 rounded-xl hover:bg-[#7C3AED]/10 transition-all"
+                            className="text-[10px] font-black text-[#7C3AED] dark:text-violet-450 hover:text-[#4C1D95] dark:hover:text-violet-300 uppercase tracking-widest bg-[#7C3AED]/5 dark:bg-violet-950/40 px-3 py-1.5 rounded-xl hover:bg-[#7C3AED]/10 dark:hover:bg-violet-905/60 transition-all"
                         >
                             Reset Filters
                         </motion.button>
@@ -241,18 +241,18 @@ export default function EngagementTracker() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* College Filter */}
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <label className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest flex items-center gap-1.5">
                             <Building2 className="w-3.5 h-3.5 text-indigo-500" />
                             Affiliated College
                         </label>
                         <select
                             value={filterCollege}
                             onChange={(e) => setFilterCollege(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer appearance-none shadow-sm"
+                            className="w-full bg-slate-50 dark:bg-[#110A24] border border-slate-200 dark:border-violet-500/20 text-slate-900 dark:text-indigo-100 rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-violet-400 transition-all cursor-pointer appearance-none shadow-sm"
                         >
-                            <option value="all">All Colleges</option>
+                            <option value="all" className="dark:bg-[#110A24]">All Colleges</option>
                             {colleges.map((c) => (
-                                <option key={c.id} value={c.id}>
+                                <option key={c.id} value={c.id} className="dark:bg-[#110A24]">
                                     {c.short_name ? `[${c.short_name}] ${c.name}` : c.name}
                                 </option>
                             ))}
@@ -261,18 +261,18 @@ export default function EngagementTracker() {
 
                     {/* Department Filter */}
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <label className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest flex items-center gap-1.5">
                             <Briefcase className="w-3.5 h-3.5 text-indigo-500" />
                             Department
                         </label>
                         <select
                             value={filterDept}
                             onChange={(e) => setFilterDept(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer appearance-none shadow-sm disabled:opacity-50"
+                            className="w-full bg-slate-50 dark:bg-[#110A24] border border-slate-200 dark:border-violet-500/20 text-slate-900 dark:text-indigo-100 rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-violet-400 transition-all cursor-pointer appearance-none shadow-sm disabled:opacity-50"
                         >
-                            <option value="all">All Departments</option>
+                            <option value="all" className="dark:bg-[#110A24]">All Departments</option>
                             {filteredDepartments.map((d) => (
-                                <option key={d.id} value={d.id}>
+                                <option key={d.id} value={d.id} className="dark:bg-[#110A24]">
                                     {d.name}
                                 </option>
                             ))}
@@ -281,36 +281,36 @@ export default function EngagementTracker() {
 
                     {/* User Type (Role) Filter */}
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <label className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest flex items-center gap-1.5">
                             <Shield className="w-3.5 h-3.5 text-indigo-500" />
                             User Type
                         </label>
                         <select
                             value={filterRole}
                             onChange={(e) => setFilterRole(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer appearance-none shadow-sm"
+                            className="w-full bg-slate-50 dark:bg-[#110A24] border border-slate-200 dark:border-violet-500/20 text-slate-900 dark:text-indigo-100 rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-violet-400 transition-all cursor-pointer appearance-none shadow-sm"
                         >
-                            <option value="all">All Operator Roles</option>
-                            <option value="1">Administrator</option>
-                            <option value="2">Head of Dept (HOD)</option>
-                            <option value="3">Faculty</option>
+                            <option value="all" className="dark:bg-[#110A24]">All Operator Roles</option>
+                            <option value="1" className="dark:bg-[#110A24]">Administrator</option>
+                            <option value="2" className="dark:bg-[#110A24]">Head of Dept (HOD)</option>
+                            <option value="3" className="dark:bg-[#110A24]">Faculty</option>
                         </select>
                     </div>
 
                     {/* Particular User Filter */}
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <label className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest flex items-center gap-1.5">
                             <UserCheck className="w-3.5 h-3.5 text-indigo-500" />
                             Particular User
                         </label>
                         <select
                             value={filterUser}
                             onChange={(e) => setFilterUser(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer appearance-none shadow-sm"
+                            className="w-full bg-slate-50 dark:bg-[#110A24] border border-slate-200 dark:border-violet-500/20 text-slate-900 dark:text-indigo-100 rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-violet-400 transition-all cursor-pointer appearance-none shadow-sm"
                         >
-                            <option value="all">All Individual Operators ({filteredUsers.length})</option>
+                            <option value="all" className="dark:bg-[#110A24]">All Individual Operators ({filteredUsers.length})</option>
                             {filteredUsers.map((u) => (
-                                <option key={u.id} value={u.id}>
+                                <option key={u.id} value={u.id} className="dark:bg-[#110A24]">
                                     {u.name} ({u.role_name})
                                 </option>
                             ))}
@@ -321,7 +321,7 @@ export default function EngagementTracker() {
 
             {/* Error Message */}
             {error && (
-                <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-800 flex items-center gap-2">
+                <div className="rounded-2xl border border-red-100 dark:border-red-500/10 bg-red-50 dark:bg-red-950/20 p-4 text-sm font-semibold text-red-800 dark:text-red-400 flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
                     {error}
                 </div>
@@ -331,22 +331,22 @@ export default function EngagementTracker() {
             <div className="relative">
                 {/* Secondary subtle pulsing overlay when data fetches in background */}
                 {loading && stats !== null && (
-                    <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] rounded-[2.5rem] z-10 pointer-events-none transition-all flex items-center justify-center animate-pulse" />
+                    <div className="absolute inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-[1px] rounded-[2.5rem] z-10 pointer-events-none transition-all flex items-center justify-center animate-pulse" />
                 )}
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {/* Tracked Users KPI Card */}
                     <motion.div 
                         initial={{ opacity: 0, y: 15 }} 
                         animate={{ opacity: 1, y: 0 }} 
-                        className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300"
+                        className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 dark:border-violet-500/20 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300"
                     >
-                        <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-[5rem] transition-all duration-500 group-hover:scale-110 opacity-50 bg-indigo-50/50" />
-                        <Users className="w-8 h-8 mb-6 relative z-10 text-indigo-500" />
+                        <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-[5rem] transition-all duration-500 group-hover:scale-110 opacity-50 bg-indigo-50/50 dark:bg-indigo-950/10" />
+                        <Users className="w-7 h-7 sm:w-8 sm:h-8 mb-4 sm:mb-6 relative z-10 text-indigo-500" />
                         <div className="relative z-10">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Users Tracked</h4>
-                            <p className="text-4xl font-black text-[#1E1B4B]">{stats?.total_users_tracked || 0}</p>
-                            <p className="text-[11px] font-bold text-slate-400 mt-2">Active telemetry streams</p>
+                            <h4 className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest mb-1">Users Tracked</h4>
+                            <p className="text-3xl sm:text-4xl font-black text-[#1E1B4B] dark:text-indigo-100">{stats?.total_users_tracked || 0}</p>
+                            <p className="text-[11px] font-bold text-slate-400 dark:text-violet-400/40 mt-2">Active telemetry streams</p>
                         </div>
                     </motion.div>
 
@@ -355,14 +355,14 @@ export default function EngagementTracker() {
                         initial={{ opacity: 0, y: 15 }} 
                         animate={{ opacity: 1, y: 0 }} 
                         transition={{ delay: 0.05 }}
-                        className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300"
+                        className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 dark:border-violet-500/20 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300"
                     >
-                        <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-[5rem] transition-all duration-500 group-hover:scale-110 opacity-50 bg-purple-50/50" />
-                        <Clock className="w-8 h-8 mb-6 relative z-10 text-purple-500" />
+                        <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-[5rem] transition-all duration-500 group-hover:scale-110 opacity-50 bg-purple-50/50 dark:bg-purple-950/10" />
+                        <Clock className="w-7 h-7 sm:w-8 sm:h-8 mb-4 sm:mb-6 relative z-10 text-purple-500" />
                         <div className="relative z-10">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Active Time</h4>
-                            <p className="text-4xl font-black text-[#1E1B4B]">{formatTime(stats?.total_active_time_seconds || 0)}</p>
-                            <p className="text-[11px] font-bold text-slate-400 mt-2">Aggregated platform use</p>
+                            <h4 className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest mb-1">Total Active Time</h4>
+                            <p className="text-3xl sm:text-4xl font-black text-[#1E1B4B] dark:text-indigo-100">{formatTime(stats?.total_active_time_seconds || 0)}</p>
+                            <p className="text-[11px] font-bold text-slate-400 dark:text-violet-400/40 mt-2">Aggregated platform use</p>
                         </div>
                     </motion.div>
 
@@ -371,14 +371,14 @@ export default function EngagementTracker() {
                         initial={{ opacity: 0, y: 15 }} 
                         animate={{ opacity: 1, y: 0 }} 
                         transition={{ delay: 0.1 }}
-                        className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300"
+                        className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 dark:border-violet-500/20 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300"
                     >
-                        <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-[5rem] transition-all duration-500 group-hover:scale-110 opacity-50 bg-fuchsia-50/50" />
-                        <TrendingUp className="w-8 h-8 mb-6 relative z-10 text-fuchsia-500" />
+                        <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-[5rem] transition-all duration-500 group-hover:scale-110 opacity-50 bg-fuchsia-50/50 dark:bg-fuchsia-950/10" />
+                        <TrendingUp className="w-7 h-7 sm:w-8 sm:h-8 mb-4 sm:mb-6 relative z-10 text-fuchsia-500" />
                         <div className="relative z-10">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Session Duration</h4>
-                            <p className="text-4xl font-black text-[#1E1B4B]">{formatTimeDetailed(avgDuration)}</p>
-                            <p className="text-[11px] font-bold text-slate-400 mt-2">Telemetry rate per active user</p>
+                            <h4 className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest mb-1">Avg Session Duration</h4>
+                            <p className="text-3xl sm:text-4xl font-black text-[#1E1B4B] dark:text-indigo-100">{formatTimeDetailed(avgDuration)}</p>
+                            <p className="text-[11px] font-bold text-slate-400 dark:text-violet-400/40 mt-2">Telemetry rate per active user</p>
                         </div>
                     </motion.div>
 
@@ -387,30 +387,30 @@ export default function EngagementTracker() {
                         initial={{ opacity: 0, y: 15 }} 
                         animate={{ opacity: 1, y: 0 }} 
                         transition={{ delay: 0.15 }}
-                        className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300"
+                        className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 dark:border-violet-500/20 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300"
                     >
-                        <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-[5rem] transition-all duration-500 group-hover:scale-110 opacity-50 bg-emerald-50/50" />
-                        <MousePointerClick className="w-8 h-8 mb-6 relative z-10 text-emerald-500" />
+                        <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-[5rem] transition-all duration-500 group-hover:scale-110 opacity-50 bg-emerald-50/50 dark:bg-emerald-950/10" />
+                        <MousePointerClick className="w-7 h-7 sm:w-8 sm:h-8 mb-4 sm:mb-6 relative z-10 text-emerald-500" />
                         <div className="relative z-10">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Interactions</h4>
-                            <p className="text-4xl font-black text-[#1E1B4B]">{stats?.total_interactions || 0}</p>
-                            <p className="text-[11px] font-bold text-slate-400 mt-2">Hits, scrolls & background telemetry</p>
+                            <h4 className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest mb-1">Total Interactions</h4>
+                            <p className="text-3xl sm:text-4xl font-black text-[#1E1B4B] dark:text-indigo-100">{stats?.total_interactions || 0}</p>
+                            <p className="text-[11px] font-bold text-slate-400 dark:text-violet-400/40 mt-2">Hits, scrolls & background telemetry</p>
                         </div>
                     </motion.div>
                 </div>
             </div>
 
             {/* Visual Telemetry Breakdown (Graphs and Lists) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                 
                 {/* Left Panel: Top Pages Telemetry list */}
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col space-y-6">
+                <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 dark:border-violet-500/20 shadow-sm flex flex-col space-y-5 sm:space-y-6">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-black text-[#1E1B4B] flex items-center gap-3">
-                            <Compass className="w-6 h-6 text-[#7C3AED]" />
+                        <h2 className="text-base sm:text-xl font-black text-[#1E1B4B] dark:text-indigo-100 flex items-center gap-2 sm:gap-3">
+                            <Compass className="w-5 h-5 sm:w-6 sm:h-6 text-[#7C3AED] dark:text-violet-400" />
                             Top Page Telemetry
                         </h2>
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <div className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">
                             Sorted by Duration
                         </div>
                     </div>
@@ -424,18 +424,18 @@ export default function EngagementTracker() {
                                         <div className="flex items-center justify-between text-xs font-bold">
                                             <div className="flex items-center gap-2 max-w-[70%]">
                                                 <div className="w-2.5 h-2.5 rounded-full bg-indigo-500/80 flex-shrink-0" />
-                                                <span className="text-[#1E1B4B] font-semibold truncate hover:text-indigo-600 transition-colors">
+                                                <span className="text-[#1E1B4B] dark:text-indigo-100 font-semibold truncate hover:text-indigo-600 dark:hover:text-violet-450 transition-colors">
                                                     {page.page_url}
                                                 </span>
                                             </div>
                                             <div className="text-right flex items-center gap-2">
-                                                <span className="text-indigo-600 font-extrabold">{formatTimeDetailed(page.total_time)}</span>
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">({page.total_interactions} hits)</span>
+                                                <span className="text-indigo-600 dark:text-violet-400 font-extrabold">{formatTimeDetailed(page.total_time)}</span>
+                                                <span className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">({page.total_interactions} hits)</span>
                                             </div>
                                         </div>
                                         
                                         {/* Premium Glowing Progress Bar */}
-                                        <div className="h-2 w-full bg-slate-50 border border-slate-100 rounded-full overflow-hidden relative">
+                                        <div className="h-2 w-full bg-slate-50 dark:bg-violet-950/30 border border-slate-100 dark:border-violet-500/10 rounded-full overflow-hidden relative">
                                             <motion.div 
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${percentage}%` }}
@@ -447,11 +447,11 @@ export default function EngagementTracker() {
                                 );
                             })
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-slate-400 text-center gap-3">
-                                <Globe className="w-12 h-12 opacity-30 text-[#7C3AED]" />
+                            <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-violet-400/50 text-center gap-3">
+                                <Globe className="w-12 h-12 opacity-30 text-[#7C3AED] dark:text-violet-400" />
                                 <div>
-                                    <p className="text-sm font-bold text-[#1E1B4B]">No URL Telemetry Found</p>
-                                    <p className="text-xs text-slate-400 mt-1">Adjust your cascading filter parameters.</p>
+                                    <p className="text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">No URL Telemetry Found</p>
+                                    <p className="text-xs text-slate-400 dark:text-violet-400/60 mt-1">Adjust your cascading filter parameters.</p>
                                 </div>
                             </div>
                         )}
@@ -459,13 +459,13 @@ export default function EngagementTracker() {
                 </div>
 
                 {/* Right Panel: Daily Activity Trend spring vertical bar graph */}
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col space-y-6">
+                <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 dark:border-violet-500/20 shadow-sm flex flex-col space-y-5 sm:space-y-6">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-black text-[#1E1B4B] flex items-center gap-3">
-                            <Activity className="w-6 h-6 text-[#7C3AED]" />
+                        <h2 className="text-base sm:text-xl font-black text-[#1E1B4B] dark:text-indigo-100 flex items-center gap-2 sm:gap-3">
+                            <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-[#7C3AED] dark:text-violet-400" />
                             Daily Engagement Trend
                         </h2>
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <div className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">
                             Last 7 Days
                         </div>
                     </div>
@@ -479,10 +479,10 @@ export default function EngagementTracker() {
                                         return (
                                             <div key={i} className="group relative flex-1 flex flex-col justify-end items-center h-full mx-1">
                                                 {/* Sophisticated Hover Tooltip Card */}
-                                                <div className="opacity-0 group-hover:opacity-100 group-hover:-translate-y-2.5 transition-all duration-300 pointer-events-none absolute -top-14 z-20 w-36 bg-slate-900/95 backdrop-blur-md text-white text-[10px] p-2.5 rounded-2xl shadow-xl text-center flex flex-col gap-0.5 border border-white/10">
-                                                    <span className="font-extrabold text-[10px] text-slate-200">{formatTrendDate(day.date)}</span>
+                                                <div className="opacity-0 group-hover:opacity-100 group-hover:-translate-y-2.5 transition-all duration-300 pointer-events-none absolute -top-14 z-20 w-36 bg-slate-900/95 dark:bg-[#110A24]/95 backdrop-blur-md text-white text-[10px] p-2.5 rounded-2xl shadow-xl text-center flex flex-col gap-0.5 border border-white/10 dark:border-violet-500/20">
+                                                    <span className="font-extrabold text-[10px] text-slate-200 dark:text-indigo-200">{formatTrendDate(day.date)}</span>
                                                     <span className="font-black text-[#a78bfa] text-xs mt-0.5">{formatTime(day.total_time)} total</span>
-                                                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{day.active_users} active users</span>
+                                                    <span className="text-[9px] text-slate-400 dark:text-violet-400/60 font-bold uppercase tracking-wider">{day.active_users} active users</span>
                                                 </div>
 
                                                 {/* Physics Spring animating vertical graph bar */}
@@ -498,7 +498,7 @@ export default function EngagementTracker() {
                                                     </motion.div>
                                                 </div>
 
-                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-3">
+                                                <span className="text-[9px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest mt-3">
                                                     {formatTrendDate(day.date)}
                                                 </span>
                                             </div>
@@ -507,11 +507,11 @@ export default function EngagementTracker() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-slate-400 text-center gap-3">
-                                <Layers className="w-12 h-12 opacity-30 text-[#7C3AED]" />
+                            <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-violet-400/50 text-center gap-3">
+                                <Layers className="w-12 h-12 opacity-30 text-[#7C3AED] dark:text-violet-400" />
                                 <div>
-                                    <p className="text-sm font-bold text-[#1E1B4B]">No Active Trend Telemetry</p>
-                                    <p className="text-xs text-slate-400 mt-1">Data will accumulate as systems operate.</p>
+                                    <p className="text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">No Active Trend Telemetry</p>
+                                    <p className="text-xs text-slate-400 dark:text-violet-400/60 mt-1">Data will accumulate as systems operate.</p>
                                 </div>
                             </div>
                         )}

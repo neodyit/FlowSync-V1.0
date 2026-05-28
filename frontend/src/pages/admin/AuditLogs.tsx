@@ -72,29 +72,29 @@ const AuditLogs: React.FC = () => {
   });
 
   const getActionColor = (action: string) => {
-    if (action.includes('CREATE')) return 'text-emerald-600 bg-emerald-50 border-emerald-100';
-    if (action.includes('DELETE')) return 'text-rose-600 bg-rose-50 border-rose-100';
-    if (action.includes('UPDATE')) return 'text-amber-600 bg-amber-50 border-amber-100';
-    if (action === 'LOGIN') return 'text-blue-600 bg-blue-50 border-blue-100';
-    if (action === 'API_HIT') return 'text-slate-400 bg-slate-50 border-slate-100';
-    return 'text-slate-600 bg-slate-50 border-slate-100';
+    if (action.includes('CREATE')) return 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-500/10';
+    if (action.includes('DELETE')) return 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-500/10';
+    if (action.includes('UPDATE')) return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-500/10';
+    if (action === 'LOGIN') return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-500/10';
+    if (action === 'API_HIT') return 'text-slate-400 dark:text-violet-300 bg-slate-50 dark:bg-violet-950/20 border-slate-100 dark:border-violet-500/10';
+    return 'text-slate-600 dark:text-violet-200 bg-slate-50 dark:bg-violet-950/20 border-slate-100 dark:border-violet-500/10';
   };
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <SEO title="Audit Protocols" description="Comprehensive immutable ledger of all system interactions and administrative changes within FlowSync." />
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
         <div>
-          <h1 className="text-4xl font-black text-[#1E1B4B] tracking-tight flex items-center gap-3">
-            <History className="w-10 h-10 text-[#7C3AED]" />
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight flex items-center gap-2 sm:gap-3">
+            <History className="w-7 h-7 sm:w-10 sm:h-10 text-[#7C3AED] dark:text-violet-400" />
             Audit Protocols
           </h1>
-          <p className="text-[#4C1D95]/60 mt-1 font-medium">Comprehensive immutable ledger of all system interactions.</p>
+          <p className="text-[#4C1D95]/60 dark:text-violet-400/60 mt-1 font-medium text-sm">Comprehensive immutable ledger of all system interactions.</p>
         </div>
         <button 
           onClick={fetchLogs}
-          className="flex items-center gap-2 px-6 py-3 bg-white border border-[#7C3AED]/10 rounded-2xl text-sm font-bold text-[#7C3AED] hover:bg-[#7C3AED]/5 transition-all active:scale-95 shadow-sm"
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-2xl text-sm font-bold text-[#7C3AED] dark:text-violet-400 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/40 transition-all active:scale-95 shadow-sm cursor-pointer w-full md:w-auto"
         >
           <RefreshCcw className={cn("w-4 h-4", isLoading && "animate-spin")} />
           Refresh Registry
@@ -102,51 +102,51 @@ const AuditLogs: React.FC = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white/70 backdrop-blur-md rounded-3xl p-4 border border-[#7C3AED]/10 shadow-sm flex flex-col lg:flex-row gap-4">
+      <div className="bg-white/70 dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-3xl p-4 border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex flex-col lg:flex-row gap-4 relative z-[50]">
         <div className="flex-1 relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7C3AED] opacity-40 group-focus-within:opacity-100 transition-opacity" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7C3AED] dark:text-violet-400 opacity-40 group-focus-within:opacity-100 transition-opacity" />
           <input 
             type="text" 
             placeholder="Search by operator, action, or resource..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-[#7C3AED]/5 rounded-2xl outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-medium"
+            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-[#110A24] border border-[#7C3AED]/5 dark:border-violet-500/20 rounded-2xl outline-none focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-medium text-[#1E1B4B] dark:text-indigo-100 placeholder:text-slate-300 dark:placeholder:text-indigo-100/20"
           />
         </div>
         
         <div className="w-full lg:w-64 relative group">
-          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7C3AED] opacity-40" />
+          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7C3AED] dark:text-violet-400 opacity-40" />
           <select 
             value={filterAction}
             onChange={(e) => setFilterAction(e.target.value)}
-            className="w-full pl-12 pr-10 py-3 bg-white border border-[#7C3AED]/5 rounded-2xl outline-none focus:border-[#7C3AED] transition-all text-sm font-bold appearance-none cursor-pointer"
+            className="w-full pl-12 pr-10 py-3 bg-white dark:bg-[#110A24] border border-[#7C3AED]/5 dark:border-violet-500/20 rounded-2xl outline-none focus:border-[#7C3AED] dark:focus:border-violet-400 transition-all text-sm font-bold appearance-none cursor-pointer text-[#1E1B4B] dark:text-indigo-100"
           >
-            <option value="all">All Action Types</option>
-            <option value="LOGIN">Logins</option>
-            <option value="CREATE_USER">User Creation</option>
-            <option value="UPDATE_USER">User Updates</option>
-            <option value="DELETE_USER">User Deletions</option>
-            <option value="API_HIT">System API Hits</option>
+            <option value="all" className="dark:bg-[#110A24]">All Action Types</option>
+            <option value="LOGIN" className="dark:bg-[#110A24]">Logins</option>
+            <option value="CREATE_USER" className="dark:bg-[#110A24]">User Creation</option>
+            <option value="UPDATE_USER" className="dark:bg-[#110A24]">User Updates</option>
+            <option value="DELETE_USER" className="dark:bg-[#110A24]">User Deletions</option>
+            <option value="API_HIT" className="dark:bg-[#110A24]">System API Hits</option>
           </select>
-          <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7C3AED] rotate-90" />
+          <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7C3AED] dark:text-violet-400 rotate-90" />
         </div>
       </div>
 
       {/* Logs List */}
-      <div className="bg-white rounded-[2.5rem] border border-[#7C3AED]/10 shadow-xl overflow-hidden">
+      <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-[2.5rem] border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 uppercase tracking-[0.2em]">Timestamp</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 uppercase tracking-[0.2em]">Operator</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 uppercase tracking-[0.2em]">Action Protocol</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 uppercase tracking-[0.2em]">Target Resource</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 uppercase tracking-[0.2em]">Origin (IP)</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 uppercase tracking-[0.2em]">Status</th>
+              <tr className="bg-slate-50/50 dark:bg-violet-950/20 border-b border-slate-100 dark:border-violet-500/20">
+                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 dark:text-violet-400/80 uppercase tracking-[0.2em]">Timestamp</th>
+                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 dark:text-violet-400/80 uppercase tracking-[0.2em]">Operator</th>
+                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 dark:text-violet-400/80 uppercase tracking-[0.2em]">Action Protocol</th>
+                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 dark:text-violet-400/80 uppercase tracking-[0.2em]">Target Resource</th>
+                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 dark:text-violet-400/80 uppercase tracking-[0.2em]">Origin (IP)</th>
+                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 dark:text-violet-400/80 uppercase tracking-[0.2em]">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-50 dark:divide-violet-500/10">
               <AnimatePresence mode="popLayout">
                 {filteredLogs.map((log) => (
                   <motion.tr 
@@ -155,23 +155,23 @@ const AuditLogs: React.FC = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="group hover:bg-slate-50/80 transition-colors"
+                    className="group hover:bg-slate-50/80 dark:hover:bg-violet-950/30 transition-colors border-b border-slate-50 dark:border-violet-500/10"
                   >
                     <td className="px-8 py-6">
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-[#1E1B4B]">
+                        <span className="text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">
                           {formatDate(log.created_at)}
                         </span>
                       </div>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#7C3AED]/5 flex items-center justify-center text-[#7C3AED] group-hover:bg-[#7C3AED] group-hover:text-white transition-all duration-300">
+                        <div className="w-9 h-9 rounded-xl bg-[#7C3AED]/5 dark:bg-violet-950/40 flex items-center justify-center text-[#7C3AED] dark:text-violet-400 group-hover:bg-[#7C3AED] group-hover:text-white dark:group-hover:text-white transition-all duration-300">
                           <User className="w-4 h-4" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-[#1E1B4B]">{log.user_name || 'System / Guest'}</span>
-                          <span className="text-[10px] font-bold text-slate-400">{log.user_email || 'anonymous-origin'}</span>
+                          <span className="text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">{log.user_name || 'System / Guest'}</span>
+                          <span className="text-[10px] font-bold text-slate-400 dark:text-violet-400/60">{log.user_email || 'anonymous-origin'}</span>
                         </div>
                       </div>
                     </td>
@@ -187,20 +187,20 @@ const AuditLogs: React.FC = () => {
                     <td className="px-8 py-6">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 bg-slate-100 rounded text-[9px] font-black text-slate-500 uppercase tracking-widest border border-slate-200">
+                          <span className="px-2 py-0.5 bg-slate-100 dark:bg-violet-950/40 rounded text-[9px] font-black text-slate-500 dark:text-violet-300 uppercase tracking-widest border border-slate-200 dark:border-violet-500/20">
                             {log.resource || 'ENDPOINT'}
                           </span>
-                          <span className="text-xs font-bold text-[#1E1B4B]">{log.resource_id ? `#${log.resource_id}` : log.request_uri}</span>
+                          <span className="text-xs font-bold text-[#1E1B4B] dark:text-indigo-100">{log.resource_id ? `#${log.resource_id}` : log.request_uri}</span>
                         </div>
                         {log.details && (
-                          <span className="text-[10px] font-medium text-slate-400 truncate max-w-[200px]">
+                          <span className="text-[10px] font-medium text-slate-400 dark:text-violet-400/80 truncate max-w-[200px]">
                             {log.details}
                           </span>
                         )}
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                      <div className="flex items-center gap-2 text-slate-400">
+                      <div className="flex items-center gap-2 text-slate-400 dark:text-violet-400/60">
                         <Globe className="w-3.5 h-3.5 opacity-50" />
                         <span className="text-xs font-mono font-medium">{log.ip_address || '0.0.0.0'}</span>
                       </div>
@@ -220,11 +220,11 @@ const AuditLogs: React.FC = () => {
         
         {!isLoading && filteredLogs.length === 0 && (
           <div className="text-center py-20 space-y-4">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto">
-              <Terminal className="w-10 h-10 text-slate-200" />
+            <div className="w-20 h-20 bg-slate-50 dark:bg-violet-950/20 rounded-full flex items-center justify-center mx-auto">
+              <Terminal className="w-10 h-10 text-slate-200 dark:text-violet-500/20" />
             </div>
-            <h3 className="text-xl font-black text-[#1E1B4B]">No audit records found</h3>
-            <p className="text-sm font-bold text-slate-400 max-w-xs mx-auto">
+            <h3 className="text-xl font-black text-[#1E1B4B] dark:text-indigo-100">No audit records found</h3>
+            <p className="text-sm font-bold text-slate-400 dark:text-violet-400/60 max-w-xs mx-auto">
               No system interactions matched your current search and filter criteria.
             </p>
           </div>
@@ -233,7 +233,7 @@ const AuditLogs: React.FC = () => {
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-12 h-12 border-4 border-[#7C3AED]/20 border-t-[#7C3AED] rounded-full animate-spin" />
-            <p className="text-[#4C1D95]/60 font-black text-xs uppercase tracking-widest">Analyzing Immutable Logs...</p>
+            <p className="text-[#4C1D95]/60 dark:text-violet-400/60 font-black text-xs uppercase tracking-widest">Analyzing Immutable Logs...</p>
           </div>
         )}
       </div>

@@ -47,24 +47,24 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
   return (
     <div className={cn("space-y-1.5", className)} ref={containerRef}>
-      {label && <label className="text-[10px] font-black text-[#1E1B4B]/40 uppercase tracking-widest ml-1">{label}</label>}
+      {label && <label className="text-[10px] font-black text-[#1E1B4B]/40 dark:text-violet-400/40 uppercase tracking-widest ml-1">{label}</label>}
       <div className="relative">
         <button
           type="button"
           disabled={disabled}
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "w-full flex items-center justify-between gap-3 px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none transition-all text-sm font-medium",
-            isOpen && "bg-white border-[#7C3AED] ring-4 ring-[#7C3AED]/5 shadow-lg",
+            "w-full flex items-center justify-between gap-3 px-4 py-3 bg-slate-50 dark:bg-[#110A24] border border-slate-100 dark:border-violet-500/20 rounded-2xl outline-none transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100",
+            isOpen && "bg-white dark:bg-[#110A24] border-[#7C3AED] dark:border-violet-400 ring-4 ring-[#7C3AED]/5 shadow-lg",
             disabled && "opacity-50 cursor-not-allowed grayscale",
-            !selectedOption && "text-slate-400"
+            !selectedOption && "text-slate-400 dark:text-violet-400/60"
           )}
         >
           <div className="flex items-center gap-3 overflow-hidden">
-            {icon && <span className={cn("text-slate-400 shrink-0", isOpen && "text-[#7C3AED]")}>{icon}</span>}
+            {icon && <span className={cn("text-slate-400 dark:text-violet-400/60 shrink-0", isOpen && "text-[#7C3AED] dark:text-violet-400")}>{icon}</span>}
             <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
           </div>
-          <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-300", isOpen && "rotate-180 text-[#7C3AED]")} />
+          <ChevronDown className={cn("w-4 h-4 text-slate-400 dark:text-violet-400/60 transition-transform duration-300", isOpen && "rotate-180 text-[#7C3AED] dark:text-violet-400")} />
         </button>
 
         <AnimatePresence>
@@ -74,11 +74,11 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute z-[100] w-full mt-2 py-2 bg-white border border-[#7C3AED]/10 rounded-[24px] shadow-2xl shadow-[#7C3AED]/10 overflow-hidden"
+              className="absolute z-[100] w-full mt-2 py-2 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-[24px] shadow-2xl shadow-[#7C3AED]/10 overflow-hidden"
             >
               <div className="max-h-[240px] overflow-y-auto custom-scrollbar">
                 {options.length === 0 ? (
-                  <div className="px-4 py-3 text-xs text-slate-400 italic">No options available</div>
+                  <div className="px-4 py-3 text-xs text-slate-400 dark:text-violet-400 italic">No options available</div>
                 ) : (
                   options.map((option) => (
                     <button
@@ -89,8 +89,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
                         setIsOpen(false);
                       }}
                       className={cn(
-                        "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-colors hover:bg-[#7C3AED]/5",
-                        value === option.value ? "text-[#7C3AED] bg-[#7C3AED]/5" : "text-slate-600"
+                        "w-full flex items-center justify-between px-4 py-2.5 text-sm font-bold transition-colors hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/40 cursor-pointer",
+                        value === option.value ? "text-[#7C3AED] dark:text-violet-400 bg-[#7C3AED]/5 dark:bg-violet-950/40" : "text-slate-600 dark:text-violet-200"
                       )}
                     >
                       <div className="flex items-center gap-3">
