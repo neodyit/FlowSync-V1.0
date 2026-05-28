@@ -208,7 +208,7 @@ const Settings: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-20">
+    <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 pb-20 px-3 md:px-0">
       <SEO title="Portal Control" description="Manage departmental protocols and security." />
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -532,21 +532,21 @@ const Settings: React.FC = () => {
                 </div>
 
                 {/* Active Sessions */}
-                <div className="bg-white rounded-[2.5rem] border border-[#7C3AED]/10 p-10 shadow-xl shadow-[#7C3AED]/5">
-                  <div className="flex items-center justify-between mb-10">
+                <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] border border-[#7C3AED]/10 p-5 sm:p-10 shadow-xl shadow-[#7C3AED]/5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 sm:mb-10">
                     <div className="flex items-center gap-4">
-                      <div className="p-3 bg-[#7C3AED]/5 rounded-2xl border border-[#7C3AED]/10">
+                      <div className="p-3 bg-[#7C3AED]/5 rounded-2xl border border-[#7C3AED]/10 shrink-0">
                         <Globe className="w-6 h-6 text-[#7C3AED]" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-black text-[#1E184B]">Active Sessions</h3>
-                        <p className="text-sm font-bold text-[#1E184B]/40">Manage devices currently logged into your HOD portal.</p>
+                        <h3 className="text-lg sm:text-xl font-black text-[#1E184B]">Active Sessions</h3>
+                        <p className="text-xs sm:text-sm font-bold text-[#1E184B]/40">Manage devices currently logged into your HOD portal.</p>
                       </div>
                     </div>
                     {sessions.length > 1 && (
                       <button 
                         onClick={handleClearAllSessions}
-                        className="px-6 py-3 bg-rose-50 text-rose-500 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-rose-100 hover:bg-rose-500 hover:text-white transition-all"
+                        className="w-full sm:w-auto px-6 py-3 bg-rose-50 text-rose-500 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-rose-100 hover:bg-rose-500 hover:text-white transition-all text-center flex items-center justify-center shrink-0"
                       >
                         End All Others
                       </button>
@@ -555,34 +555,37 @@ const Settings: React.FC = () => {
 
                   <div className="space-y-4">
                     {sessions.map((session) => (
-                      <div key={session.id} className="flex items-center justify-between p-6 bg-slate-50 border border-slate-100 rounded-3xl group">
-                        <div className="flex items-center gap-5">
+                      <div key={session.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 bg-slate-50 border border-slate-100 rounded-3xl group gap-4">
+                        <div className="flex items-start sm:items-center gap-3 sm:gap-5 min-w-0 w-full sm:w-auto">
                           <div className={cn(
-                            "w-12 h-12 rounded-2xl flex items-center justify-center border transition-all shadow-sm",
+                            "w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center border transition-all shadow-sm shrink-0",
                             session.token_id === currentToken ? "bg-[#7C3AED] text-white border-[#7C3AED]" : "bg-white text-slate-400 border-slate-200"
                           )}>
-                            <Smartphone className="w-6 h-6" />
+                            <Smartphone className="w-5.5 h-5.5 sm:w-6 sm:h-6 shrink-0" />
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
                               <p className="text-sm font-black text-[#1E184B] tracking-tight">{session.ip_address}</p>
                               {session.token_id === currentToken && (
                                 <span className="text-[8px] font-black bg-[#7C3AED]/10 text-[#7C3AED] px-2 py-0.5 rounded-full uppercase tracking-widest">Current</span>
                               )}
                             </div>
-                            <p className="text-[10px] font-bold text-slate-400 line-clamp-1 mt-0.5">{session.user_agent}</p>
+                            <p className="text-[10px] font-bold text-slate-400 mt-0.5 break-all line-clamp-2" title={session.user_agent}>{session.user_agent}</p>
                             <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">
                               Last active: {formatDate(session.created_at)}
                             </p>
                           </div>
                         </div>
                         {session.token_id !== currentToken && (
-                          <button 
-                            onClick={() => handleTerminateSession(session.id)}
-                            className="p-3 bg-white text-slate-400 rounded-xl hover:bg-rose-50 hover:text-rose-500 border border-slate-100 hover:border-rose-100 transition-all shadow-sm"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="w-full sm:w-auto flex justify-end shrink-0 border-t border-slate-200/40 sm:border-t-0 pt-3 sm:pt-0">
+                            <button 
+                              onClick={() => handleTerminateSession(session.id)}
+                              className="w-full sm:w-auto px-4 py-2.5 sm:p-3 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-xl border border-slate-200 hover:border-rose-200 transition-all shadow-sm flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider"
+                            >
+                              <Trash2 className="w-4 h-4 shrink-0" />
+                              <span className="sm:hidden">Revoke Session</span>
+                            </button>
+                          </div>
                         )}
                       </div>
                     ))}

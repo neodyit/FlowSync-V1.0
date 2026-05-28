@@ -104,8 +104,8 @@ export default function MainLayout() {
           {/* Logo */}
           <div className="p-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#7C3AED] rounded-xl flex items-center justify-center shadow-lg shadow-[#7C3AED]/20 overflow-hidden">
-                <img src="/logo.png" alt="FlowSync" className="w-6 h-6 object-contain" />
+              <div className="w-10 h-10 bg-white border border-[#7C3AED]/15 rounded-xl flex items-center justify-center shadow-md overflow-hidden">
+                <img src="/logo.png" alt="FlowSync" className="w-8 h-8 object-contain" />
               </div>
               <span className="text-xl font-black tracking-tight text-[#1E184B] font-display">
                 FlowSync

@@ -256,22 +256,22 @@ const HODNotifications: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-20">
+    <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 pb-20 px-3 md:px-0">
       <SEO title="Notification Center" description="Stay updated with departmental activities and task progress." />
       
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
         <div>
-          <h1 className="text-4xl font-black text-[#1E184B] tracking-tight">Notification Center</h1>
-          <p className="text-[#1E184B]/60 mt-1 font-bold flex items-center gap-2 text-sm">
+          <h1 className="text-2xl sm:text-4xl font-black text-[#1E184B] tracking-tight">Notification Center</h1>
+          <p className="text-[#1E184B]/60 mt-1 font-bold flex items-center gap-2 text-xs sm:text-sm">
             <Bell className="w-4 h-4 text-[#7C3AED]" />
             Manage alerts and push notices.
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
           <button 
             onClick={() => setIsPushModalOpen(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-[#1E184B] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#7C3AED] transition-all shadow-xl shadow-[#1E184B]/20"
+            className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-[#1E184B] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#7C3AED] transition-all shadow-xl shadow-[#1E184B]/20 whitespace-nowrap"
           >
             <Send className="w-4 h-4" />
             New Push
@@ -279,16 +279,16 @@ const HODNotifications: React.FC = () => {
           {notifications.some(n => !n.is_read) && (
             <button 
               onClick={() => markAsRead()}
-              className="flex items-center gap-2 px-6 py-3 bg-[#7C3AED]/5 text-[#7C3AED] rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#7C3AED] hover:text-white transition-all border border-[#7C3AED]/10 shadow-sm"
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-[#7C3AED]/5 text-[#7C3AED] rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#7C3AED] hover:text-white transition-all border border-[#7C3AED]/10 shadow-sm whitespace-nowrap"
             >
               <MailOpen className="w-4 h-4" />
-              Mark All Read
+              Mark All
             </button>
           )}
           {notifications.length > 0 && (
             <button 
               onClick={deleteAllNotifications}
-              className="flex items-center gap-2 px-6 py-3 bg-rose-50 text-rose-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-100 shadow-sm"
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-rose-50 text-rose-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-100 shadow-sm whitespace-nowrap"
             >
               <Trash2 className="w-4 h-4" />
               Clear All
@@ -297,11 +297,11 @@ const HODNotifications: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex gap-6 border-b border-slate-200">
+      <div className="flex gap-4 sm:gap-6 border-b border-slate-200 px-1">
         <button 
           onClick={() => setActiveTab('alerts')}
           className={cn(
-            "pb-4 text-sm font-black uppercase tracking-widest transition-all",
+            "pb-3 text-xs sm:text-sm font-black uppercase tracking-widest transition-all",
             activeTab === 'alerts' 
               ? "text-[#7C3AED] border-b-2 border-[#7C3AED]" 
               : "text-slate-400 hover:text-slate-600 border-b-2 border-transparent"
@@ -312,7 +312,7 @@ const HODNotifications: React.FC = () => {
         <button 
           onClick={() => setActiveTab('history')}
           className={cn(
-            "pb-4 text-sm font-black uppercase tracking-widest transition-all",
+            "pb-3 text-xs sm:text-sm font-black uppercase tracking-widest transition-all",
             activeTab === 'history' 
               ? "text-[#7C3AED] border-b-2 border-[#7C3AED]" 
               : "text-slate-400 hover:text-slate-600 border-b-2 border-transparent"
@@ -342,14 +342,14 @@ const HODNotifications: React.FC = () => {
               const config = getTypeConfig(notif.type);
               const Icon = config.icon;
               return (
-                <motion.div
+                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
                   key={notif.id}
                   onClick={() => markAsRead(notif.id)}
                   className={cn(
-                    "group relative bg-white rounded-[2rem] border p-6 flex items-start gap-6 transition-all cursor-pointer overflow-hidden",
+                    "group relative bg-white rounded-[2rem] border p-4 sm:p-6 flex items-start gap-3 sm:gap-6 transition-all cursor-pointer overflow-hidden",
                     notif.is_read ? "border-slate-100 bg-slate-50/30" : "border-[#7C3AED]/10 shadow-xl shadow-[#7C3AED]/5"
                   )}
                 >
@@ -357,12 +357,12 @@ const HODNotifications: React.FC = () => {
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-[#7C3AED]" />
                   )}
 
-                  <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm", config.bg)}>
-                    <Icon className={cn("w-7 h-7", config.color)} />
+                  <div className={cn("w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 shadow-sm", config.bg)}>
+                    <Icon className={cn("w-5 h-5 sm:w-7 sm:h-7", config.color)} />
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-3 mb-2">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5" />
                         {formatDate(notif.created_at)} • {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -376,7 +376,7 @@ const HODNotifications: React.FC = () => {
                     </div>
                     
                     <p className={cn(
-                      "text-[15px] font-bold leading-relaxed mb-4",
+                      "text-sm sm:text-[15px] font-bold leading-relaxed mb-4",
                       notif.is_read ? "text-[#1E184B]/50" : "text-[#1E184B]"
                     )}>
                       {notif.message}
@@ -388,7 +388,7 @@ const HODNotifications: React.FC = () => {
                           e.stopPropagation();
                           handleTaskLink(notif.task_id!);
                         }}
-                        className="inline-flex items-center gap-2 text-[10px] font-black text-[#7C3AED] uppercase tracking-widest hover:underline bg-white px-4 py-2 rounded-xl border border-[#7C3AED]/10 hover:border-[#7C3AED]/30 transition-all shadow-sm"
+                        className="inline-flex items-center gap-2 text-[10px] font-black text-[#7C3AED] uppercase tracking-widest hover:underline bg-white px-3 sm:px-4 py-2 rounded-xl border border-[#7C3AED]/10 hover:border-[#7C3AED]/30 transition-all shadow-sm max-w-full truncate"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                         Go to Mission: {notif.task_title || 'View Details'}
@@ -399,7 +399,7 @@ const HODNotifications: React.FC = () => {
                   <div className="flex flex-col items-end gap-4 shrink-0">
                     <button 
                       onClick={(e) => deleteNotification(e, notif.id)}
-                      className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-rose-50 hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100"
+                      className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-rose-50 hover:text-rose-500 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                       title="Remove notification"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -426,7 +426,7 @@ const HODNotifications: React.FC = () => {
               const readUsers = notice.recipients.filter(r => r.is_read);
               
               return (
-                <div key={notice.id} className="bg-white rounded-[2rem] border border-[#7C3AED]/10 p-6 shadow-sm overflow-hidden">
+                <div key={notice.id} className="bg-white rounded-[2rem] border border-[#7C3AED]/10 p-4 sm:p-6 shadow-sm overflow-hidden">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
