@@ -158,62 +158,62 @@ export default function Feedbacks() {
 
   const getStatusConfig = (status: string) => {
     switch(status) {
-      case 'resolved': return { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-200', label: 'Resolved' };
-      case 'in_progress': return { icon: RefreshCw, color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-200', label: 'In Progress' };
-      default: return { icon: Clock, color: 'text-slate-500', bg: 'bg-slate-50', border: 'border-slate-200', label: 'Pending' };
+      case 'resolved': return { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/20', border: 'border-emerald-200 dark:border-emerald-500/10', label: 'Resolved' };
+      case 'in_progress': return { icon: RefreshCw, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-950/20', border: 'border-amber-200 dark:border-amber-500/10', label: 'In Progress' };
+      default: return { icon: Clock, color: 'text-slate-500 dark:text-violet-300', bg: 'bg-slate-50 dark:bg-violet-950/20', border: 'border-slate-200 dark:border-violet-500/10', label: 'Pending' };
     }
   };
 
   const getTypeConfig = (type: string) => {
     switch(type) {
-      case 'issue': return { icon: AlertCircle, color: 'text-rose-500', bg: 'bg-rose-50', label: 'Issue Report' };
-      default: return { icon: MessageSquare, color: 'text-[#7C3AED]', bg: 'bg-[#7C3AED]/10', label: 'Feedback' };
+      case 'issue': return { icon: AlertCircle, color: 'text-rose-500 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/20', label: 'Issue Report' };
+      default: return { icon: MessageSquare, color: 'text-[#7C3AED] dark:text-violet-400', bg: 'bg-[#7C3AED]/10 dark:bg-violet-950/40', label: 'Feedback' };
     }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-[#1E1B4B] tracking-tight">Feedback Hub</h1>
-          <p className="text-[#4C1D95]/60 font-medium mt-1">Review and manage user feedback and issue reports.</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight">Feedback Hub</h1>
+          <p className="text-[#4C1D95]/60 dark:text-violet-400/60 font-medium mt-1 text-sm">Review and manage user feedback and issue reports.</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white/70 backdrop-blur-md rounded-3xl p-4 border border-[#7C3AED]/10 shadow-sm flex flex-col lg:flex-row gap-4 relative z-10">
-        <div className="flex-1 relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7C3AED] opacity-40 group-focus-within:opacity-100 transition-opacity" />
+      <div className="bg-white/70 dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-3xl p-4 border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex flex-col gap-3 relative z-10">
+        <div className="relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7C3AED] dark:text-violet-400 opacity-40 group-focus-within:opacity-100 transition-opacity" />
           <input 
             type="text" 
             placeholder="Search subject, name, or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-[#7C3AED]/5 rounded-2xl outline-none focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-medium"
+            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-[#110A24] border border-[#7C3AED]/5 dark:border-violet-500/20 rounded-2xl outline-none focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-medium text-[#1E1B4B] dark:text-indigo-100 placeholder:text-slate-300 dark:placeholder:text-indigo-100/20"
           />
         </div>
         
-        <div className="flex gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as any)}
-            className="px-4 py-3 bg-white border border-[#7C3AED]/10 rounded-2xl outline-none focus:border-[#7C3AED] transition-all text-sm font-bold text-[#1E1B4B]"
+            className="w-full px-4 py-3 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-2xl outline-none focus:border-[#7C3AED] dark:focus:border-violet-400 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
           >
-            <option value="all">All Types</option>
-            <option value="feedback">Feedbacks</option>
-            <option value="issue">Issues</option>
+            <option value="all" className="dark:bg-[#110A24]">All Types</option>
+            <option value="feedback" className="dark:bg-[#110A24]">Feedbacks</option>
+            <option value="issue" className="dark:bg-[#110A24]">Issues</option>
           </select>
 
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as any)}
-            className="px-4 py-3 bg-white border border-[#7C3AED]/10 rounded-2xl outline-none focus:border-[#7C3AED] transition-all text-sm font-bold text-[#1E1B4B]"
+            className="w-full px-4 py-3 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-2xl outline-none focus:border-[#7C3AED] dark:focus:border-violet-400 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
           >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="in_progress">In Progress</option>
-            <option value="resolved">Resolved</option>
+            <option value="all" className="dark:bg-[#110A24]">All Status</option>
+            <option value="pending" className="dark:bg-[#110A24]">Pending</option>
+            <option value="in_progress" className="dark:bg-[#110A24]">In Progress</option>
+            <option value="resolved" className="dark:bg-[#110A24]">Resolved</option>
           </select>
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function Feedbacks() {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <div className="w-12 h-12 border-4 border-[#7C3AED]/20 border-t-[#7C3AED] rounded-full animate-spin" />
-          <p className="text-[#4C1D95]/60 font-black text-xs uppercase tracking-widest">Loading Records...</p>
+          <p className="text-[#4C1D95]/60 dark:text-violet-400/60 font-black text-xs uppercase tracking-widest">Loading Records...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -239,7 +239,7 @@ export default function Feedbacks() {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.98 }}
-                  className="bg-white rounded-[2rem] p-6 border border-[#7C3AED]/10 shadow-lg shadow-[#7C3AED]/5 relative group overflow-hidden flex flex-col"
+                  className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-[2rem] p-6 border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-lg shadow-[#7C3AED]/5 relative group overflow-hidden flex flex-col"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className={cn("px-3 py-1.5 rounded-xl flex items-center gap-2 border", statusCfg.bg, statusCfg.border)}>
@@ -253,14 +253,14 @@ export default function Feedbacks() {
                     </div>
                   </div>
 
-                  <h3 className="text-lg font-black text-[#1E1B4B] line-clamp-1 mb-2 group-hover:text-[#7C3AED] transition-colors">{f.subject}</h3>
-                  <p className="text-sm text-[#4C1D95]/70 line-clamp-3 mb-6 flex-1 font-medium leading-relaxed">
+                  <h3 className="text-lg font-black text-[#1E1B4B] dark:text-indigo-100 line-clamp-1 mb-2 group-hover:text-[#7C3AED] dark:group-hover:text-violet-400 transition-colors">{f.subject}</h3>
+                  <p className="text-sm text-[#4C1D95]/70 dark:text-indigo-200/70 line-clamp-3 mb-6 flex-1 font-medium leading-relaxed">
                     {f.message}
                   </p>
 
-                  <div className="pt-4 border-t border-[#7C3AED]/10 flex items-center justify-between mb-4">
+                  <div className="pt-4 border-t border-[#7C3AED]/10 dark:border-violet-500/10 flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-[#7C3AED]/10 dark:bg-violet-950/40 text-[#7C3AED] dark:text-violet-300 flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
                         {f.user_profile_pic ? (
                           <img src={`${import.meta.env.VITE_API_URL}/${f.user_profile_pic}`} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -268,11 +268,11 @@ export default function Feedbacks() {
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#1E1B4B] truncate">{f.user_name}</p>
-                        <p className="text-[10px] text-[#4C1D95]/60 truncate font-medium">{f.role_name}</p>
+                        <p className="text-xs font-bold text-[#1E1B4B] dark:text-indigo-100 truncate">{f.user_name}</p>
+                        <p className="text-[10px] text-[#4C1D95]/60 dark:text-violet-400/60 truncate font-medium">{f.role_name}</p>
                       </div>
                     </div>
-                    <p className="text-[10px] font-bold text-[#4C1D95]/40 text-right shrink-0">
+                    <p className="text-[10px] font-bold text-[#4C1D95]/40 dark:text-violet-400/40 text-right shrink-0">
                       {formatDate(f.created_at)}
                     </p>
                   </div>
@@ -283,14 +283,14 @@ export default function Feedbacks() {
                         setSelectedFeedback(f);
                         setIsModalOpen(true);
                       }}
-                      className="flex-1 bg-[#7C3AED]/5 hover:bg-[#7C3AED]/10 text-[#7C3AED] py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 bg-[#7C3AED]/5 dark:bg-[#7C3AED]/10 hover:bg-[#7C3AED]/10 dark:hover:bg-[#7C3AED]/20 text-[#7C3AED] dark:text-violet-400 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2"
                     >
                       <Eye className="w-4 h-4" />
                       View Details
                     </button>
                     <button
                       onClick={() => handleDelete(f.id)}
-                      className="w-10 h-10 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl flex items-center justify-center transition-colors"
+                      className="w-10 h-10 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-500 dark:text-rose-450 rounded-xl flex items-center justify-center transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -304,12 +304,12 @@ export default function Feedbacks() {
 
       {/* No Results */}
       {!isLoading && filteredFeedbacks.length === 0 && (
-        <div className="text-center py-20 space-y-4 bg-white/40 rounded-[3rem] border border-dashed border-[#7C3AED]/20">
-          <div className="w-20 h-20 bg-[#7C3AED]/10 rounded-full flex items-center justify-center mx-auto">
-            <MessageSquare className="w-10 h-10 text-[#7C3AED] opacity-20" />
+        <div className="text-center py-20 space-y-4 bg-white/40 dark:bg-violet-950/10 rounded-[3rem] border border-dashed border-[#7C3AED]/20 dark:border-violet-500/20">
+          <div className="w-20 h-20 bg-[#7C3AED]/10 dark:bg-violet-950/40 rounded-full flex items-center justify-center mx-auto">
+            <MessageSquare className="w-10 h-10 text-[#7C3AED] dark:text-violet-400 opacity-20" />
           </div>
-          <h3 className="text-xl font-black text-[#1E1B4B]">No records found</h3>
-          <p className="text-sm font-bold text-[#4C1D95]/60 max-w-xs mx-auto">
+          <h3 className="text-xl font-black text-[#1E1B4B] dark:text-indigo-100">No records found</h3>
+          <p className="text-sm font-bold text-[#4C1D95]/60 dark:text-violet-400/60 max-w-xs mx-auto">
             No feedbacks or issues match your current filters.
           </p>
         </div>
@@ -318,52 +318,52 @@ export default function Feedbacks() {
       {/* Detail Modal */}
       <AnimatePresence>
         {isModalOpen && selectedFeedback && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-[#1E1B4B]/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-[#1E1B4B]/40 dark:bg-black/60 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              exit={{ opacity: 0, scale: 0.95, y: 40 }}
+              className="relative bg-white dark:bg-[#1A0F35] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-t-[2rem] sm:rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh] z-10"
             >
               {/* Modal Header */}
-              <div className="p-8 pb-6 border-b border-[#7C3AED]/10 flex items-start justify-between bg-gradient-to-br from-white to-[#7C3AED]/[0.02]">
-                <div className="pr-8">
-                  <div className="flex items-center gap-3 mb-4">
+              <div className="p-5 sm:p-8 pb-4 sm:pb-6 border-b border-[#7C3AED]/10 dark:border-violet-500/10 flex items-start justify-between gap-3 bg-gradient-to-br from-white to-[#7C3AED]/[0.02] dark:from-[#110A24] dark:to-[#1A0F35]">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
                     <span className={cn(
                       "px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border",
-                      selectedFeedback.type === 'issue' ? "bg-rose-50 text-rose-500 border-rose-100" : "bg-[#7C3AED]/10 text-[#7C3AED] border-[#7C3AED]/20"
+                      selectedFeedback.type === 'issue' ? "bg-rose-50 dark:bg-rose-950/20 text-rose-500 border-rose-100 dark:border-rose-500/10" : "bg-[#7C3AED]/10 dark:bg-violet-950/40 text-[#7C3AED] dark:text-violet-400 border-[#7C3AED]/20 dark:border-violet-500/20"
                     )}>
                       {selectedFeedback.type === 'issue' ? 'Issue Report' : 'Feedback'}
                     </span>
-                    <span className="text-[10px] font-bold text-[#4C1D95]/40 uppercase tracking-widest flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-[#4C1D95]/40 dark:text-violet-400/40 uppercase tracking-widest flex items-center gap-1.5">
                       <Clock className="w-3 h-3" />
                       {new Date(selectedFeedback.created_at).toLocaleString()}
                     </span>
                   </div>
-                  <h2 className="text-2xl font-black text-[#1E1B4B] tracking-tight leading-tight">
+                  <h2 className="text-lg sm:text-2xl font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight leading-tight line-clamp-3">
                     {selectedFeedback.subject}
                   </h2>
                 </div>
                 <button 
                   onClick={() => setIsModalOpen(false)}
-                  className="w-10 h-10 rounded-full bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-500 flex items-center justify-center transition-colors shrink-0"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-violet-950/40 hover:bg-rose-100 dark:hover:bg-rose-950/60 text-slate-500 dark:text-violet-400 hover:text-rose-500 flex items-center justify-center transition-colors shrink-0"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
 
               {/* Modal Body */}
-              <div className="p-8 overflow-y-auto custom-scrollbar flex-1 bg-[#F8FAFC]">
+              <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar flex-1 bg-[#F8FAFC] dark:bg-[#0E0820] space-y-4">
                 {/* Submitter Info */}
-                <div className="bg-white rounded-2xl p-4 border border-[#7C3AED]/10 mb-6 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] flex items-center justify-center font-bold text-lg overflow-hidden shrink-0 shadow-inner">
+                <div className="bg-white dark:bg-[#1A0F35]/45 rounded-2xl p-4 border border-[#7C3AED]/10 dark:border-violet-500/15 mb-6 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-[#7C3AED]/10 dark:bg-violet-950/40 text-[#7C3AED] dark:text-violet-300 flex items-center justify-center font-bold text-lg overflow-hidden shrink-0 shadow-inner">
                     {selectedFeedback.user_profile_pic ? (
                       <img src={`${import.meta.env.VITE_API_URL}/${selectedFeedback.user_profile_pic}`} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -371,12 +371,12 @@ export default function Feedbacks() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-black text-[#1E1B4B] truncate">{selectedFeedback.user_name}</p>
+                    <p className="text-sm font-black text-[#1E1B4B] dark:text-indigo-100 truncate">{selectedFeedback.user_name}</p>
                     <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs font-medium text-[#4C1D95]/60 flex items-center gap-1">
+                      <span className="text-xs font-medium text-[#4C1D95]/60 dark:text-violet-400/60 flex items-center gap-1">
                         <Mail className="w-3.5 h-3.5" /> {selectedFeedback.user_email}
                       </span>
-                      <span className="text-[10px] font-bold text-[#7C3AED] uppercase tracking-widest bg-[#7C3AED]/10 px-2 py-0.5 rounded-md">
+                      <span className="text-[10px] font-bold text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest bg-[#7C3AED]/10 dark:bg-violet-950/40 px-2 py-0.5 rounded-md">
                         {selectedFeedback.role_name}
                       </span>
                     </div>
@@ -384,12 +384,12 @@ export default function Feedbacks() {
                 </div>
 
                 {/* Message Content */}
-                <div className="bg-white rounded-2xl p-6 border border-[#7C3AED]/10 shadow-sm relative">
-                  <div className="absolute top-6 left-6 text-[#7C3AED]/10">
+                <div className="bg-white dark:bg-[#1A0F35]/45 rounded-2xl p-6 border border-[#7C3AED]/10 dark:border-violet-500/15 shadow-sm relative">
+                  <div className="absolute top-6 left-6 text-[#7C3AED]/10 dark:text-violet-500/10">
                     <MessageSquare className="w-8 h-8" />
                   </div>
                   <div className="relative z-10 pl-12">
-                    <p className="text-[#1E1B4B] leading-relaxed whitespace-pre-wrap text-sm font-medium">
+                    <p className="text-[#1E1B4B] dark:text-indigo-200 leading-relaxed whitespace-pre-wrap text-sm font-medium">
                       {selectedFeedback.message}
                     </p>
                   </div>
@@ -397,36 +397,36 @@ export default function Feedbacks() {
               </div>
 
               {/* Modal Footer (Actions) */}
-              <div className="p-6 border-t border-[#7C3AED]/10 bg-white flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="p-4 sm:p-6 border-t border-[#7C3AED]/10 dark:border-violet-500/10 bg-white dark:bg-[#110A24] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black text-[#1E1B4B]/40 uppercase tracking-widest mr-2">Update Status:</span>
+                  <span className="text-[10px] font-black text-[#1E1B4B]/40 dark:text-violet-400/40 uppercase tracking-widest mr-2">Update Status:</span>
                   <select
                     value={selectedFeedback.status}
                     onChange={(e) => updateStatus(selectedFeedback.id, e.target.value)}
                     className={cn(
-                      "px-4 py-2.5 rounded-xl outline-none transition-all text-xs font-bold border cursor-pointer",
-                      selectedFeedback.status === 'resolved' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
-                      selectedFeedback.status === 'in_progress' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                      'bg-slate-50 text-slate-600 border-slate-200'
+                      "px-4 py-2.5 rounded-xl outline-none transition-all text-xs font-bold border cursor-pointer bg-slate-50 dark:bg-violet-950/30 text-slate-600 dark:text-violet-200 border-slate-200 dark:border-violet-500/20",
+                      selectedFeedback.status === 'resolved' ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/10' :
+                      selectedFeedback.status === 'in_progress' ? 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/10' :
+                      'bg-slate-50 dark:bg-violet-950/30 text-slate-600 dark:text-violet-200 border-slate-200 dark:border-violet-500/20'
                     )}
                   >
-                    <option value="pending">Pending</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="resolved">Resolved</option>
+                    <option value="pending" className="dark:bg-[#110A24]">Pending</option>
+                    <option value="in_progress" className="dark:bg-[#110A24]">In Progress</option>
+                    <option value="resolved" className="dark:bg-[#110A24]">Resolved</option>
                   </select>
                 </div>
 
                 <div className="flex gap-3 w-full sm:w-auto">
                   <a 
                     href={`mailto:${selectedFeedback.user_email}?subject=Re: ${selectedFeedback.subject}`}
-                    className="flex-1 sm:flex-none px-6 py-2.5 bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 text-[#7C3AED] rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 sm:flex-none px-6 py-2.5 bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 dark:bg-violet-950/40 dark:hover:bg-violet-900/40 text-[#7C3AED] dark:text-violet-400 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2"
                   >
                     <Mail className="w-4 h-4" />
                     Email User
                   </a>
                   <button
                     onClick={() => handleDelete(selectedFeedback.id)}
-                    className="w-10 h-10 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl flex items-center justify-center transition-colors shrink-0"
+                    className="w-10 h-10 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-500 dark:text-rose-450 rounded-xl flex items-center justify-center transition-colors shrink-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

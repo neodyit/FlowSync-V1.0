@@ -18,11 +18,15 @@ import {
   Building2,
   Trophy,
   MessageSquare,
-  Activity
+  Activity,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { checkSession } from '../utils/auth';
+import { useTheme } from '../components/ThemeProvider';
 
 export default function MainLayout() {
+  const { theme, toggleTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -86,7 +90,7 @@ export default function MainLayout() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-[#EDE9FE] overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#EDE9FE] dark:bg-[#0E0820] overflow-hidden font-sans transition-colors duration-200">
       {/* Sidebar Backdrop */}
       {isSidebarOpen && (
         <div 
@@ -97,21 +101,21 @@ export default function MainLayout() {
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 w-72 bg-[#F5F3FF]/10 backdrop-blur-md border-r border-[#7C3AED]/10 z-[200] transition-transform duration-300 lg:translate-x-0 lg:static shadow-xl shadow-slate-900/5
+        fixed inset-y-0 left-0 w-72 bg-[#F5F3FF]/10 dark:bg-[#110A24]/10 backdrop-blur-md border-r border-[#7C3AED]/10 dark:border-violet-500/10 z-[200] transition-transform duration-300 lg:translate-x-0 lg:static shadow-xl shadow-slate-900/5
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="h-full flex flex-col">
           {/* Logo */}
           <div className="p-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white border border-[#7C3AED]/15 rounded-xl flex items-center justify-center shadow-md overflow-hidden">
+              <div className="w-10 h-10 bg-white dark:bg-[#110A24] border border-[#7C3AED]/15 dark:border-violet-500/20 rounded-xl flex items-center justify-center shadow-md overflow-hidden">
                 <img src="/logo.png" alt="FlowSync" className="w-8 h-8 object-contain" />
               </div>
-              <span className="text-xl font-black tracking-tight text-[#1E184B] font-display">
+              <span className="text-xl font-black tracking-tight text-[#1E184B] dark:text-indigo-100 font-display">
                 FlowSync
               </span>
             </div>
-            <button className="lg:hidden p-2 text-[#4C1D95]" onClick={() => setIsSidebarOpen(false)}>
+            <button className="lg:hidden p-2 text-[#4C1D95] dark:text-violet-400" onClick={() => setIsSidebarOpen(false)}>
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -126,7 +130,7 @@ export default function MainLayout() {
                   onClick={() => setIsSidebarOpen(false)}
                   className={({ isActive }) => `
                     flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all
-                    ${isActive ? 'bg-[#7C3AED] text-white shadow-lg' : 'text-[#4C1D95] hover:bg-[#7C3AED]/10 hover:text-[#7C3AED]'}
+                    ${isActive ? 'bg-[#7C3AED] text-white shadow-lg' : 'text-[#4C1D95] dark:text-violet-400/80 hover:bg-[#7C3AED]/10 dark:hover:bg-violet-950/30 hover:text-[#7C3AED] dark:hover:text-violet-300'}
                   `}
                 >
                   <Icon className="w-5 h-5" />
@@ -137,16 +141,16 @@ export default function MainLayout() {
           </nav>
 
           {/* Institutional Status */}
-          <div className="p-6 border-t border-[#7C3AED]/10">
-            <div className="p-4 rounded-2xl bg-white border border-[#7C3AED]/10 space-y-3">
+          <div className="p-6 border-t border-[#7C3AED]/10 dark:border-violet-500/10">
+            <div className="p-4 rounded-2xl bg-white dark:bg-[#1A0F35]/25 border border-[#7C3AED]/10 dark:border-violet-500/20 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-[#1E184B]/40 uppercase tracking-widest">Core Engine</span>
+                <span className="text-[10px] font-black text-[#1E184B]/40 dark:text-indigo-100/40 uppercase tracking-widest">Core Engine</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               </div>
-              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div className="h-full bg-[#7C3AED] w-[94%]" />
               </div>
-              <p className="text-[10px] font-bold text-[#1E184B]/60 text-center uppercase tracking-tighter">Sync Integrity: 94%</p>
+              <p className="text-[10px] font-bold text-[#1E184B]/60 dark:text-indigo-200/60 text-center uppercase tracking-tighter">Sync Integrity: 94%</p>
             </div>
           </div>
         </div>
@@ -155,25 +159,41 @@ export default function MainLayout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Header */}
-        <header className="h-20 bg-[#EDE9FE] border-b border-[#7C3AED]/10 sticky top-0 z-[100] px-6 md:px-10 flex items-center justify-between">
+        <header className="h-20 bg-[#EDE9FE]/80 dark:bg-[#0E0820]/80 backdrop-blur-md border-b border-[#7C3AED]/10 dark:border-violet-500/10 sticky top-0 z-[100] px-6 md:px-10 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <button 
-              className="lg:hidden p-2.5 rounded-xl bg-white text-[#1E184B] shadow-sm border border-[#7C3AED]/10"
+              className="lg:hidden p-2.5 rounded-xl bg-white dark:bg-[#110A24] text-[#1E184B] dark:text-indigo-100 shadow-sm border border-[#7C3AED]/10 dark:border-violet-500/10"
               onClick={() => setIsSidebarOpen(true)}
             >
               <Menu className="w-6 h-6" />
             </button>
             <div className="hidden md:flex relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4C1D95] opacity-30" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4C1D95] dark:text-violet-400/40 opacity-30" />
               <input 
                 type="text" 
                 placeholder="Find records..." 
-                className="pl-12 pr-6 py-2.5 bg-white border border-[#7C3AED]/10 rounded-xl text-sm font-medium focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/5 transition-all w-80 text-[#1E184B] placeholder:text-[#1E184B]/20"
+                className="pl-12 pr-6 py-2.5 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-xl text-sm font-medium focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all w-80 text-[#1E184B] dark:text-indigo-100 placeholder:text-[#1E184B]/20 dark:placeholder:text-indigo-100/20"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-5">
+            {/* Theme Toggle Button */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleTheme();
+              }}
+              className="p-2.5 rounded-xl border border-[#7C3AED]/10 dark:border-violet-500/20 text-[#1E184B]/40 dark:text-violet-400/60 hover:text-[#7C3AED] dark:hover:text-violet-400 hover:border-[#7C3AED]/20 dark:hover:border-violet-500/40 transition-all cursor-pointer bg-white dark:bg-[#110A24]"
+              aria-label="Toggle Theme"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-5 h-5 animate-pulse text-amber-400" />
+              ) : (
+                <Moon className="w-5 h-5 text-indigo-600" />
+              )}
+            </button>
+
             {/* Notifications Panel */}
             <div className="relative">
               <button 
@@ -182,35 +202,35 @@ export default function MainLayout() {
                   setIsNotificationsOpen(!isNotificationsOpen);
                   setIsProfileOpen(false);
                 }}
-                className={`p-2.5 rounded-xl transition-all relative border bg-white cursor-pointer z-50 ${isNotificationsOpen ? 'border-[#7C3AED] text-[#7C3AED]' : 'border-[#7C3AED]/10 text-[#4C1D95] hover:border-[#7C3AED]/30'}`}
+                className={`p-2.5 rounded-xl transition-all relative border cursor-pointer z-50 bg-white dark:bg-[#110A24] ${isNotificationsOpen ? 'border-[#7C3AED] text-[#7C3AED] dark:border-violet-400 dark:text-violet-400' : 'border-[#7C3AED]/10 dark:border-violet-500/20 text-[#4C1D95] dark:text-violet-400/80 hover:border-[#7C3AED]/30 dark:hover:border-violet-500/40'}`}
               >
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-[#7C3AED] rounded-full border-2 border-[#EDE9FE]"></span>
+                <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-[#7C3AED] dark:bg-violet-500 rounded-full border-2 border-[#EDE9FE] dark:border-[#110A24]"></span>
               </button>
 
               {isNotificationsOpen && (
-                <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-80 bg-white rounded-2xl shadow-2xl border border-[#7C3AED]/10 overflow-hidden z-[110]">
-                  <div className="p-4 bg-slate-50 border-b border-[#7C3AED]/5 flex items-center justify-between">
-                    <h4 className="text-xs font-black text-[#1E184B] uppercase tracking-widest">Activity Feed</h4>
-                    <span className="pill bg-[#7C3AED]/10 text-[#7C3AED]">3 Alerts</span>
+                <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-80 bg-white/95 dark:bg-[#1A0F35]/95   rounded-3xl shadow-2xl border border-[#7C3AED]/10 dark:border-violet-500/20 overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="p-4 bg-[#7C3AED]/5 dark:bg-violet-950/30 border-b border-[#7C3AED]/10 dark:border-violet-500/20 flex items-center justify-between">
+                    <h4 className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">Activity Feed</h4>
+                    <span className="pill bg-[#7C3AED]/10 dark:bg-violet-500/20 text-[#7C3AED] dark:text-violet-400 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">3 Alerts</span>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="p-4 border-b border-slate-50 hover:bg-slate-50 transition-all cursor-pointer group">
-                        <p className="text-xs font-bold text-[#1E184B] group-hover:text-[#7C3AED]">System Protocol Update • v2.4</p>
-                        <p className="text-[10px] text-[#4C1D95] mt-1 opacity-70">Infrastructure core successfully synchronized.</p>
-                        <p className="text-[9px] font-black text-[#7C3AED] mt-2 uppercase">Just now</p>
+                      <div key={i} className="p-4 border-b border-[#7C3AED]/5 dark:border-violet-500/5 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/30 transition-all cursor-pointer group">
+                        <p className="text-xs font-bold text-[#1E184B] dark:text-indigo-100 group-hover:text-[#7C3AED] dark:group-hover:text-violet-400">System Protocol Update • v2.4</p>
+                        <p className="text-[10px] text-[#4C1D95] dark:text-indigo-200/70 mt-1 opacity-70">Infrastructure core successfully synchronized.</p>
+                        <p className="text-[9px] font-black text-[#7C3AED] dark:text-violet-400 mt-2 uppercase">Just now</p>
                       </div>
                     ))}
                   </div>
-                  <button className="w-full py-3 bg-slate-50 text-[10px] font-black text-[#7C3AED] uppercase tracking-widest hover:bg-slate-100 transition-all">
+                  <button className="w-full py-3 bg-[#7C3AED]/10 dark:bg-violet-600 text-[10px] font-black text-[#7C3AED] dark:text-white uppercase tracking-widest hover:bg-[#7C3AED]/20 dark:hover:bg-violet-700 transition-all">
                     View Comprehensive Log
                   </button>
                 </div>
               )}
             </div>
 
-            <div className="h-8 w-px bg-[#7C3AED]/10 mx-1" />
+            <div className="h-8 w-px bg-[#7C3AED]/10 dark:bg-violet-500/10 mx-1" />
 
             {/* User Profile Dropdown */}
             <div className="relative">
@@ -220,11 +240,11 @@ export default function MainLayout() {
                   setIsProfileOpen(!isProfileOpen);
                   setIsNotificationsOpen(false);
                 }}
-                className="flex items-center gap-3 p-1.5 pl-4 rounded-2xl bg-white border border-[#7C3AED]/10 hover:border-[#7C3AED]/30 transition-all shadow-sm cursor-pointer z-50"
+                className="flex items-center gap-3 p-1.5 pl-4 rounded-2xl bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 hover:border-[#7C3AED]/30 dark:hover:border-violet-500/40 transition-all shadow-sm cursor-pointer z-50"
               >
                 <div className="text-right hidden sm:block">
-                  <p className="text-xs font-black text-[#1E184B] tracking-tight">{user.name}</p>
-                  <p className="text-[9px] font-black text-[#7C3AED] uppercase tracking-widest opacity-60">{user.role}</p>
+                  <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 tracking-tight">{user.name}</p>
+                  <p className="text-[9px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest opacity-60">{user.role}</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-[#7C3AED]/20">
                   {initials}
@@ -232,25 +252,25 @@ export default function MainLayout() {
               </button>
 
               {isProfileOpen && (
-                <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-64 bg-white rounded-2xl shadow-2xl border border-[#7C3AED]/10 overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="p-5 bg-slate-50 border-b border-[#7C3AED]/5">
-                    <p className="text-xs font-black text-[#1E184B] uppercase tracking-widest">{user.name}</p>
-                    <p className="text-[10px] text-[#4C1D95] mt-1 font-bold">Authenticated User</p>
+                <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-64 bg-white/20 dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-2xl shadow-2xl border border-[#7C3AED]/10 dark:border-violet-500/20 overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="p-5 bg-slate-50 dark:bg-violet-950/30 border-b border-[#7C3AED]/5 dark:border-violet-500/20">
+                    <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">{user.name}</p>
+                    <p className="text-[10px] text-[#4C1D95] dark:text-violet-400 mt-1 font-bold">Authenticated User</p>
                   </div>
                   <div className="p-2">
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] hover:bg-[#7C3AED]/5 hover:text-[#7C3AED] transition-all">
-                      <User className="w-4 h-4" />
+                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-200 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/20 hover:text-[#7C3AED] dark:hover:text-violet-400 transition-all">
+                      <User className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" />
                       Institutional Profile
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] hover:bg-[#7C3AED]/5 hover:text-[#7C3AED] transition-all">
-                      <Settings className="w-4 h-4" />
+                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-200 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/20 hover:text-[#7C3AED] dark:hover:text-violet-400 transition-all">
+                      <Settings className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" />
                       Security Settings
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] hover:bg-[#7C3AED]/5 hover:text-[#7C3AED] transition-all">
-                      <History className="w-4 h-4" />
+                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-200 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/20 hover:text-[#7C3AED] dark:hover:text-violet-400 transition-all">
+                      <History className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" />
                       Audit History
                     </button>
-                    <div className="h-px bg-slate-100 my-2" />
+                    <div className="h-px bg-slate-100 dark:bg-violet-500/10 my-2" />
                     <button 
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-500/5 transition-all"
@@ -264,6 +284,7 @@ export default function MainLayout() {
             </div>
           </div>
         </header>
+
         {/* Scrollable Area */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-6 md:p-10 min-h-full flex flex-col">

@@ -21,8 +21,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
 
   if (isLoading) {
     return ( 
-      <div className="min-h-screen flex items-center justify-center bg-[#EDE9FE]">
-        <div className="w-12 h-12 border-4 border-[#7C3AED]/20 border-t-[#7C3AED] rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-[#EDE9FE] dark:bg-[#0E0820] transition-colors duration-200">
+        <div className="w-12 h-12 border-4 border-[#7C3AED]/20 border-t-[#7C3AED] dark:border-violet-500/20 dark:border-t-violet-400 rounded-full animate-spin" />
       </div>
     );
   }

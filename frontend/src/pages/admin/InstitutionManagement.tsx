@@ -100,18 +100,18 @@ const InstitutionManagement: React.FC = () => {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto">
       <SEO title="Institution Management" description="Manage colleges and departmental hierarchies within the FlowSync ecosystem." />
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-black text-[#1E1B4B]">Institution Management</h1>
-          <p className="text-[#4C1D95]/60 mt-2">Oversee all affiliated colleges and their hierarchies.</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-[#1E1B4B] dark:text-indigo-100">Institution Management</h1>
+          <p className="text-[#4C1D95]/60 dark:text-violet-400/60 mt-1 text-xs sm:text-sm">Oversee all affiliated colleges and their hierarchies.</p>
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-purple-500/20"
+          className="flex items-center gap-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-purple-500/20 cursor-pointer self-start sm:self-auto text-xs sm:text-sm shrink-0"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           Add College
         </button>
       </div>
@@ -128,36 +128,36 @@ const InstitutionManagement: React.FC = () => {
               layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-[24px] border border-[#7C3AED]/10 p-6 hover:shadow-xl hover:shadow-purple-500/5 transition-all group relative overflow-hidden"
+              className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-[24px] border border-[#7C3AED]/10 dark:border-violet-500/20 p-6 hover:shadow-xl hover:shadow-purple-500/5 transition-all group relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#7C3AED]/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform" />
               
               <div className="flex items-start justify-between relative z-10 mb-4">
-                <div className="p-3 bg-[#7C3AED]/10 rounded-2xl">
-                  <Building2 className="w-6 h-6 text-[#7C3AED]" />
+                <div className="p-3 bg-[#7C3AED]/10 dark:bg-violet-950/40 rounded-2xl">
+                  <Building2 className="w-6 h-6 text-[#7C3AED] dark:text-violet-400" />
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => handleOpenModal(college)} className="p-2 text-gray-400 hover:text-[#7C3AED] transition-colors">
+                  <button onClick={() => handleOpenModal(college)} className="p-2 text-gray-400 dark:text-violet-400/60 hover:text-[#7C3AED] dark:hover:text-violet-300 transition-colors cursor-pointer">
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDelete(college.id)} className="p-2 text-gray-400 hover:text-rose-500 transition-colors">
+                  <button onClick={() => handleDelete(college.id)} className="p-2 text-gray-400 dark:text-violet-400/60 hover:text-rose-500 transition-colors cursor-pointer">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
               <div className="relative z-10 cursor-pointer" onClick={() => navigate(`/admin/colleges/${college.short_name || college.id}`)}>
-                <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#7C3AED] transition-colors">{college.name}</h3>
-                <span className="inline-block px-2.5 py-1 rounded-lg bg-gray-100 text-gray-500 text-[10px] font-black uppercase tracking-wider mt-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-indigo-100 group-hover:text-[#7C3AED] dark:group-hover:text-violet-300 transition-colors">{college.name}</h3>
+                <span className="inline-block px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-violet-950/40 text-gray-500 dark:text-violet-300 text-[10px] font-black uppercase tracking-wider mt-2">
                   {college.short_name || 'N/A'}
                 </span>
                 
-                <div className="flex items-start gap-2 mt-4 text-gray-500 text-sm">
+                <div className="flex items-start gap-2 mt-4 text-gray-500 dark:text-violet-400/70 text-sm">
                   <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <p className="line-clamp-2">{college.address || 'No address provided'}</p>
+                  <p className="line-clamp-2 dark:text-violet-300">{college.address || 'No address provided'}</p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between text-[#7C3AED] font-bold text-sm">
+                <div className="mt-6 pt-4 border-t border-gray-50 dark:border-violet-500/10 flex items-center justify-between text-[#7C3AED] dark:text-violet-400 font-bold text-sm">
                   <span>View Departments</span>
                   <ExternalLink className="w-4 h-4" />
                 </div>
@@ -182,54 +182,54 @@ const InstitutionManagement: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl"
+              className="relative bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-[24px] sm:rounded-[32px] w-full max-w-md p-6 sm:p-8 shadow-2xl z-10"
             >
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">{editingCollege ? 'Edit College' : 'Add New College'}</h2>
-                <button onClick={handleCloseModal} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                  <X className="w-6 h-6 text-gray-400" />
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-indigo-100">{editingCollege ? 'Edit College' : 'Add New College'}</h2>
+                <button onClick={handleCloseModal} className="p-2 hover:bg-gray-100 dark:hover:bg-violet-950/40 rounded-full transition-colors cursor-pointer">
+                  <X className="w-6 h-6 text-gray-400 dark:text-violet-400" />
                 </button>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-bold text-gray-600 ml-1">College Name</label>
+                  <label className="text-[12px] font-bold text-gray-600 dark:text-violet-400 ml-1">College Name</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-[#7C3AED] transition-all text-sm"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-[#1A0F35]/30 border border-gray-200 dark:border-violet-500/20 rounded-xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 transition-all text-sm text-gray-900 dark:text-indigo-100"
                     placeholder="e.g. Imperial Institute of Technology"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-bold text-gray-600 ml-1">Short Name / Code</label>
+                  <label className="text-[12px] font-bold text-gray-600 dark:text-violet-400 ml-1">Short Name / Code</label>
                   <input
                     type="text"
                     required
                     value={formData.short_name}
                     onChange={(e) => setFormData({ ...formData, short_name: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-[#7C3AED] transition-all text-sm"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-[#1A0F35]/30 border border-gray-200 dark:border-violet-500/20 rounded-xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 transition-all text-sm text-gray-900 dark:text-indigo-100"
                     placeholder="e.g. IIT"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-bold text-gray-600 ml-1">Location Address</label>
+                  <label className="text-[12px] font-bold text-gray-600 dark:text-violet-400 ml-1">Location Address</label>
                   <textarea
                     rows={3}
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-[#7C3AED] transition-all text-sm resize-none"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-[#1A0F35]/30 border border-gray-200 dark:border-violet-500/20 rounded-xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 transition-all text-sm text-gray-900 dark:text-indigo-100 resize-none"
                     placeholder="Enter full physical address..."
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-3 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl font-bold shadow-lg shadow-purple-500/20 transition-all mt-4"
+                  className="w-full py-3 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl font-bold shadow-lg shadow-purple-500/20 transition-all mt-4 cursor-pointer"
                 >
                   {editingCollege ? 'Update College' : 'Create College'}
                 </button>
