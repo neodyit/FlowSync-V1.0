@@ -588,7 +588,7 @@ export default function HODLayout() {
         </header>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="p-6 md:p-10 min-h-full flex flex-col">
+          <div className="p-4 md:p-10 min-h-full flex flex-col">
             <div className="flex-1">
               <Outlet />
             </div>
