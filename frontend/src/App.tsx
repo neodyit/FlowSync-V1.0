@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Maintenance from './pages/Maintenance';
+import { ThemeProvider } from './components/ThemeProvider';
 
 // Admin Pages
 import Dashboard from './pages/admin/Dashboard';
@@ -73,77 +74,79 @@ const GlobalTracker = () => {
 
 function App() {
   return (
-    <Router>
-      <GlobalTracker />
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/maintenance" element={<Maintenance />} />
-        
-        {/* Root redirect */}
-        <Route path="/" element={<RootRedirect />} />
+    <ThemeProvider>
+      <Router>
+        <GlobalTracker />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/maintenance" element={<Maintenance />} />
+          
+          {/* Root redirect */}
+          <Route path="/" element={<RootRedirect />} />
 
-        {/* Protected Admin Routes (Role 1) */}
-        <Route element={<ProtectedRoute allowedRoles={[1]} />}>
-          <Route path="/admin" element={<MainLayout />}>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="institution" element={<InstitutionManagement />} />
-            <Route path="users" element={<UsersManagement />} />
-            <Route path="colleges/:shortName" element={<CollegeDetails />} />
-            <Route path="colleges/:shortName/:deptId" element={<DepartmentDetails />} />
-            <Route path="tasks" element={<Tasks />} />
-            <Route path="notifications" element={<Notifications />} />
-            <Route path="leaderboard" element={<Leaderboard />} />
-            <Route path="audit" element={<AuditLogs />} />
-            <Route path="controls" element={<ControlsPage />} />
-            <Route path="feedbacks" element={<Feedbacks />} />
-            <Route path="engagement" element={<EngagementTracker />} />
+          {/* Protected Admin Routes (Role 1) */}
+          <Route element={<ProtectedRoute allowedRoles={[1]} />}>
+            <Route path="/admin" element={<MainLayout />}>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="institution" element={<InstitutionManagement />} />
+              <Route path="users" element={<UsersManagement />} />
+              <Route path="colleges/:shortName" element={<CollegeDetails />} />
+              <Route path="colleges/:shortName/:deptId" element={<DepartmentDetails />} />
+              <Route path="tasks" element={<Tasks />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="leaderboard" element={<Leaderboard />} />
+              <Route path="audit" element={<AuditLogs />} />
+              <Route path="controls" element={<ControlsPage />} />
+              <Route path="feedbacks" element={<Feedbacks />} />
+              <Route path="engagement" element={<EngagementTracker />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* Protected HOD Routes (Role 2) */}
-        <Route element={<ProtectedRoute allowedRoles={[2]} />}>
-          <Route path="/hod" element={<HODLayout />}>
-            <Route index element={<Navigate to="/hod/dashboard" replace />} />
-            <Route path="dashboard" element={<HODDashboard />} />
-            <Route path="department" element={<HODDepartment />} />
-            <Route path="faculty" element={<HODFaculty />} />
-            <Route path="groups" element={<HODGroups />} />
-            <Route path="tasks" element={<HODTasks />} />
-            <Route path="tasks/new" element={<HODTaskForm />} />
-            <Route path="tasks/edit/:id" element={<HODTaskForm />} />
-            <Route path="tasks/:id" element={<HODTaskDetails />} />
-            <Route path="notifications" element={<HODNotifications />} />
-            <Route path="leaderboard" element={<HODLeaderboard />} />
-            <Route path="reports" element={<HODReports />} />
-            <Route path="settings" element={<HODSettings />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="profile/:id" element={<PublicProfile />} />
-            <Route path="feedback" element={<Feedback />} />
+          {/* Protected HOD Routes (Role 2) */}
+          <Route element={<ProtectedRoute allowedRoles={[2]} />}>
+            <Route path="/hod" element={<HODLayout />}>
+              <Route index element={<Navigate to="/hod/dashboard" replace />} />
+              <Route path="dashboard" element={<HODDashboard />} />
+              <Route path="department" element={<HODDepartment />} />
+              <Route path="faculty" element={<HODFaculty />} />
+              <Route path="groups" element={<HODGroups />} />
+              <Route path="tasks" element={<HODTasks />} />
+              <Route path="tasks/new" element={<HODTaskForm />} />
+              <Route path="tasks/edit/:id" element={<HODTaskForm />} />
+              <Route path="tasks/:id" element={<HODTaskDetails />} />
+              <Route path="notifications" element={<HODNotifications />} />
+              <Route path="leaderboard" element={<HODLeaderboard />} />
+              <Route path="reports" element={<HODReports />} />
+              <Route path="settings" element={<HODSettings />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="profile/:id" element={<PublicProfile />} />
+              <Route path="feedback" element={<Feedback />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* Protected Faculty Routes (Role 3) */}
-        <Route element={<ProtectedRoute allowedRoles={[3]} />}>
-          <Route path="/faculty" element={<FacultyLayout />}>
-            <Route index element={<Navigate to="/faculty/dashboard" replace />} />
-            <Route path="dashboard" element={<FacultyDashboard />} />
-            <Route path="department" element={<FacultyDepartment />} />
-            <Route path="tasks" element={<FacultyTasks />} />
-            <Route path="my-tasks" element={<FacultyMyTasks />} />
-            <Route path="notifications" element={<FacultyNotifications />} />
-            <Route path="leaderboard" element={<FacultyLeaderboard />} />
-            <Route path="settings" element={<FacultySettings />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="profile/:id" element={<PublicProfile />} />
-            <Route path="feedback" element={<Feedback />} />
+          {/* Protected Faculty Routes (Role 3) */}
+          <Route element={<ProtectedRoute allowedRoles={[3]} />}>
+            <Route path="/faculty" element={<FacultyLayout />}>
+              <Route index element={<Navigate to="/faculty/dashboard" replace />} />
+              <Route path="dashboard" element={<FacultyDashboard />} />
+              <Route path="department" element={<FacultyDepartment />} />
+              <Route path="tasks" element={<FacultyTasks />} />
+              <Route path="my-tasks" element={<FacultyMyTasks />} />
+              <Route path="notifications" element={<FacultyNotifications />} />
+              <Route path="leaderboard" element={<FacultyLeaderboard />} />
+              <Route path="settings" element={<FacultySettings />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="profile/:id" element={<PublicProfile />} />
+              <Route path="feedback" element={<Feedback />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* Catch-all redirect */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </Router>
+          {/* Catch-all redirect */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-display: "Inter", sans-serif;
@@ -17,24 +19,90 @@
     --card-border: #7C3AED;
   }
 
-  /* Reset Dark Mode to match Light or disable if requested. 
-     User said "everywhere", so I'll make dark mode also look like a darker lavender theme or just solid.
-     But mostly, I'll ensure the default is the Light Lavender.
-  */
   .dark {
-    --bg-primary: #EDE9FE;
-    --bg-secondary: #F5F3FF;
-    --accent: #7C3AED;
-    --text-main: #1E1B4B;
-    --text-muted: #4C1D95;
-    --card-bg: #FFFFFF;
-    --card-border: #7C3AED;
+    /* Deep Elegant Violet-infused Dark Theme */
+    --bg-primary: #090514;
+    --bg-secondary: #130C24;
+    --accent: #8B5CF6;
+    --text-main: #F3F4F6;
+    --text-muted: #A78BFA;
+    --card-bg: #110A24;
+    --card-border: rgba(139, 92, 246, 0.2);
+
+    /* Instant, high-fidelity dark overrides for existing hardcoded Tailwind layout elements */
+    background-color: var(--bg-primary) !important;
+    color: var(--text-main);
+
+    .bg-white {
+      background-color: var(--card-bg) !important;
+    }
+
+    .bg-slate-50, .bg-slate-50\/50 {
+      background-color: var(--bg-secondary) !important;
+    }
+
+    /* Wildcard match to capture all border-slate-X and custom brand borders */
+    [class*="border-slate-"],
+    [class*="border-[#7C3AED]"] {
+      border-color: var(--card-border) !important;
+    }
+
+    /* Wildcard match to capture all text-[#1E184B] color opacities like /30, /40, /60 */
+    [class*="text-[#1E184B]"] {
+      color: var(--text-main) !important;
+    }
+    [class*="text-[#1E184B]/"] {
+      color: var(--text-muted) !important;
+      opacity: 0.8 !important;
+    }
+
+    /* Catch all default grey slate text styles */
+    [class*="text-slate-"] {
+      color: var(--text-muted) !important;
+      opacity: 0.8 !important;
+    }
+
+    /* Custom translucent brand background tags in dark mode - targeted precisely to prevent hover clash */
+    .bg-\[\#7C3AED\]\/5 {
+      background-color: rgba(139, 92, 246, 0.05) !important;
+    }
+    .bg-\[\#7C3AED\]\/10 {
+      background-color: rgba(139, 92, 246, 0.1) !important;
+    }
+
+    .bg-blue-50 {
+      background-color: rgba(59, 130, 246, 0.1) !important;
+    }
+
+    .bg-emerald-50 {
+      background-color: rgba(16, 185, 129, 0.1) !important;
+    }
+
+    .bg-amber-50 {
+      background-color: rgba(245, 158, 11, 0.1) !important;
+    }
+
+    /* SweetAlert2 Elegant overrides */
+    .swal2-popup {
+      background: var(--card-bg) !important;
+      border: 1px solid var(--card-border) !important;
+      color: var(--text-main) !important;
+    }
+    .swal2-title, .swal2-content, .swal2-html-container {
+      color: var(--text-main) !important;
+    }
+    
+    /* Input fields and generic borders dark correction */
+    .input-field, input, select, textarea {
+      background-color: var(--bg-secondary) !important;
+      border-color: var(--card-border) !important;
+      color: var(--text-main) !important;
+    }
   }
 
   body {
-    @apply bg-[var(--bg-primary)] text-[var(--text-main)] font-sans antialiased;
+    @apply bg-[var(--bg-primary)] text-[var(--text-main)] font-sans antialiased transition-colors duration-300;
     min-height: 100vh;
-    background-color: #EDE9FE !important;
   }
 }
 

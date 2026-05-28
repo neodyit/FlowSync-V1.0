@@ -13,12 +13,14 @@ import {
   Trash2,
   Moon,
   Zap,
-  LayoutGrid
+  LayoutGrid,
+  Sun
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
 import { cn, formatDate } from '@/lib/utils';
 import Swal from 'sweetalert2';
+import { useTheme } from '../../components/ThemeProvider';
 
 interface Session {
   id: number;
@@ -30,6 +32,7 @@ interface Session {
 }
 
 const Settings: React.FC = () => {
+  const { theme: currentTheme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<'Security' | 'Notifications' | 'Department'>('Department');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -304,27 +307,63 @@ const Settings: React.FC = () => {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-6"
               >
-                <div className="bg-white rounded-[2.5rem] border border-[#7C3AED]/10 p-10 shadow-xl shadow-[#7C3AED]/5">
+                <div className="bg-white dark:bg-[#110A24] rounded-[2.5rem] border border-[#7C3AED]/10 dark:border-[#8B5CF6]/10 p-10 shadow-xl shadow-[#7C3AED]/5 dark:shadow-none">
                   <div className="flex items-center gap-4 mb-10">
-                    <div className="p-3 bg-[#7C3AED]/5 rounded-2xl border border-[#7C3AED]/10">
-                      <LayoutGrid className="w-6 h-6 text-[#7C3AED]" />
+                    <div className="p-3 bg-[#7C3AED]/5 dark:bg-[#8B5CF6]/5 rounded-2xl border border-[#7C3AED]/10 dark:border-[#8B5CF6]/15">
+                      <LayoutGrid className="w-6 h-6 text-[#7C3AED] dark:text-[#A78BFA]" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-[#1E184B]">Departmental Protocols</h3>
-                      <p className="text-sm font-bold text-[#1E184B]/40">Configure default behaviors for the portal.</p>
+                      <h3 className="text-xl font-black text-[#1E184B] dark:text-white">Departmental Protocols</h3>
+                      <p className="text-sm font-bold text-[#1E184B]/40 dark:text-white/40">Configure default behaviors for the portal.</p>
                     </div>
                   </div>
 
                   <div className="space-y-8">
-                    <div className="p-8 bg-slate-50 rounded-[2rem] border border-dashed border-slate-200 text-center">
-                      <p className="text-sm font-bold text-[#1E184B]/40">More departmental controls coming soon...</p>
+                    <div>
+                      <h4 className="text-xs font-black text-[#1E184B] dark:text-white uppercase tracking-widest mb-4">Appearance Theme</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {(['light', 'dark', 'system'] as const).map((t) => {
+                          const isSelected = currentTheme === t;
+                          return (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => setTheme(t)}
+                              className={cn(
+                                "p-6 rounded-3xl border text-left transition-all relative overflow-hidden group cursor-pointer",
+                                isSelected 
+                                  ? "bg-white dark:bg-[#160E35] border-[#7C3AED] dark:border-[#8B5CF6] shadow-xl shadow-[#7C3AED]/10 dark:shadow-none" 
+                                  : "bg-slate-50 dark:bg-[#1A1235]/30 border-slate-100 dark:border-slate-800/40 hover:border-[#7C3AED]/30 dark:hover:border-[#8B5CF6]/30"
+                              )}
+                            >
+                              <div className="flex items-center justify-between mb-4">
+                                <div className={cn(
+                                  "p-2.5 rounded-xl border transition-all",
+                                  isSelected
+                                    ? "bg-[#7C3AED]/10 dark:bg-[#8B5CF6]/10 border-[#7C3AED]/20 dark:border-[#8B5CF6]/20 text-[#7C3AED] dark:text-[#A78BFA]"
+                                    : "bg-white dark:bg-[#110A24] border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500"
+                                )}>
+                                  {t === 'light' ? <Sun className="w-5 h-5" /> : t === 'dark' ? <Moon className="w-5 h-5" /> : <SettingsIcon className="w-5 h-5" />}
+                                </div>
+                                {isSelected && (
+                                  <span className="w-2.5 h-2.5 rounded-full bg-[#7C3AED] dark:bg-[#8B5CF6] shadow-[0_0_8px_#7C3AED] dark:shadow-[0_0_8px_#8B5CF6]" />
+                                )}
+                              </div>
+                              <p className="text-sm font-black text-[#1E184B] dark:text-white capitalize tracking-tight">{t} Mode</p>
+                              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                                {t === 'light' ? 'Crisp light environment' : t === 'dark' ? 'Futuristic sleek dark mode' : 'Adapts to system configuration'}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
-                    <div className="pt-6 flex justify-end">
+                    <div className="pt-6 flex justify-end border-t border-slate-100 dark:border-slate-800/40">
                       <button 
                         onClick={() => handleUpdateSettings({})}
                         disabled={isSubmitting}
-                        className="px-10 py-4 bg-[#7C3AED] text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-[#7C3AED]/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
+                        className="px-10 py-4 bg-[#7C3AED] dark:bg-[#8B5CF6] text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-[#7C3AED]/20 dark:shadow-[#8B5CF6]/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
                       >
                         {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply Defaults'}
                       </button>

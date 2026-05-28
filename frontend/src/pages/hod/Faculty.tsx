@@ -101,23 +101,23 @@ const HODFaculty: React.FC = () => {
     switch (status) {
       case 'Assigned': 
       case 'Broadcasted':
-        return 'bg-blue-50/40 backdrop-blur-md border-blue-100/60 hover:bg-blue-50/60 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/[0.04]';
+        return 'bg-blue-50/40 dark:bg-blue-950/15 backdrop-blur-md border-blue-100/60 dark:border-blue-900/35 hover:bg-blue-50/60 dark:hover:bg-blue-950/25 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-xl hover:shadow-blue-500/[0.04]';
       case 'Accepted': 
-        return 'bg-indigo-50/40 backdrop-blur-md border-indigo-100/60 hover:bg-indigo-50/60 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-500/[0.04]';
+        return 'bg-indigo-50/40 dark:bg-indigo-950/15 backdrop-blur-md border-indigo-100/60 dark:border-indigo-900/35 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/25 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-xl hover:shadow-indigo-500/[0.04]';
       case 'In Progress': 
-        return 'bg-amber-50/40 backdrop-blur-md border-amber-100/60 hover:bg-amber-50/60 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-500/[0.04]';
+        return 'bg-amber-50/40 dark:bg-amber-950/15 backdrop-blur-md border-amber-100/60 dark:border-amber-900/35 hover:bg-amber-50/60 dark:hover:bg-amber-950/25 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-xl hover:shadow-amber-500/[0.04]';
       case 'Submitted': 
-        return 'bg-purple-50/40 backdrop-blur-md border-purple-100/60 hover:bg-purple-50/60 hover:border-purple-300 hover:shadow-xl hover:shadow-purple-500/[0.04]';
+        return 'bg-purple-50/40 dark:bg-purple-950/15 backdrop-blur-md border-purple-100/60 dark:border-purple-900/35 hover:bg-purple-50/60 dark:hover:bg-purple-950/25 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-xl hover:shadow-purple-500/[0.04]';
       case 'Approved':
       case 'Completed': 
-        return 'bg-emerald-50/40 backdrop-blur-md border-emerald-100/60 hover:bg-emerald-50/60 hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-500/[0.04]';
+        return 'bg-emerald-50/40 dark:bg-emerald-950/15 backdrop-blur-md border-emerald-100/60 dark:border-emerald-900/35 hover:bg-emerald-50/60 dark:hover:bg-emerald-950/25 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-xl hover:shadow-emerald-500/[0.04]';
       case 'Rejected':
       case 'Declined': 
-        return 'bg-rose-50/40 backdrop-blur-md border-rose-100/60 hover:bg-rose-50/60 hover:border-rose-300 hover:shadow-xl hover:shadow-rose-500/[0.04]';
+        return 'bg-rose-50/40 dark:bg-rose-950/15 backdrop-blur-md border-rose-100/60 dark:border-rose-900/35 hover:bg-rose-50/60 dark:hover:bg-rose-950/25 hover:border-rose-300 dark:hover:border-rose-700 hover:shadow-xl hover:shadow-rose-500/[0.04]';
       case 'Rework Required': 
-        return 'bg-orange-50/40 backdrop-blur-md border-orange-100/60 hover:bg-orange-50/60 hover:border-orange-300 hover:shadow-xl hover:shadow-orange-500/[0.04]';
+        return 'bg-orange-50/40 dark:bg-orange-950/15 backdrop-blur-md border-orange-100/60 dark:border-orange-900/35 hover:bg-orange-50/60 dark:hover:bg-orange-950/25 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-xl hover:shadow-orange-500/[0.04]';
       default: 
-        return 'bg-white/40 backdrop-blur-md border-slate-100 hover:bg-white/60 hover:border-[#7C3AED]/30 hover:shadow-xl hover:shadow-[#7C3AED]/[0.04]';
+        return 'bg-white/40 dark:bg-[#110A24]/40 backdrop-blur-md border-slate-100 dark:border-slate-800 hover:bg-white/60 dark:hover:bg-[#110A24]/60 hover:border-[#7C3AED]/30 dark:hover:border-[#8B5CF6]/30 hover:shadow-xl hover:shadow-[#7C3AED]/[0.04]';
     }
   };
 
