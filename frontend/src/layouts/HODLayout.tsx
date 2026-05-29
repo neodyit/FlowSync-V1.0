@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutGrid, 
   Users, 
@@ -36,6 +36,14 @@ export default function HODLayout() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo(0, 0);
+    }
+  }, [location.pathname]);
   
   // Get user from localStorage
   const [user, setUser] = useState(() => {
@@ -604,7 +612,7 @@ export default function HODLayout() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto">
+        <div ref={mainContentRef} className="flex-1 overflow-y-auto">
           <div className="p-4 md:p-10 min-h-full flex flex-col">
             <div className="flex-1">
               <Outlet />

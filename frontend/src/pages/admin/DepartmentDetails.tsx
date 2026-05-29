@@ -329,41 +329,40 @@ const DepartmentDetails: React.FC = () => {
   if (!dept) return <div className="p-8 text-center text-gray-500 font-bold">Department not found.</div>;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto">
       <SEO 
         title={`${dept?.name || 'Department'} Details`} 
         description={`Manage faculty assignments, HOD leadership, and administrative settings for the ${dept?.name} at ${dept?.college_name}.`}
       />
       <button 
         onClick={() => navigate(`/admin/colleges/${shortName}`)}
-        className="flex items-center gap-2 text-[#7C3AED] font-bold mb-8 hover:gap-3 transition-all"
+        className="flex items-center gap-2 text-[#7C3AED] dark:text-violet-400 font-bold mb-6 sm:mb-8 hover:gap-3 transition-all cursor-pointer text-sm"
       >
         <ChevronLeft className="w-5 h-5" />
         Back to {dept.college_name}
       </button>
 
-      <div className="bg-white rounded-[32px] p-8 border border-[#7C3AED]/10 shadow-sm mb-12">
+      <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-[32px] p-6 sm:p-8 border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm mb-8 sm:mb-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-[#7C3AED]/5 rounded-[24px] flex items-center justify-center">
-              <Users className="w-10 h-10 text-[#7C3AED]" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#7C3AED]/5 dark:bg-violet-950/40 rounded-[24px] flex items-center justify-center shrink-0 border border-transparent dark:border-violet-500/10">
+              <Users className="w-8 h-8 sm:w-10 sm:h-10 text-[#7C3AED] dark:text-violet-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-[#1E1B4B]">{dept.name}</h1>
-              <p className="text-gray-400 text-sm font-medium mt-1">{dept.college_name} • Faculty Management</p>
+              <h1 className="text-xl sm:text-3xl font-black text-[#1E1B4B] dark:text-indigo-100 leading-tight">{dept.name}</h1>
+              <p className="text-gray-400 dark:text-violet-400/60 text-xs sm:text-sm font-medium mt-1">{dept.college_name} • Faculty Management</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 self-start md:self-auto">
             <div className="text-right">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Head of Dept</p>
-              <p className="text-sm font-bold text-[#1E1B4B]">{dept.hod_name || 'Unassigned'}</p>
+              <p className="text-[10px] font-bold text-gray-400 dark:text-violet-400/60 uppercase tracking-widest">Head of Dept</p>
+              <p className="text-xs sm:text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">{dept.hod_name || 'Unassigned'}</p>
             </div>
             {dept.hod_id ? (
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => {
-                    // Look for HOD in the full list to get their email
                     const hodUser = faculties.find(u => u.id === dept.hod_id) || 
                                     availableHODs.find(u => u.id === dept.hod_id) || 
                                     {
@@ -375,29 +374,29 @@ const DepartmentDetails: React.FC = () => {
                                     };
                     handleOpenUserModal(hodUser as Faculty, true);
                   }}
-                  className="p-1.5 text-gray-400 hover:text-[#7C3AED] transition-colors"
+                  className="p-1.5 text-gray-400 dark:text-violet-400/60 hover:text-[#7C3AED] dark:hover:text-violet-300 transition-colors cursor-pointer"
                   title="Edit HOD"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={handleRemoveHOD}
-                  className="p-1.5 text-gray-400 hover:text-rose-500 transition-colors"
+                  className="p-1.5 text-gray-400 dark:text-violet-400/60 hover:text-rose-500 transition-colors cursor-pointer"
                   title="Unassign HOD"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
-                <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100">
-                  <UserCheck className="w-6 h-6 text-emerald-500" />
+                <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center border border-emerald-100 dark:border-emerald-500/20">
+                  <UserCheck className="w-6 h-6 text-emerald-500 dark:text-emerald-400" />
                 </div>
               </div>
             ) : (
               <button 
                 onClick={() => handleOpenUserModal(undefined, true)}
-                className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center border border-rose-100 hover:bg-rose-100 transition-colors"
+                className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center border border-rose-100 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors cursor-pointer"
                 title="Create HOD"
               >
-                <Plus className="w-6 h-6 text-rose-500" />
+                <Plus className="w-6 h-6 text-rose-500 dark:text-rose-400" />
               </button>
             )}
           </div>
@@ -405,17 +404,17 @@ const DepartmentDetails: React.FC = () => {
       </div>
 
       {!dept.hod_id ? (
-        <div className="bg-white rounded-[32px] p-12 border-2 border-dashed border-[#7C3AED]/20 text-center">
-          <div className="w-20 h-20 bg-[#7C3AED]/5 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ShieldCheck className="w-10 h-10 text-[#7C3AED]" />
+        <div className="bg-white dark:bg-[#1A0F35]/15 rounded-[32px] p-8 sm:p-12 border-2 border-dashed border-[#7C3AED]/20 dark:border-violet-500/20 text-center">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#7C3AED]/5 dark:bg-violet-950/40 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShieldCheck className="w-8 h-8 sm:w-10 sm:h-10 text-[#7C3AED] dark:text-violet-400" />
           </div>
-          <h2 className="text-2xl font-bold text-[#1E1B4B] mb-2">HOD Assignment Required</h2>
-          <p className="text-gray-500 max-w-md mx-auto mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1E1B4B] dark:text-indigo-100 mb-2">HOD Assignment Required</h2>
+          <p className="text-gray-500 dark:text-violet-300/60 text-xs sm:text-sm max-w-md mx-auto mb-8 leading-relaxed">
             To manage faculty and departments, you must first create or assign a Head of Department (HOD) for {dept.name}.
           </p>
           <button
             onClick={() => handleOpenUserModal(undefined, true)}
-            className="inline-flex items-center gap-2 bg-[#7C3AED] text-white px-8 py-3 rounded-2xl font-bold hover:bg-[#6D28D9] transition-all"
+            className="inline-flex items-center gap-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg shadow-purple-500/20 transition-all cursor-pointer text-sm"
           >
             <Plus className="w-5 h-5" />
             Create & Assign HOD
@@ -425,12 +424,12 @@ const DepartmentDetails: React.FC = () => {
         <>
           <div className="flex justify-between items-end mb-8">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Department Faculty</h2>
-              <p className="text-sm text-gray-400 mt-1">Manage all educators assigned to this department.</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-indigo-100">Department Faculty</h2>
+              <p className="text-sm text-gray-400 dark:text-violet-400/60 mt-1">Manage all educators assigned to this department.</p>
             </div>
             <button
               onClick={() => handleOpenUserModal()}
-              className="flex items-center gap-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-purple-500/20"
+              className="flex items-center gap-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-purple-500/20 cursor-pointer text-sm shrink-0"
             >
               <Plus className="w-5 h-5" />
               Add Faculty
@@ -443,35 +442,35 @@ const DepartmentDetails: React.FC = () => {
                 key={f.id}
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-[#7C3AED]/20 transition-all group"
+                className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-violet-500/10 p-5 hover:border-[#7C3AED]/20 dark:hover:border-violet-500/30 transition-all group"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[#7C3AED]/5 transition-colors">
-                    <User className="w-5 h-5 text-gray-400 group-hover:text-[#7C3AED]" />
+                  <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-violet-950/40 flex items-center justify-center group-hover:bg-[#7C3AED]/5 transition-colors border border-transparent dark:border-violet-500/10">
+                    <User className="w-5 h-5 text-gray-400 dark:text-violet-400/60 group-hover:text-[#7C3AED] dark:group-hover:text-violet-300" />
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleOpenUserModal(f)} className="p-1.5 text-gray-400 hover:text-[#7C3AED]" title="Edit Faculty">
+                    <button onClick={() => handleOpenUserModal(f)} className="p-1.5 text-gray-400 dark:text-violet-400/60 hover:text-[#7C3AED] dark:hover:text-violet-300 cursor-pointer" title="Edit Faculty">
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => handleRemoveFaculty(f.id)} className="p-1.5 text-gray-400 hover:text-rose-500" title="Remove from Dept">
+                    <button onClick={() => handleRemoveFaculty(f.id)} className="p-1.5 text-gray-400 dark:text-violet-400/60 hover:text-rose-500 cursor-pointer" title="Remove from Dept">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
                 
-                <h4 className="font-bold text-gray-900">{f.name}</h4>
-                <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
-                  <Mail className="w-3 h-3" />
-                  {f.email}
+                <h4 className="font-bold text-gray-900 dark:text-indigo-100">{f.name}</h4>
+                <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 dark:text-violet-400/70">
+                  <Mail className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{f.email}</span>
                 </div>
                 
                 <div className="mt-4 flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 text-[10px] font-bold uppercase">
+                  <span className="px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-violet-950/40 text-gray-500 dark:text-violet-300 text-[10px] font-bold uppercase tracking-wider">
                     {f.role_name}
                   </span>
                   <div className="flex items-center gap-1.5">
-                    <div className={`w-1.5 h-1.5 rounded-full ${f.is_active ? 'bg-emerald-500' : 'bg-gray-300'}`} />
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">{f.is_active ? 'Active' : 'Inactive'}</span>
+                    <div className={`w-1.5 h-1.5 rounded-full ${f.is_active ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-violet-800'}`} />
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-violet-400/60 uppercase">{f.is_active ? 'Active' : 'Inactive'}</span>
                   </div>
                 </div>
               </motion.div>
@@ -483,27 +482,27 @@ const DepartmentDetails: React.FC = () => {
       {/* User Modal */}
       <AnimatePresence>
         {isUserModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={handleCloseUserModal} className="absolute inset-0 bg-[#1E1B4B]/40 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-[32px] w-full max-w-md p-6 sm:p-8 shadow-2xl z-10">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-indigo-100">
                   {editingUser ? (isHODMode ? 'Edit HOD' : 'Edit Faculty') : (isHODMode ? 'New HOD' : 'New Faculty')}
                 </h2>
-                <button onClick={handleCloseUserModal} className="p-2 hover:bg-gray-100 rounded-full"><X className="w-6 h-6 text-gray-400" /></button>
+                <button onClick={handleCloseUserModal} className="p-2 hover:bg-gray-100 dark:hover:bg-violet-950/40 rounded-full cursor-pointer"><X className="w-6 h-6 text-gray-400 dark:text-violet-400" /></button>
               </div>
-              <div className="flex p-1 bg-gray-100 rounded-2xl mb-6">
+              <div className="flex p-1 bg-gray-100 dark:bg-violet-950/40 rounded-2xl mb-6">
                 {!editingUser && (isHODMode ? availableHODs : availableFaculty).length > 0 && (
                   <button 
                     onClick={() => setActiveTab('existing')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${activeTab === 'existing' ? 'bg-white text-[#7C3AED] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                    className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeTab === 'existing' ? 'bg-white dark:bg-[#110A24] text-[#7C3AED] dark:text-violet-400 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:text-violet-400/50 dark:hover:text-violet-300'}`}
                   >
                     Select Existing
                   </button>
                 )}
                 <button 
                   onClick={() => setActiveTab('new')}
-                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${activeTab === 'new' ? 'bg-white text-[#7C3AED] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeTab === 'new' ? 'bg-white dark:bg-[#110A24] text-[#7C3AED] dark:text-violet-400 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:text-violet-400/50 dark:hover:text-violet-300'}`}
                 >
                   {editingUser ? 'Edit Details' : 'Create New'}
                 </button>
@@ -512,15 +511,15 @@ const DepartmentDetails: React.FC = () => {
               <form onSubmit={handleUserSubmit} className="space-y-6">
                 {activeTab === 'existing' && !editingUser && (
                   <div className="space-y-2 relative animate-in fade-in slide-in-from-left-4 duration-300">
-                    <label className="text-[11px] font-bold text-[#1E1B4B]/60 uppercase tracking-wider ml-1">
+                    <label className="text-[11px] font-bold text-[#1E1B4B]/60 dark:text-violet-400 uppercase tracking-wider ml-1">
                       {isHODMode ? 'Choose HOD' : 'Choose Faculty'}
                     </label>
                     
                     <div 
                       onClick={() => setIsSelectOpen(!isSelectOpen)}
-                      className={`w-full px-4 py-4 bg-gray-50/50 border ${isSelectOpen ? 'border-[#7C3AED] ring-4 ring-[#7C3AED]/10' : 'border-gray-200'} rounded-2xl outline-none transition-all text-sm font-medium text-gray-700 cursor-pointer flex items-center justify-between group`}
+                      className={`w-full px-4 py-4 bg-gray-50/50 dark:bg-[#1A0F35]/30 border ${isSelectOpen ? 'border-[#7C3AED] ring-4 ring-[#7C3AED]/10' : 'border-gray-200 dark:border-violet-500/20'} rounded-2xl outline-none transition-all text-sm font-medium text-gray-700 dark:text-indigo-200 cursor-pointer flex items-center justify-between group`}
                     >
-                      <span className={userFormData.existing_user_id ? 'text-gray-900 font-bold' : 'text-gray-400'}>
+                      <span className={userFormData.existing_user_id ? 'text-gray-900 dark:text-indigo-100 font-bold' : 'text-gray-400 dark:text-violet-400/50'}>
                         {userFormData.existing_user_id 
                           ? (isHODMode ? availableHODs : availableFaculty).find(u => u.id.toString() === userFormData.existing_user_id)?.name || 'Select User'
                           : 'Click to browse staff...'
@@ -535,9 +534,9 @@ const DepartmentDetails: React.FC = () => {
                           initial={{ opacity: 0, y: -10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                          className="absolute z-[100] left-0 right-0 top-full mt-2 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-[24px] shadow-2xl shadow-purple-500/15 overflow-hidden max-h-[300px] flex flex-col"
+                          className="absolute z-[100] left-0 right-0 top-full mt-2 bg-white/95 dark:bg-[#110A24]/95 backdrop-blur-xl border border-gray-100 dark:border-violet-500/20 rounded-[24px] shadow-2xl shadow-purple-500/15 overflow-hidden max-h-[250px] flex flex-col"
                         >
-                          <div className="p-3 border-b border-gray-50">
+                          <div className="p-3 border-b border-gray-50 dark:border-violet-500/10 flex-shrink-0">
                             <div className="relative">
                               <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                               <input 
@@ -546,12 +545,12 @@ const DepartmentDetails: React.FC = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 onClick={(e) => e.stopPropagation()}
-                                className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl outline-none text-xs font-medium"
+                                className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-[#1A0F35]/30 border-none rounded-xl outline-none text-xs font-medium text-gray-900 dark:text-indigo-100"
                               />
                             </div>
                           </div>
                           
-                          <div className="overflow-y-auto py-2 custom-scrollbar">
+                          <div className="overflow-y-auto py-2 custom-scrollbar flex-1">
                             {(isHODMode ? availableHODs : availableFaculty)
                               .filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase()))
                               .map(h => (
@@ -561,10 +560,10 @@ const DepartmentDetails: React.FC = () => {
                                   setUserFormData({ ...userFormData, existing_user_id: h.id.toString() });
                                   setIsSelectOpen(false);
                                 }}
-                                className="px-4 py-3 hover:bg-[#7C3AED]/5 cursor-pointer transition-all border-b border-gray-50/50 last:border-0 group"
+                                className="px-4 py-3 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/40 cursor-pointer transition-all border-b border-gray-50/50 dark:border-violet-500/10 last:border-0 group text-left"
                               >
-                                <div className="text-sm font-bold text-gray-800 group-hover:text-[#7C3AED] transition-colors">{h.name}</div>
-                                <div className="text-[10px] text-gray-400 font-medium">{h.email}</div>
+                                <div className="text-sm font-bold text-gray-800 dark:text-indigo-200 group-hover:text-[#7C3AED] dark:group-hover:text-violet-300 transition-colors">{h.name}</div>
+                                <div className="text-[10px] text-gray-400 dark:text-violet-400/60 font-medium">{h.email}</div>
                               </div>
                             ))}
                           </div>
@@ -576,37 +575,37 @@ const DepartmentDetails: React.FC = () => {
 
                 {activeTab === 'new' && (
                   <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold text-[#1E1B4B]/60 uppercase tracking-wider ml-1">Full Name</label>
+                    <div className="space-y-1.5 text-left">
+                      <label className="text-[11px] font-bold text-[#1E1B4B]/60 dark:text-violet-400 uppercase tracking-wider ml-1">Full Name</label>
                       <input 
                         type="text" 
                         required 
                         value={userFormData.name} 
                         onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })} 
-                        className="w-full px-4 py-4 bg-gray-50/50 border border-gray-200 rounded-2xl outline-none focus:bg-white focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all text-sm font-medium" 
+                        className="w-full px-4 py-4 bg-gray-50/50 dark:bg-[#1A0F35]/30 border border-gray-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/10 dark:focus:ring-violet-400/10 transition-all text-sm font-medium text-gray-900 dark:text-indigo-100" 
                         placeholder="Dr. John Doe" 
                       />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold text-[#1E1B4B]/60 uppercase tracking-wider ml-1">Email Address</label>
+                    <div className="space-y-1.5 text-left">
+                      <label className="text-[11px] font-bold text-[#1E1B4B]/60 dark:text-violet-400 uppercase tracking-wider ml-1">Email Address</label>
                       <input 
                         type="email" 
                         required 
                         value={userFormData.email} 
                         onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })} 
-                        className="w-full px-4 py-4 bg-gray-50/50 border border-gray-200 rounded-2xl outline-none focus:bg-white focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all text-sm font-medium" 
+                        className="w-full px-4 py-4 bg-gray-50/50 dark:bg-[#1A0F35]/30 border border-gray-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/10 dark:focus:ring-violet-400/10 transition-all text-sm font-medium text-gray-900 dark:text-indigo-100" 
                         placeholder="john.doe@college.edu" 
                       />
                     </div>
                     {!editingUser && (
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-[#1E1B4B]/60 uppercase tracking-wider ml-1">Initial Password</label>
+                      <div className="space-y-1.5 text-left">
+                        <label className="text-[11px] font-bold text-[#1E1B4B]/60 dark:text-violet-400 uppercase tracking-wider ml-1">Initial Password</label>
                         <input 
                           type="password" 
                           required 
                           value={userFormData.password} 
                           onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })} 
-                          className="w-full px-4 py-4 bg-gray-50/50 border border-gray-200 rounded-2xl outline-none focus:bg-white focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10 transition-all text-sm font-medium" 
+                          className="w-full px-4 py-4 bg-gray-50/50 dark:bg-[#1A0F35]/30 border border-gray-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/10 dark:focus:ring-violet-400/10 transition-all text-sm font-medium text-gray-900 dark:text-indigo-100" 
                           placeholder="••••••••" 
                         />
                       </div>
@@ -616,7 +615,7 @@ const DepartmentDetails: React.FC = () => {
                 <button 
                   type="submit" 
                   disabled={activeTab === 'existing' && !userFormData.existing_user_id}
-                  className="w-full py-4 bg-[#7C3AED] text-white rounded-2xl font-bold shadow-xl shadow-purple-500/25 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all mt-6 text-sm"
+                  className="w-full py-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-bold shadow-xl shadow-purple-500/25 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all mt-6 text-sm cursor-pointer"
                 >
                   {activeTab === 'existing' ? 'Confirm Assignment' : (editingUser ? 'Save Changes' : 'Create & Assign')}
                 </button>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Building2, 
   Users, 
@@ -123,16 +124,18 @@ const Department: React.FC = () => {
           
           {faculty.find(f => f.is_hod) && (
             <div className="w-full lg:w-auto flex items-center gap-4 p-4 md:px-6 md:py-3 bg-[#7C3AED]/5 rounded-2xl md:rounded-[2rem] border border-[#7C3AED]/10">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-[#7C3AED] overflow-hidden flex items-center justify-center text-white font-black text-xs md:text-sm shadow-lg shadow-[#7C3AED]/20 shrink-0">
+              <Link to={`/hod/profile/${faculty.find(f => f.is_hod)?.id}`} className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-[#7C3AED] overflow-hidden flex items-center justify-center text-white font-black text-xs md:text-sm shadow-lg shadow-[#7C3AED]/20 shrink-0 hover:scale-105 transition-all">
                 {faculty.find(f => f.is_hod)?.profile_pic ? (
                   <img src={`${import.meta.env.VITE_API_URL}/${faculty.find(f => f.is_hod)?.profile_pic}`} className="w-full h-full object-cover" alt="" />
                 ) : (
                   faculty.find(f => f.is_hod)?.name.charAt(0)
                 )}
-              </div>
+              </Link>
               <div className="flex flex-col min-w-0">
                 <span className="text-[9px] md:text-[10px] font-black text-[#7C3AED] uppercase tracking-[0.2em] mb-0.5">Head of Department</span>
-                <span className="text-xs md:text-sm font-black text-[#1E184B] truncate">{faculty.find(f => f.is_hod)?.name}</span>
+                <Link to={`/hod/profile/${faculty.find(f => f.is_hod)?.id}`} className="text-xs md:text-sm font-black text-[#1E184B] truncate hover:text-[#7C3AED] transition-colors">
+                  {faculty.find(f => f.is_hod)?.name}
+                </Link>
                 <span className="text-[9px] md:text-[10px] font-bold text-[#1E184B]/40 flex items-center gap-1 truncate">
                   <Mail className="w-2.5 h-2.5 shrink-0" />
                   {faculty.find(f => f.is_hod)?.email}
@@ -199,16 +202,16 @@ const Department: React.FC = () => {
                   <tr key={f.id} className="group hover:bg-[#7C3AED]/5 transition-colors">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-[#7C3AED]/5 overflow-hidden flex items-center justify-center text-[#7C3AED] font-black text-sm group-hover:bg-[#7C3AED] group-hover:text-white transition-all duration-300">
+                        <Link to={`/hod/profile/${f.id}`} className="w-12 h-12 rounded-2xl bg-[#7C3AED]/5 overflow-hidden flex items-center justify-center text-[#7C3AED] font-black text-sm hover:scale-105 transition-all duration-300">
                           {f.profile_pic ? (
                             <img src={`${import.meta.env.VITE_API_URL}/${f.profile_pic}`} className="w-full h-full object-cover" alt="" />
                           ) : (
                             f.name.charAt(0)
                           )}
-                        </div>
+                        </Link>
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-black text-[#1E184B]">{f.name}</span>
+                            <Link to={`/hod/profile/${f.id}`} className="text-sm font-black text-[#1E184B] hover:text-[#7C3AED] transition-colors">{f.name}</Link>
                             {!!f.is_hod && (
                               <span className="px-1.5 py-0.5 bg-[#7C3AED] text-white text-[8px] font-black uppercase rounded shadow-sm">HOD</span>
                             )}
@@ -269,16 +272,16 @@ const Department: React.FC = () => {
                 <div key={f.id} className="p-5 flex flex-col gap-4 hover:bg-[#7C3AED]/5 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-[#7C3AED]/5 overflow-hidden flex items-center justify-center text-[#7C3AED] font-black text-xs shrink-0">
+                      <Link to={`/hod/profile/${f.id}`} className="w-10 h-10 rounded-xl bg-[#7C3AED]/5 overflow-hidden flex items-center justify-center text-[#7C3AED] font-black text-xs shrink-0 hover:scale-105 transition-all">
                         {f.profile_pic ? (
                           <img src={`${import.meta.env.VITE_API_URL}/${f.profile_pic}`} className="w-full h-full object-cover" alt="" />
                         ) : (
                           f.name.charAt(0)
                         )}
-                      </div>
+                      </Link>
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs font-black text-[#1E184B] truncate">{f.name}</span>
+                          <Link to={`/hod/profile/${f.id}`} className="text-xs font-black text-[#1E184B] hover:text-[#7C3AED] transition-colors truncate">{f.name}</Link>
                           {!!f.is_hod && (
                             <span className="px-1.5 py-0.5 bg-[#7C3AED] text-white text-[8px] font-black uppercase rounded shadow-sm">HOD</span>
                           )}
@@ -325,3 +328,4 @@ const Department: React.FC = () => {
 };
 
 export default Department;
+

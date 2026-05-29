@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Building2, 
   User, 
@@ -24,15 +25,18 @@ interface TeamMember {
   name: string;
   email: string;
   profile_pic: string | null;
+  is_public: number;
 }
 
 interface DeptData {
   department: string;
   college: string;
   hod: {
+    id?: number | null;
     name: string;
     email: string;
     profile_pic: string | null;
+    is_public?: number;
   };
   stats: {
     rank: number | string;
@@ -163,15 +167,31 @@ const FacultyDepartment: React.FC = () => {
               <h3 className="text-xs font-black text-[#1E184B]/40 dark:text-violet-400/50 uppercase tracking-[0.2em]">Leadership Oversight</h3>
               
               <div className="flex flex-col items-center text-center space-y-4">
-                <div className="w-24 h-24 bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] rounded-[2rem] overflow-hidden flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-[#7C3AED]/20">
-                  {data.hod.profile_pic ? (
-                    <img src={`${import.meta.env.VITE_API_URL}/${data.hod.profile_pic}`} className="w-full h-full object-cover" alt="" />
-                  ) : (
-                    data.hod.name.charAt(0)
-                  )}
-                </div>
+                {data.hod.is_public && data.hod.id ? (
+                  <Link to={`/faculty/profile/${data.hod.id}`} className="w-24 h-24 bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] rounded-[2rem] overflow-hidden flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-[#7C3AED]/20 hover:scale-105 transition-all">
+                    {data.hod.profile_pic ? (
+                      <img src={`${import.meta.env.VITE_API_URL}/${data.hod.profile_pic}`} className="w-full h-full object-cover" alt="" />
+                    ) : (
+                      data.hod.name.charAt(0)
+                    )}
+                  </Link>
+                ) : (
+                  <div className="w-24 h-24 bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] rounded-[2rem] overflow-hidden flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-[#7C3AED]/20">
+                    {data.hod.profile_pic ? (
+                      <img src={`${import.meta.env.VITE_API_URL}/${data.hod.profile_pic}`} className="w-full h-full object-cover" alt="" />
+                    ) : (
+                      data.hod.name.charAt(0)
+                    )}
+                  </div>
+                )}
                 <div>
-                  <h4 className="text-2xl font-black text-[#1E184B] dark:text-indigo-100">{data.hod.name}</h4>
+                  {data.hod.is_public && data.hod.id ? (
+                    <Link to={`/faculty/profile/${data.hod.id}`} className="text-2xl font-black text-[#1E184B] dark:text-indigo-100 hover:text-[#7C3AED] transition-colors">
+                      {data.hod.name}
+                    </Link>
+                  ) : (
+                    <h4 className="text-2xl font-black text-[#1E184B] dark:text-indigo-100">{data.hod.name}</h4>
+                  )}
                   <p className="text-[10px] font-black text-[#7C3AED] uppercase tracking-widest mt-1">Head of Department</p>
                 </div>
               </div>
@@ -187,16 +207,18 @@ const FacultyDepartment: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-[#110A24]/40 rounded-2xl border border-slate-100 dark:border-violet-500/10 group/link hover:border-[#7C3AED]/30 transition-all cursor-pointer">
-                  <div className="w-10 h-10 bg-white dark:bg-[#1A0F35] rounded-xl flex items-center justify-center text-slate-400 dark:text-violet-400/50 group-hover/link:text-[#7C3AED] transition-colors">
-                    <User className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/50 uppercase tracking-widest">Portfolio</p>
-                    <p className="text-sm font-black text-[#1E184B] dark:text-indigo-100 truncate">View HOD Profile</p>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-slate-300" />
-                </div>
+                {data.hod.is_public && data.hod.id && (
+                  <Link to={`/faculty/profile/${data.hod.id}`} className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-[#110A24]/40 rounded-2xl border border-slate-100 dark:border-violet-500/10 group/link hover:border-[#7C3AED]/30 transition-all cursor-pointer">
+                    <div className="w-10 h-10 bg-white dark:bg-[#1A0F35] rounded-xl flex items-center justify-center text-slate-400 dark:text-violet-400/50 group-hover/link:text-[#7C3AED] transition-colors">
+                      <User className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/50 uppercase tracking-widest">Portfolio</p>
+                      <p className="text-sm font-black text-[#1E184B] dark:text-indigo-100 truncate">View HOD Profile</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-slate-300" />
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -289,22 +311,42 @@ const FacultyDepartment: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {data.team?.map((member, idx) => (
-            <div 
-              key={idx} 
-              className="flex items-center gap-4 p-4 bg-slate-50/50 dark:bg-[#110A24]/30 rounded-2xl border border-transparent dark:border-violet-500/10 hover:border-[#7C3AED]/20 dark:hover:border-violet-400/40 hover:bg-white dark:hover:bg-[#1A0F35]/80 hover:shadow-xl hover:shadow-[#7C3AED]/5 dark:hover:shadow-violet-950/20 hover:-translate-y-0.5 transition-all duration-300 group"
-            >
-              <div className="w-12 h-12 bg-[#7C3AED]/5 dark:bg-violet-950/40 rounded-xl border border-slate-100 dark:border-violet-500/15 overflow-hidden flex items-center justify-center font-black text-[#7C3AED] dark:text-violet-400 group-hover:bg-[#7C3AED] dark:group-hover:bg-violet-600 group-hover:text-white dark:group-hover:text-white transition-all shadow-sm shrink-0">
-                {member.profile_pic ? (
-                  <img src={`${import.meta.env.VITE_API_URL}/${member.profile_pic}`} className="w-full h-full object-cover" alt="" />
-                ) : (
-                  member.name.charAt(0)
-                )}
+            member.is_public ? (
+              <Link 
+                to={`/faculty/profile/${member.id}`}
+                key={idx} 
+                className="flex items-center gap-4 p-4 bg-slate-50/50 dark:bg-[#110A24]/30 rounded-2xl border border-transparent dark:border-violet-500/10 hover:border-[#7C3AED]/20 dark:hover:border-violet-400/40 hover:bg-white dark:hover:bg-[#1A0F35]/80 hover:shadow-xl hover:shadow-[#7C3AED]/5 dark:hover:shadow-violet-950/20 hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer"
+              >
+                <div className="w-12 h-12 bg-[#7C3AED]/5 dark:bg-violet-950/40 rounded-xl border border-slate-100 dark:border-violet-500/15 overflow-hidden flex items-center justify-center font-black text-[#7C3AED] dark:text-violet-400 group-hover:bg-[#7C3AED] dark:group-hover:bg-violet-600 group-hover:text-white dark:group-hover:text-white transition-all shadow-sm shrink-0 hover:scale-105">
+                  {member.profile_pic ? (
+                    <img src={`${import.meta.env.VITE_API_URL}/${member.profile_pic}`} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    member.name.charAt(0)
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-[#1E184B] dark:text-indigo-100 truncate group-hover:text-[#7C3AED] dark:group-hover:text-violet-400 transition-colors">{member.name}</p>
+                  <p className="text-xs font-medium text-slate-400 dark:text-violet-400/60 lowercase truncate mt-0.5">{member.email}</p>
+                </div>
+              </Link>
+            ) : (
+              <div 
+                key={idx} 
+                className="flex items-center gap-4 p-4 bg-slate-50/50 dark:bg-[#110A24]/30 rounded-2xl border border-transparent dark:border-violet-500/10 hover:border-[#7C3AED]/5 dark:hover:border-violet-400/10 hover:bg-white dark:hover:bg-[#1A0F35]/80 transition-all duration-300 group"
+              >
+                <div className="w-12 h-12 bg-[#7C3AED]/5 dark:bg-violet-950/40 rounded-xl border border-slate-100 dark:border-violet-500/15 overflow-hidden flex items-center justify-center font-black text-[#7C3AED] dark:text-violet-400 shadow-sm shrink-0">
+                  {member.profile_pic ? (
+                    <img src={`${import.meta.env.VITE_API_URL}/${member.profile_pic}`} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    member.name.charAt(0)
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-[#1E184B] dark:text-indigo-100 truncate">{member.name}</p>
+                  <p className="text-xs font-medium text-slate-400 dark:text-violet-400/60 lowercase truncate mt-0.5">{member.email}</p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-[#1E184B] dark:text-indigo-100 truncate group-hover:text-[#7C3AED] dark:group-hover:text-violet-400 transition-colors">{member.name}</p>
-                <p className="text-xs font-medium text-slate-400 dark:text-violet-400/60 lowercase truncate mt-0.5">{member.email}</p>
-              </div>
-            </div>
+            )
           ))}
         </div>
       </div>

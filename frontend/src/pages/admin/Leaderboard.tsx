@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Trophy, RefreshCw, AlertTriangle, Loader2, Award, Medal, CheckCircle2 } from 'lucide-react';
 import SEO from '@/components/SEO';
 import { cn } from '@/lib/utils';
@@ -133,15 +134,17 @@ const Leaderboard: React.FC = () => {
                   #{rank}
                 </div>
                 
-                <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-100 dark:bg-[#110A24] border-4 border-white dark:border-[#0E0820] shadow-md mb-4">
+                <Link to={`/admin/profile/${leader.id}`} className="w-20 h-20 rounded-full overflow-hidden bg-slate-100 dark:bg-[#110A24] border-4 border-white dark:border-[#0E0820] shadow-md mb-4 block hover:scale-105 transition-all">
                   {leader.profile_pic ? (
                     <img src={`${import.meta.env.VITE_API_URL}/${leader.profile_pic}`} alt={leader.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center font-black text-slate-300 dark:text-violet-400 text-2xl bg-[#7C3AED]/10 dark:bg-violet-950/40">{leader.name.charAt(0)}</div>
                   )}
-                </div>
+                </Link>
                 
-                <h3 className="font-black text-[#1E184B] dark:text-indigo-100 text-center mb-1 leading-tight">{leader.name}</h3>
+                <Link to={`/admin/profile/${leader.id}`} className="font-black text-[#1E184B] dark:text-indigo-100 text-center mb-1 leading-tight hover:text-[#7C3AED] transition-colors block">
+                  {leader.name}
+                </Link>
                 <p className="text-[9px] font-bold text-slate-400 dark:text-violet-400/60 text-center mb-4 truncate w-full">{leader.college_name}</p>
                 
                 <div className="mt-auto pb-6 w-full text-center">
@@ -182,15 +185,17 @@ const Leaderboard: React.FC = () => {
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#110A24] border border-slate-200 dark:border-violet-500/20 shrink-0">
+                      <Link to={`/admin/profile/${leader.id}`} className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#110A24] border border-slate-200 dark:border-violet-500/20 shrink-0 block hover:scale-105 transition-all">
                         {leader.profile_pic ? (
                           <img src={`${import.meta.env.VITE_API_URL}/${leader.profile_pic}`} alt={leader.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center font-black text-slate-400 dark:text-violet-300 text-xs bg-[#7C3AED]/10 dark:bg-violet-950/40">{leader.name.charAt(0)}</div>
                         )}
-                      </div>
+                      </Link>
                       <div>
-                        <p className="text-sm font-black text-[#1E184B] dark:text-indigo-100">{leader.name}</p>
+                        <Link to={`/admin/profile/${leader.id}`} className="text-sm font-black text-[#1E184B] dark:text-indigo-100 hover:text-[#7C3AED] transition-colors block">
+                          {leader.name}
+                        </Link>
                         <p className="text-[10px] font-bold text-slate-400 dark:text-violet-400/60">{leader.email}</p>
                       </div>
                     </div>

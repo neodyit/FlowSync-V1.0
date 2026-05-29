@@ -20,7 +20,7 @@ try {
             LEFT JOIN faculty_departments fd ON u.id = fd.user_id
             LEFT JOIN departments d ON fd.department_id = d.id
             LEFT JOIN colleges c ON d.college_id = c.id
-            ORDER BY lp.total_points DESC, lp.tasks_completed DESC
+            ORDER BY lp.total_points DESC, lp.tasks_completed DESC, lp.bonus_points DESC, lp.updated_at ASC
             LIMIT 100
         ");
         $leaderboard = $stmt->fetchAll();

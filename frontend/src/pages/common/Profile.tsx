@@ -104,6 +104,39 @@ const Profile = () => {
     }
   };
 
+  const handleToggleVisibility = async () => {
+    if (!profile) return;
+    const newIsPublic = profile.is_public ? 0 : 1;
+    
+    setProfile(prev => prev ? { ...prev, is_public: newIsPublic } : null);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/profile.php`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ ...profile, is_public: newIsPublic })
+      });
+      const result = await response.json();
+      if (result.status === 'success') {
+        Swal.fire({
+          icon: 'success',
+          title: newIsPublic ? 'Profile is now Public' : 'Profile is now Private',
+          text: newIsPublic ? 'Other department members can now search and view your profile.' : 'Your profile is now hidden from the departmental roster.',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        window.dispatchEvent(new CustomEvent('profile-updated'));
+      } else {
+        setProfile(prev => prev ? { ...prev, is_public: profile.is_public } : null);
+        Swal.fire('Error', 'Failed to update visibility status.', 'error');
+      }
+    } catch (error) {
+      setProfile(prev => prev ? { ...prev, is_public: profile.is_public } : null);
+      Swal.fire('Error', 'Failed to update visibility status.', 'error');
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -271,21 +304,37 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-[#1E184B] to-[#110D2C] rounded-[2.5rem] p-8 text-white shadow-xl">
-            <Sparkles className="w-8 h-8 text-amber-400 mb-4" />
-            <h3 className="text-xl font-black mb-2">Public Visibility</h3>
-            <p className="text-white/60 text-xs font-medium leading-relaxed mb-6">
-              Toggle your profile's discoverability within the department and broader academic community.
-            </p>
+          <div className="bg-gradient-to-br from-[#1E184B] to-[#110D2C] rounded-[2.5rem] p-8 text-white shadow-xl flex flex-col justify-between">
+            <div>
+              <Sparkles className="w-8 h-8 text-amber-400 mb-4" />
+              <h3 className="text-xl font-black mb-2">Profile Privacy</h3>
+              <p className="text-white/60 text-xs font-medium leading-relaxed mb-6">
+                Choose if others can discover and view your professional credentials on department rosters and leaderboards.
+              </p>
+              
+              <div className="flex items-center gap-3 mb-6 p-4 bg-white/5 rounded-2xl border border-white/10">
+                <div className={cn(
+                  "w-3 h-3 rounded-full animate-pulse",
+                  profile.is_public ? "bg-emerald-400" : "bg-amber-400"
+                )} />
+                <span className="text-xs font-black uppercase tracking-widest text-white/95">
+                  Status: {profile.is_public ? "Public Profile" : "Private Session"}
+                </span>
+              </div>
+            </div>
+            
             <button 
-              onClick={() => setProfile({ ...profile, is_public: profile.is_public ? 0 : 1 })}
+              type="button"
+              onClick={handleToggleVisibility}
               className={cn(
-                "w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-                profile.is_public ? "bg-emerald-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
+                "w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95",
+                profile.is_public 
+                  ? "bg-slate-100/10 hover:bg-slate-100/20 text-white border border-white/10" 
+                  : "bg-[#7C3AED] hover:bg-[#6D28D9] text-white"
               )}
             >
-              {profile.is_public ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-              {profile.is_public ? "Live Protocol" : "Stealth Mode"}
+              {profile.is_public ? <Lock className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+              {profile.is_public ? "Make Profile Private" : "Make Profile Public"}
             </button>
           </div>
         </div>

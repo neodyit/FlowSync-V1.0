@@ -30,7 +30,7 @@ try {
     $deptId = $deptInfo['dept_id'];
 
     // 2. Fetch HOD Details
-    $stmt = $db->prepare("SELECT name, email, profile_pic FROM users WHERE id = :hod_id");
+    $stmt = $db->prepare("SELECT id, name, email, profile_pic, is_public FROM users WHERE id = :hod_id");
     $stmt->execute(['hod_id' => $deptInfo['hod_id']]);
     $hod = $stmt->fetch();
 
@@ -68,7 +68,7 @@ try {
 
     // 5. Fetch Team Members
     $stmt = $db->prepare("
-        SELECT u.id, u.name, u.email, u.profile_pic 
+        SELECT u.id, u.name, u.email, u.profile_pic, u.is_public 
         FROM faculty_departments fd
         JOIN users u ON fd.user_id = u.id
         WHERE fd.department_id = :dept_id AND fd.user_id != :user_id
@@ -82,9 +82,11 @@ try {
             'department' => $deptInfo['dept_name'],
             'college' => $deptInfo['college_name'],
             'hod' => [
+                'id' => $hod['id'] ?? null,
                 'name' => $hod['name'] ?? 'Not Assigned',
                 'email' => $hod['email'] ?? 'N/A',
-                'profile_pic' => $hod['profile_pic']
+                'profile_pic' => $hod['profile_pic'],
+                'is_public' => isset($hod['is_public']) ? (int)$hod['is_public'] : 0
             ],
             'stats' => [
                 'rank' => $rank ?: 'N/A',

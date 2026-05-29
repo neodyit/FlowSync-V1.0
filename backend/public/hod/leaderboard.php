@@ -52,7 +52,7 @@ try {
     $stmt->execute(['college_id' => $collegeId]);
     $deptRankings = $stmt->fetchAll();
 
-    // 3. Faculty Leaderboard (Global)
+    // 3. Faculty Leaderboard (Within the HOD's Department)
     $stmt = $db->prepare("
         SELECT 
             u.id, 
@@ -66,10 +66,11 @@ try {
         LEFT JOIN faculty_departments fd ON u.id = fd.user_id
         LEFT JOIN departments d ON fd.department_id = d.id
         WHERE u.role_id = 3
-        ORDER BY total_score DESC
+          AND fd.department_id = :dept_id
+        ORDER BY total_score DESC, COALESCE(lp.tasks_completed, 0) DESC, COALESCE(lp.bonus_points, 0) DESC, lp.updated_at ASC
         LIMIT 20
     ");
-    $stmt->execute();
+    $stmt->execute(['dept_id' => $myDeptId]);
     $facultyLeaderboard = $stmt->fetchAll();
 
     echo json_encode([

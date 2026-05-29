@@ -581,7 +581,7 @@ const UsersManagement: React.FC = () => {
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -593,11 +593,11 @@ const UsersManagement: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-[2rem] sm:rounded-[2.5rem] w-full max-w-xl p-6 sm:p-8 md:p-10 shadow-2xl z-10"
+              className="relative bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-[2.5rem] w-full max-w-xl p-6 sm:p-8 md:p-10 shadow-2xl z-10 max-h-[90vh] flex flex-col overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-[#7C3AED] rounded-t-[2.5rem]" />
               
-              <div className="flex justify-between items-center mb-8">
+              <div className="flex justify-between items-center mb-6 flex-shrink-0">
                 <div>
                   <h2 className="text-xl sm:text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">{editingUser ? 'Edit User Credentials' : 'Create New User'}</h2>
                   <p className="text-xs font-bold text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest mt-1">Identity Management Protocol</p>
@@ -610,105 +610,109 @@ const UsersManagement: React.FC = () => {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">Full Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
-                      placeholder="e.g. John Doe"
-                    />
+              <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden space-y-6">
+                {/* Scrollable Fields Container */}
+                <div className="space-y-6 overflow-y-auto flex-1 pr-1.5 py-1 -mr-2 scrollbar-thin">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">Full Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
+                        placeholder="e.g. John Doe"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">Email Address</label>
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
+                        placeholder="john@example.com"
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">Email Address</label>
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
-                      placeholder="john@example.com"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="relative">
+                      <CustomSelect
+                        label="Access Role"
+                        value={formData.role_id}
+                        onChange={(val) => setFormData({ ...formData, role_id: Number(val) })}
+                        options={roles.map(r => ({ value: r.id, label: r.name }))}
+                        disabled={!!(editingUser && editingUser.is_current_hod && editingUser.is_current_hod > 0)}
+                        icon={Shield}
+                      />
+                      {editingUser && editingUser.is_current_hod && editingUser.is_current_hod > 0 && (
+                        <p className="text-[9px] text-amber-600 font-bold mt-1 ml-1 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> HOD of {editingUser.department_name} (Role Protected)
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">{editingUser ? 'New Password (Optional)' : 'Initial Password'}</label>
+                      <input
+                        type="password"
+                        required={!editingUser}
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
+                        placeholder="••••••••"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="relative">
-                    <CustomSelect
-                      label="Access Role"
-                      value={formData.role_id}
-                      onChange={(val) => setFormData({ ...formData, role_id: Number(val) })}
-                      options={roles.map(r => ({ value: r.id, label: r.name }))}
-                      disabled={!!(editingUser && editingUser.is_current_hod && editingUser.is_current_hod > 0)}
-                      icon={Shield}
-                    />
-                    {editingUser && editingUser.is_current_hod && editingUser.is_current_hod > 0 && (
-                      <p className="text-[9px] text-amber-600 font-bold mt-1 ml-1 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> HOD of {editingUser.department_name} (Role Protected)
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">{editingUser ? 'New Password (Optional)' : 'Initial Password'}</label>
-                    <input
-                      type="password"
-                      required={!editingUser}
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <CustomSelect
-                    label="College Assignment"
-                    value={formData.college_id}
-                    onChange={(val) => setFormData({ ...formData, college_id: val.toString(), department_id: '' })}
-                    options={[
-                      { value: '', label: 'Select College' },
-                      ...colleges.map(c => ({ value: c.id, label: c.name }))
-                    ]}
-                    disabled={!!(editingUser && editingUser.is_current_hod && editingUser.is_current_hod > 0)}
-                  />
-
-                  <CustomSelect
-                    label="Department Assignment"
-                    value={formData.department_id}
-                    onChange={(val) => setFormData({ ...formData, department_id: val.toString() })}
-                    disabled={!formData.college_id || !!(editingUser && editingUser.is_current_hod && editingUser.is_current_hod > 0)}
-                    options={[
-                      { value: '', label: 'Select Department' },
-                      ...departments
-                        .filter(d => d.college_id.toString() === formData.college_id)
-                        .map(d => ({ value: d.id, label: d.name }))
-                    ]}
-                  />
-                </div>
-
-                {(!editingUser || editingUser.id !== 1) && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <CustomSelect
-                      label="Account Operational Status"
-                      value={formData.is_active}
-                      onChange={(val) => setFormData({ ...formData, is_active: Number(val) })}
+                      label="College Assignment"
+                      value={formData.college_id}
+                      onChange={(val) => setFormData({ ...formData, college_id: val.toString(), department_id: '' })}
                       options={[
-                        { value: 1, label: 'Active (Permit Access)' },
-                        { value: 0, label: 'Inactive (Revoke Access)' }
+                        { value: '', label: 'Select College' },
+                        ...colleges.map(c => ({ value: c.id, label: c.name }))
                       ]}
-                      icon={Power}
+                      disabled={!!(editingUser && editingUser.is_current_hod && editingUser.is_current_hod > 0)}
+                    />
+
+                    <CustomSelect
+                      label="Department Assignment"
+                      value={formData.department_id}
+                      onChange={(val) => setFormData({ ...formData, department_id: val.toString() })}
+                      disabled={!formData.college_id || !!(editingUser && editingUser.is_current_hod && editingUser.is_current_hod > 0)}
+                      options={[
+                        { value: '', label: 'Select Department' },
+                        ...departments
+                          .filter(d => d.college_id.toString() === formData.college_id)
+                          .map(d => ({ value: d.id, label: d.name }))
+                      ]}
                     />
                   </div>
-                )}
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4">
+                  {(!editingUser || editingUser.id !== 1) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <CustomSelect
+                        label="Account Operational Status"
+                        value={formData.is_active}
+                        onChange={(val) => setFormData({ ...formData, is_active: Number(val) })}
+                        options={[
+                          { value: 1, label: 'Active (Permit Access)' },
+                          { value: 0, label: 'Inactive (Revoke Access)' }
+                        ]}
+                        icon={Power}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Fixed Footer Actions */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-slate-100 dark:border-violet-500/10 flex-shrink-0 mt-auto">
                   <button
                     type="submit"
                     className="flex-1 py-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-black shadow-xl shadow-purple-500/20 transition-all uppercase tracking-widest text-xs cursor-pointer"

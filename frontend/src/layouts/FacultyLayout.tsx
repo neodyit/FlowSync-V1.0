@@ -32,6 +32,13 @@ export default function FacultyLayout() {
   const [lastPopupId, setLastPopupId] = useState<number | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo(0, 0);
+    }
+  }, [location.pathname]);
   
   // Get user from localStorage
   const [user, setUser] = useState(() => {
@@ -789,7 +796,7 @@ export default function FacultyLayout() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto">
+        <div ref={mainContentRef} className="flex-1 overflow-y-auto">
           <div className="p-6 md:p-10 min-h-full flex flex-col">
             <div className="flex-1">
               <Outlet />
