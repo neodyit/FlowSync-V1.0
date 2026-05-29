@@ -240,7 +240,6 @@ export default function MainLayout() {
             </div>
 
             <div className="h-8 w-px bg-[#7C3AED]/10 dark:bg-violet-500/10 mx-1" />
-
             {/* User Profile Dropdown */}
             <div className="relative">
               <button 
@@ -249,10 +248,10 @@ export default function MainLayout() {
                   setIsProfileOpen(!isProfileOpen);
                   setIsNotificationsOpen(false);
                 }}
-                className="flex items-center gap-3 p-1.5 pl-4 rounded-2xl bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 hover:border-[#7C3AED]/30 dark:hover:border-violet-500/40 transition-all shadow-sm cursor-pointer z-50"
+                className="flex items-center justify-center sm:justify-start gap-3 w-[52px] h-[52px] sm:w-auto sm:h-auto p-1.5 sm:pl-4 rounded-2xl bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 hover:border-[#7C3AED]/30 dark:hover:border-violet-500/40 transition-all shadow-sm cursor-pointer z-50"
               >
                 <div className="text-right hidden sm:block">
-                  <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 tracking-tight">{user.name}</p>
+                  <p className="text-xs font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight">{user.name}</p>
                   <p className="text-[9px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest opacity-60">{user.role}</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-[#7C3AED]/20">
