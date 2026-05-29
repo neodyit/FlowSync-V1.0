@@ -14,7 +14,10 @@ import {
     Globe,
     Layers,
     SlidersHorizontal,
-    Compass
+    Compass,
+    Crown,
+    Award,
+    Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -32,12 +35,28 @@ interface DailyActivityData {
     active_users: number;
 }
 
+interface TopUserData {
+    id: number;
+    name: string;
+    email: string;
+    role_name: string;
+    total_time: number;
+    total_interactions: number;
+}
+
 interface StatsData {
     total_users_tracked: number;
     total_active_time_seconds: number;
     total_interactions: number;
     top_pages: TopPageData[];
     daily_activity: DailyActivityData[];
+    top_users: {
+        all: TopUserData[];
+        today: TopUserData[];
+        yesterday: TopUserData[];
+        '7days': TopUserData[];
+        '30days': TopUserData[];
+    };
 }
 
 export default function EngagementTracker() {
@@ -55,6 +74,7 @@ export default function EngagementTracker() {
     const [filterDept, setFilterDept] = useState('all');
     const [filterRole, setFilterRole] = useState('all');
     const [filterUser, setFilterUser] = useState('all');
+    const [topUsersTimeframe, setTopUsersTimeframe] = useState<'all' | 'today' | 'yesterday' | '7days' | '30days'>('all');
 
     // Fetch filters datasets on mount
     useEffect(() => {
@@ -519,6 +539,169 @@ export default function EngagementTracker() {
                 </div>
 
             </div>
+
+            {/* Top 10 Most Active Users leaderboard */}
+            <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 dark:border-violet-500/20 shadow-sm flex flex-col space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-violet-500/10 pb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-violet-100 dark:bg-violet-950/50 rounded-2xl">
+                            <Crown className="w-6 h-6 text-[#7C3AED] dark:text-violet-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg sm:text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">
+                                Most Active Operators
+                            </h2>
+                            <p className="text-[#4C1D95]/60 dark:text-violet-400/60 font-medium text-xs sm:text-sm">Leaderboard tracking administrative operational engagement.</p>
+                        </div>
+                    </div>
+
+                    {/* Timeframe pill selectors */}
+                    <div className="flex flex-wrap items-center gap-1.5 bg-slate-50 dark:bg-[#110A24] p-1.5 rounded-2xl border border-slate-100 dark:border-violet-500/10">
+                        {[
+                            { key: 'all', label: 'All Time' },
+                            { key: 'today', label: 'Today' },
+                            { key: 'yesterday', label: 'Yesterday' },
+                            { key: '7days', label: 'Last 7 Days' },
+                            { key: '30days', label: 'Last 30 Days' }
+                        ].map((timeframeOpt) => (
+                            <button
+                                key={timeframeOpt.key}
+                                onClick={() => setTopUsersTimeframe(timeframeOpt.key as any)}
+                                className={cn(
+                                    "px-4 py-2 text-xs font-black rounded-xl transition-all uppercase tracking-wider",
+                                    topUsersTimeframe === timeframeOpt.key
+                                        ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/20"
+                                        : "text-slate-400 dark:text-violet-400/60 hover:text-slate-700 dark:hover:text-indigo-200"
+                                )}
+                            >
+                                {timeframeOpt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={topUsersTimeframe}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3 }}
+                            className="min-w-full divide-y divide-slate-100 dark:divide-violet-500/10"
+                        >
+                            {stats?.top_users?.[topUsersTimeframe] && stats.top_users[topUsersTimeframe].length > 0 ? (
+                                <div className="space-y-4 pt-2">
+                                    {stats.top_users[topUsersTimeframe].map((userRow, idx) => {
+                                        const rank = idx + 1;
+                                        const maxUserTime = Math.max(...stats.top_users[topUsersTimeframe].map(u => u.total_time), 1);
+                                        const percentage = Math.round((userRow.total_time / maxUserTime) * 100);
+                                        const initials = userRow.name
+                                            ? userRow.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+                                            : '??';
+                                            
+                                        // Rank styles
+                                        let rankBadge = null;
+                                        let rankBg = "bg-slate-100 dark:bg-violet-950/20 text-slate-600 dark:text-indigo-300";
+                                        
+                                        if (rank === 1) {
+                                            rankBadge = <Crown className="w-4 h-4 text-amber-500 animate-pulse fill-amber-500" />;
+                                            rankBg = "bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 font-extrabold border border-amber-200/50";
+                                        } else if (rank === 2) {
+                                            rankBadge = <Award className="w-4 h-4 text-slate-400 fill-slate-400" />;
+                                            rankBg = "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-extrabold border border-slate-200/50";
+                                        } else if (rank === 3) {
+                                            rankBadge = <Award className="w-4 h-4 text-amber-700 fill-amber-700" />;
+                                            rankBg = "bg-amber-100/60 dark:bg-[#78350F]/20 text-amber-750 dark:text-amber-500 font-extrabold border border-amber-600/20";
+                                        }
+
+                                        return (
+                                            <div 
+                                                key={userRow.id} 
+                                                className="group flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-3xl hover:bg-slate-50 dark:hover:bg-[#1E123F]/30 border border-transparent hover:border-slate-100 dark:hover:border-violet-500/10 transition-all duration-300"
+                                            >
+                                                {/* Left column: rank, avatar, user details */}
+                                                <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                    {/* Rank Circle */}
+                                                    <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center text-xs shadow-sm flex-shrink-0", rankBg)}>
+                                                        {rankBadge ? rankBadge : rank}
+                                                    </div>
+
+                                                    {/* Avatar initials with dynamic background */}
+                                                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-500/10 via-purple-500/10 to-pink-500/10 dark:from-indigo-500/20 dark:via-purple-500/20 dark:to-pink-500/20 text-[#7C3AED] dark:text-violet-300 border border-[#7C3AED]/20 dark:border-violet-500/30 flex items-center justify-center font-black text-sm flex-shrink-0 shadow-inner">
+                                                        {initials}
+                                                    </div>
+
+                                                    {/* Names & roles */}
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="font-extrabold text-[#1E1B4B] dark:text-indigo-100 text-sm md:text-base hover:text-indigo-600 dark:hover:text-violet-400 transition-colors truncate">
+                                                                {userRow.name}
+                                                            </span>
+                                                            <span className="px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/60 border border-violet-200/30 text-[10px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest">
+                                                                {userRow.role_name}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-xs text-slate-400 dark:text-violet-400/40 truncate block mt-0.5">
+                                                            {userRow.email}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Center column: active time progress bar visual */}
+                                                <div className="hidden lg:flex flex-col flex-1 max-w-xs space-y-1.5 px-4">
+                                                    <div className="flex justify-between items-center text-[10px] font-black text-slate-400 dark:text-violet-455 uppercase tracking-wider">
+                                                        <span>Proportional Activity</span>
+                                                        <span>{percentage}%</span>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-slate-100 dark:bg-violet-950/40 border border-slate-200/20 dark:border-violet-500/10 rounded-full overflow-hidden">
+                                                        <motion.div 
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${percentage}%` }}
+                                                            transition={{ duration: 0.6, ease: "easeOut" }}
+                                                            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Right column: duration stats & actions */}
+                                                <div className="flex items-center justify-between md:justify-end gap-6 text-right ml-12 md:ml-0 border-t border-dashed border-slate-100 dark:border-violet-500/10 pt-3 md:pt-0 md:border-none">
+                                                    <div className="flex flex-col text-left md:text-right">
+                                                        <span className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">Total Active Time</span>
+                                                        <span className="text-sm font-extrabold text-[#1E1B4B] dark:text-indigo-100 mt-0.5 flex items-center gap-1.5 justify-start md:justify-end">
+                                                            <Clock className="w-3.5 h-3.5 text-indigo-500 dark:text-violet-400" />
+                                                            {formatTimeDetailed(userRow.total_time)}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="w-px h-8 bg-slate-100 dark:bg-violet-500/10 hidden sm:block" />
+
+                                                    <div className="flex flex-col text-right">
+                                                        <span className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">Interaction Hits</span>
+                                                        <span className="text-sm font-black text-indigo-600 dark:text-violet-455 mt-0.5 flex items-center gap-1.5 justify-end">
+                                                            <Zap className="w-3.5 h-3.5 text-fuchsia-500 fill-fuchsia-500/30 animate-pulse" />
+                                                            {userRow.total_interactions}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-violet-400/50 text-center gap-3">
+                                    <Users className="w-12 h-12 opacity-30 text-[#7C3AED] dark:text-violet-400" />
+                                    <div>
+                                        <p className="text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">No Operator Telemetry Found</p>
+                                        <p className="text-xs text-slate-400 dark:text-violet-400/60 mt-1">No sessions recorded in this timeframe filter.</p>
+                                    </div>
+                                </div>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+            </div>
+
         </div>
     );
 }

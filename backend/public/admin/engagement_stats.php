@@ -97,6 +97,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $dailyActivityStmt->execute($params);
         $dailyActivity = $dailyActivityStmt->fetchAll();
 
+        // Stats: Top 10 Most Active Users by Timeframe
+        $timeframes = [
+            'all' => '',
+            'today' => "es.timestamp >= CURDATE()",
+            'yesterday' => "es.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND es.timestamp < CURDATE()",
+            '7days' => "es.timestamp >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)",
+            '30days' => "es.timestamp >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
+        ];
+
+        $topUsersByTimeframe = [];
+
+        foreach ($timeframes as $key => $timeCondition) {
+            $tempClauses = $whereClauses;
+            if (!empty($timeCondition)) {
+                $tempClauses[] = $timeCondition;
+            }
+            
+            $tempWhereSql = "";
+            if (!empty($tempClauses)) {
+                $tempWhereSql = "WHERE " . implode(" AND ", $tempClauses);
+            }
+            
+            $topUsersStmt = $db->prepare("
+                SELECT 
+                    u.id, 
+                    u.name, 
+                    u.email, 
+                    r.name as role_name,
+                    COALESCE(SUM(es.active_time_seconds), 0) as total_time,
+                    COALESCE(SUM(es.interaction_count), 0) as total_interactions
+                FROM users u
+                JOIN roles r ON u.role_id = r.id
+                JOIN engagement_sessions es ON es.user_id = u.id
+                $tempWhereSql
+                GROUP BY u.id
+                ORDER BY total_time DESC
+                LIMIT 10
+            ");
+            $topUsersStmt->execute($params);
+            $rows = $topUsersStmt->fetchAll();
+            
+            foreach ($rows as &$u_data) {
+                $u_data['id'] = (int)$u_data['id'];
+                $u_data['total_time'] = (int)$u_data['total_time'];
+                $u_data['total_interactions'] = (int)$u_data['total_interactions'];
+            }
+            
+            $topUsersByTimeframe[$key] = $rows;
+        }
+
         echo json_encode([
             'status' => 'success',
             'data' => [
@@ -104,7 +154,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 'total_active_time_seconds' => (int)$totalTime,
                 'total_interactions' => (int)$totalInteractions,
                 'top_pages' => $topPages,
-                'daily_activity' => $dailyActivity
+                'daily_activity' => $dailyActivity,
+                'top_users' => $topUsersByTimeframe
             ]
         ]);
 
