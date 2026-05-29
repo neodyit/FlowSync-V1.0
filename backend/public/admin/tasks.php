@@ -24,7 +24,8 @@ try {
                        u_to.name as assigned_to_name,
                        u_to.email as assigned_to_email,
                        u_by.name as assigned_by_name,
-                       u_by.email as assigned_by_email
+                       u_by.email as assigned_by_email,
+                       COALESCE((SELECT ROUND(AVG(progress)) FROM task_assignments WHERE task_id = t.id), 0) as progress
                 FROM tasks t
                 JOIN colleges c ON t.college_id = c.id
                 JOIN departments d ON t.department_id = d.id

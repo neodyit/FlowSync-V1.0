@@ -45,6 +45,7 @@ const AuditLogs: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAction, setFilterAction] = useState('all');
+  const [timeFrame, setTimeFrame] = useState('all');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -83,7 +84,21 @@ const AuditLogs: React.FC = () => {
     
     const matchesAction = filterAction === 'all' || log.action === filterAction;
     
-    return matchesSearch && matchesAction;
+    const matchesTimeFrame = (() => {
+      if (timeFrame === 'all') return true;
+      const logDate = new Date(log.created_at);
+      const now = new Date();
+      if (timeFrame === 'today') {
+        return logDate.toDateString() === now.toDateString();
+      }
+      if (timeFrame === 'week') {
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return logDate >= oneWeekAgo;
+      }
+      return true;
+    })();
+    
+    return matchesSearch && matchesAction && matchesTimeFrame;
   });
 
   const getActionColor = (action: string) => {
@@ -119,6 +134,59 @@ const AuditLogs: React.FC = () => {
         </button>
       </div>
 
+      {/* Overview Statistics Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Events */}
+        <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 rounded-3xl border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-indigo-50 dark:bg-violet-950/40 rounded-2xl flex items-center justify-center text-[#7C3AED] dark:text-violet-400">
+            <History className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">Total Logs</p>
+            <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">{logs.length}</p>
+          </div>
+        </div>
+
+        {/* Security / Deletions */}
+        <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 rounded-3xl border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-rose-50 dark:bg-rose-950/40 rounded-2xl flex items-center justify-center text-rose-500 dark:text-rose-400">
+            <Shield className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">Purges / Deletions</p>
+            <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">
+              {logs.filter(l => l.action.includes('DELETE')).length}
+            </p>
+          </div>
+        </div>
+
+        {/* Authentication Events */}
+        <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 rounded-3xl border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-blue-50 dark:bg-blue-950/40 rounded-2xl flex items-center justify-center text-blue-500 dark:text-blue-400">
+            <User className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">User Logins</p>
+            <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">
+              {logs.filter(l => l.action === 'LOGIN').length}
+            </p>
+          </div>
+        </div>
+
+        {/* Sync Status / API Hits */}
+        <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 rounded-3xl border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-violet-50 dark:bg-violet-950/40 rounded-2xl flex items-center justify-center text-[#7C3AED] dark:text-violet-400 animate-pulse">
+            <Zap className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">System API Hits</p>
+            <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">
+              {logs.filter(l => l.action === 'API_HIT' || l.action.includes('SYNC')).length}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Filter Bar */}
       <div className="bg-white/70 dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-3xl p-3 sm:p-4 border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex flex-col md:flex-row gap-3 sm:gap-4 relative z-[40]">
         <div className="flex-1 relative group">
@@ -132,21 +200,37 @@ const AuditLogs: React.FC = () => {
           />
         </div>
         
-        <div className="w-full md:w-64 relative group">
-          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 text-[#7C3AED] dark:text-violet-400 opacity-40" />
-          <select 
-            value={filterAction}
-            onChange={(e) => setFilterAction(e.target.value)}
-            className="w-full pl-10 sm:pl-12 pr-10 py-2.5 sm:py-3 bg-white dark:bg-[#110A24] border border-[#7C3AED]/5 dark:border-violet-500/20 rounded-2xl outline-none focus:border-[#7C3AED] dark:focus:border-violet-400 transition-all text-xs sm:text-sm font-bold appearance-none cursor-pointer text-[#1E1B4B] dark:text-indigo-100"
-          >
-            <option value="all" className="dark:bg-[#110A24]">All Action Types</option>
-            <option value="LOGIN" className="dark:bg-[#110A24]">Logins</option>
-            <option value="CREATE_USER" className="dark:bg-[#110A24]">User Creation</option>
-            <option value="UPDATE_USER" className="dark:bg-[#110A24]">User Updates</option>
-            <option value="DELETE_USER" className="dark:bg-[#110A24]">User Deletions</option>
-            <option value="API_HIT" className="dark:bg-[#110A24]">System API Hits</option>
-          </select>
-          <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7C3AED] dark:text-violet-400 rotate-90" />
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <div className="relative group flex-1 sm:w-48">
+            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 text-[#7C3AED] dark:text-violet-400 opacity-40" />
+            <select 
+              value={filterAction}
+              onChange={(e) => setFilterAction(e.target.value)}
+              className="w-full pl-10 sm:pl-12 pr-10 py-2.5 sm:py-3 bg-white dark:bg-[#110A24] border border-[#7C3AED]/5 dark:border-violet-500/20 rounded-2xl outline-none focus:border-[#7C3AED] dark:focus:border-violet-400 transition-all text-xs sm:text-sm font-bold appearance-none cursor-pointer text-[#1E1B4B] dark:text-indigo-100"
+            >
+              <option value="all" className="dark:bg-[#110A24]">All Action Types</option>
+              <option value="LOGIN" className="dark:bg-[#110A24]">Logins</option>
+              <option value="CREATE_USER" className="dark:bg-[#110A24]">User Creation</option>
+              <option value="UPDATE_USER" className="dark:bg-[#110A24]">User Updates</option>
+              <option value="DELETE_USER" className="dark:bg-[#110A24]">User Deletions</option>
+              <option value="API_HIT" className="dark:bg-[#110A24]">System API Hits</option>
+            </select>
+            <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7C3AED] dark:text-violet-400 rotate-90" />
+          </div>
+
+          <div className="relative group flex-1 sm:w-48">
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 text-[#7C3AED] dark:text-violet-400 opacity-40" />
+            <select 
+              value={timeFrame}
+              onChange={(e) => setTimeFrame(e.target.value)}
+              className="w-full pl-10 sm:pl-12 pr-10 py-2.5 sm:py-3 bg-white dark:bg-[#110A24] border border-[#7C3AED]/5 dark:border-violet-500/20 rounded-2xl outline-none focus:border-[#7C3AED] dark:focus:border-violet-400 transition-all text-xs sm:text-sm font-bold appearance-none cursor-pointer text-[#1E1B4B] dark:text-indigo-100"
+            >
+              <option value="all" className="dark:bg-[#110A24]">All Time</option>
+              <option value="today" className="dark:bg-[#110A24]">Today Only</option>
+              <option value="week" className="dark:bg-[#110A24]">Last 7 Days</option>
+            </select>
+            <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7C3AED] dark:text-violet-400 rotate-90" />
+          </div>
         </div>
       </div>
 
