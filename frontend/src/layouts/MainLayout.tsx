@@ -252,7 +252,7 @@ export default function MainLayout() {
               </button>
 
               {isProfileOpen && (
-                <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-64 bg-white/20 dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-2xl shadow-2xl border border-[#7C3AED]/10 dark:border-violet-500/20 overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-64 bg-white/90 dark:bg-[#1A0F35]/90 backdrop-blur-3x1 rounded-2xl shadow-2xl border border-[#7C3AED]/10 dark:border-violet-500/20 overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="p-5 bg-slate-50 dark:bg-violet-950/30 border-b border-[#7C3AED]/5 dark:border-violet-500/20">
                     <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">{user.name}</p>
                     <p className="text-[10px] text-[#4C1D95] dark:text-violet-400 mt-1 font-bold">Authenticated User</p>

@@ -13,6 +13,7 @@
 .env.production.local
 frontend/.env
 backend/.env
+app.md
 
 # ------------------------------------------
 # Dependencies & Package Managers
