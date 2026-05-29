@@ -86,7 +86,7 @@ const Leaderboard: React.FC = () => {
       <div className="text-center space-y-4">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#7C3AED]/5 dark:bg-[#7C3AED]/10 rounded-2xl">
           <Trophy className="w-4 h-4 text-[#7C3AED]" />
-          <span className="text-[10px] font-black text-[#7C3AED] uppercase tracking-widest">Global Standings</span>
+          <span className="text-[10px] font-black text-[#7C3AED] uppercase tracking-widest">Departmental Standings</span>
         </div> 
         <h1 className="text-5xl md:text-7xl font-black text-[#1E184B] dark:text-indigo-100 tracking-tight">
           Hall of <span className="text-[#7C3AED]">Excellence</span>
@@ -193,7 +193,7 @@ const Leaderboard: React.FC = () => {
             <h2 className="text-xs font-black text-slate-400 dark:text-violet-400/50 uppercase tracking-[0.2em]">Top 10 Performers</h2>
             <div className="flex items-center gap-2 text-[10px] font-black text-[#7C3AED] uppercase tracking-widest">
               <Users className="w-3 h-3" />
-              Global Faculty
+              Department Faculty
             </div>
           </div>
           
@@ -243,7 +243,7 @@ const Leaderboard: React.FC = () => {
             
             <div className="relative z-10 space-y-8">
               <div>
-                <h3 className="text-xs font-black text-white/60 uppercase tracking-[0.2em]">Your Global Pulse</h3>
+                <h3 className="text-xs font-black text-white/60 uppercase tracking-[0.2em]">Your Department Pulse</h3>
                 <p className="text-4xl font-black mt-2">Rank #{myStanding?.rank}</p>
               </div>
 

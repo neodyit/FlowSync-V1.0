@@ -17,7 +17,16 @@ if (!$session) {
 $currentUserId = $session['user_id'];
 
 try {
-    // 1. Get Top 10 Performers
+    // Get current user's department ID first
+    $stmt = $db->prepare("
+        SELECT department_id 
+        FROM faculty_departments 
+        WHERE user_id = :user_id
+    ");
+    $stmt->execute(['user_id' => $currentUserId]);
+    $myDeptId = $stmt->fetchColumn();
+
+    // 1. Get Top 10 Performers within the same department
     $stmt = $db->prepare("
         SELECT 
             u.id, 
@@ -30,22 +39,27 @@ try {
         FROM leaderboard_points lp
         JOIN users u ON lp.user_id = u.id
         LEFT JOIN colleges c ON u.college_id = c.id
-        LEFT JOIN faculty_departments fd ON u.id = fd.user_id
+        JOIN faculty_departments fd ON u.id = fd.user_id
         LEFT JOIN departments d ON fd.department_id = d.id
         WHERE u.role_id = 3 -- Faculty only
-        ORDER BY lp.total_points DESC
+          AND fd.department_id = :dept_id
+        ORDER BY lp.total_points DESC, lp.tasks_completed DESC, lp.bonus_points DESC, lp.updated_at ASC
         LIMIT 10
     ");
-    $stmt->execute();
+    $stmt->execute(['dept_id' => $myDeptId]);
     $topPerformers = $stmt->fetchAll();
 
-    // 2. Get Current User's Global Standing
+    // 2. Get Current User's Standing within their department
     $stmt = $db->prepare("
-        SELECT user_id, total_points as total_score
-        FROM leaderboard_points
-        ORDER BY total_points DESC
+        SELECT lp.user_id, lp.total_points as total_score
+        FROM leaderboard_points lp
+        JOIN users u ON lp.user_id = u.id
+        JOIN faculty_departments fd ON u.id = fd.user_id
+        WHERE u.role_id = 3
+          AND fd.department_id = :dept_id
+        ORDER BY lp.total_points DESC, lp.tasks_completed DESC, lp.bonus_points DESC, lp.updated_at ASC
     ");
-    $stmt->execute();
+    $stmt->execute(['dept_id' => $myDeptId]);
     $rankings = $stmt->fetchAll();
 
     $myStanding = [

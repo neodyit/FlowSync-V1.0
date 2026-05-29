@@ -121,6 +121,8 @@ function App() {
                 <Route path="controls" element={<ControlsPage />} />
                 <Route path="feedbacks" element={<Feedbacks />} />
                 <Route path="engagement" element={<EngagementTracker />} />
+                <Route path="profile" element={<Profile />} />
+                <Route path="profile/:id" element={<PublicProfile />} />
               </Route>
             </Route>
 

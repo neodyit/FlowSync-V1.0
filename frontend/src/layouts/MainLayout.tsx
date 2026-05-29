@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutGrid, 
   Users, 
@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { checkSession } from '../utils/auth';
 import { useTheme } from '../components/ThemeProvider';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function MainLayout() {
   const { theme, toggleTheme } = useTheme();
@@ -31,6 +32,14 @@ export default function MainLayout() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo(0, 0);
+    }
+  }, [location.pathname]);
   
   // Get user from localStorage with robust parsing
   const rawUser = localStorage.getItem('user');
@@ -286,11 +295,17 @@ export default function MainLayout() {
         </header>
 
         {/* Scrollable Area */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={mainContentRef} className="flex-1 overflow-y-auto">
           <div className="p-6 md:p-10 min-h-full flex flex-col">
-            <div className="flex-1">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="flex-1"
+            >
               <Outlet />
-            </div>
+            </motion.div>
 
             {/* Footer Credit */}
             <footer className="mt-20 pt-12 pb-12 border-t border-[#7C3AED]/10 text-center">
