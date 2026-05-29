@@ -1,4 +1,4 @@
-import React, { useState, useEffect, type ReactNode } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   Building2, 
@@ -19,7 +19,8 @@ import {
   MessageSquare,
   History,
   Shield,
-  ArrowRight
+  ArrowRight,
+  Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, formatDate, getDownloadUrl } from "@/lib/utils";
@@ -44,7 +45,7 @@ interface Review {
 }
 
 interface Task {
-  progress: ReactNode;
+  progress: number;
   id: number;
   title: string;
   description: string;
@@ -209,6 +210,61 @@ const Tasks: React.FC = () => {
             <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
             REFRESH SYNC
           </button>
+        </div>
+      </div>
+
+      {/* Overview Statistics Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Tasks */}
+        <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 rounded-3xl border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-indigo-50 dark:bg-violet-950/40 rounded-2xl flex items-center justify-center text-[#7C3AED] dark:text-violet-400">
+            <Target className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">Total Missions</p>
+            <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">{tasks.length}</p>
+          </div>
+        </div>
+
+        {/* Completed Tasks */}
+        <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 rounded-3xl border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl flex items-center justify-center text-emerald-500 dark:text-emerald-400">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">Completed</p>
+            <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">
+              {tasks.filter(t => t.status === 'Completed' || t.status === 'Approved').length}
+            </p>
+          </div>
+        </div>
+
+        {/* Pending Review */}
+        <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 rounded-3xl border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-amber-50 dark:bg-amber-950/40 rounded-2xl flex items-center justify-center text-amber-500 dark:text-amber-400">
+            <Clock className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">Pending Review</p>
+            <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">
+              {tasks.filter(t => t.status === 'Submitted' || t.status === 'Under Review').length}
+            </p>
+          </div>
+        </div>
+
+        {/* Average Progress */}
+        <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md p-5 rounded-3xl border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-purple-50 dark:bg-purple-950/40 rounded-2xl flex items-center justify-center text-purple-500 dark:text-purple-400">
+            <Activity className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">Average Progress</p>
+            <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">
+              {tasks.length > 0 
+                ? Math.round(tasks.reduce((acc, t) => acc + (t.progress ? Number(t.progress) : 0), 0) / tasks.length)
+                : 0}%
+            </p>
+          </div>
         </div>
       </div>
 
