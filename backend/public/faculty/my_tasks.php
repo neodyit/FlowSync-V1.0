@@ -190,8 +190,8 @@ try {
             $updateFields = ["status = :status"];
             $params = ['status' => $newStatus, 'tid' => $taskId, 'uid' => $session['user_id']];
 
-            if ($newStatus === 'Accepted') {
-                $updateFields[] = "accepted_at = NOW()";
+            if ($newStatus === 'Accepted' || $newStatus === 'In Progress') {
+                $updateFields[] = "accepted_at = COALESCE(accepted_at, NOW())";
             }
             
             // Add progress and remarks update if provided

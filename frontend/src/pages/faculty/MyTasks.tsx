@@ -743,12 +743,14 @@ const FacultyMyTasks: React.FC = () => {
                                   "px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-tighter border",
                                   member.status === 'Completed' || member.status === 'Approved' ? 'bg-emerald-50 text-emerald-500 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30' :
                                   member.status === 'Submitted' ? 'bg-purple-50 text-purple-500 border-purple-100 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/30' :
-                                  member.status === 'Accepted' || member.status === 'In Progress' ? 'bg-indigo-50 text-indigo-500 border-indigo-100 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30' :
+                                  member.status === 'In Progress' ? 'bg-amber-50 text-amber-500 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30' :
+                                  member.status === 'Accepted' ? 'bg-indigo-50 text-indigo-500 border-indigo-100 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30' :
                                   'bg-slate-50 text-slate-400 border-slate-100 dark:bg-slate-900/20 dark:border-slate-800/30'
                                 )}>
-                                  {member.status === 'Completed' || member.status === 'Approved' ? 'Finalized' : 
-                                   member.status === 'Submitted' ? 'For Review' : 
-                                   member.status === 'Accepted' || member.status === 'In Progress' ? 'Working' : 'Pending'}
+                                  {member.status === 'Completed' || member.status === 'Approved' ? 'Reviewed' : 
+                                   member.status === 'Submitted' ? 'Submitted' : 
+                                   member.status === 'In Progress' ? 'Working' : 
+                                   member.status === 'Accepted' ? 'Accepted' : 'Pending'}
                                 </span>
                                 <span className="block text-[8px] font-black text-slate-400 dark:text-violet-500/40 mt-1 uppercase tracking-wider">{member.progress}% Done</span>
                               </div>
@@ -990,7 +992,7 @@ const FacultyMyTasks: React.FC = () => {
                           {selectedTask.status === 'Assigned' && (
                             <div className="grid grid-cols-2 gap-3">
                               <button 
-                                onClick={() => handleUpdateStatus(selectedTask.id, 'Accepted')}
+                                onClick={() => handleUpdateStatus(selectedTask.id, 'In Progress')}
                                 className="py-4 bg-[#7C3AED] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#7C3AED]/20 hover:bg-[#6D28D9] transition-all"
                               >
                                 Accept Task
