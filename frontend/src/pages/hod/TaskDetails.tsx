@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Swal from 'sweetalert2';
 import SEO from '@/components/SEO';
 import { cn, formatDate, getDownloadUrl } from '@/lib/utils';
+import { CollaboratorProfileModal } from '@/components/common/CollaboratorProfileModal';
 
 interface Faculty {
   id: number;
@@ -104,6 +105,9 @@ export default function HODTaskDetails() {
 
   // Debounce ref to keep track of active timeout for score updates
   const debounceTimeoutRef = React.useRef<any>(null);
+
+  const [selectedFacultyId, setSelectedFacultyId] = useState<number | null>(null);
+  const [isFacultyModalOpen, setIsFacultyModalOpen] = useState(false);
 
   const fetchFaculty = async () => {
     try {
@@ -886,7 +890,17 @@ export default function HODTaskDetails() {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 truncate">{assign.faculty_name}</p>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedFacultyId(assign.user_id);
+                              setIsFacultyModalOpen(true);
+                            }}
+                            className="text-xs font-black text-[#1E184B] dark:text-indigo-100 hover:text-[#7C3AED] dark:hover:text-violet-400 transition-colors truncate block text-left w-full cursor-pointer"
+                          >
+                            {assign.faculty_name}
+                          </button>
                           <p className="text-[9px] font-bold text-slate-400 dark:text-violet-400/60 truncate max-w-[130px]">{assign.faculty_email}</p>
                         </div>
                       </div>
@@ -1666,6 +1680,16 @@ export default function HODTaskDetails() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Collaborator Profile Modal */}
+      <CollaboratorProfileModal 
+        isOpen={isFacultyModalOpen}
+        onClose={() => {
+          setIsFacultyModalOpen(false);
+          setSelectedFacultyId(null);
+        }}
+        userId={selectedFacultyId}
+      />
     </div>
   );
 }

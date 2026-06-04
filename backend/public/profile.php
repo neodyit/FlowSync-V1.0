@@ -48,9 +48,42 @@ if ($method === 'GET') {
 
     // Privacy check
     if ($targetId != $userId && $user['is_public'] == 0) {
-        http_response_code(403);
-        echo json_encode(['status' => 'error', 'message' => 'This profile is private.']);
-        exit;
+        $canAccessPrivate = false;
+        
+        // Check if requester is HOD
+        $roleCheck = $db->prepare("SELECT role_id FROM users WHERE id = :uid");
+        $roleCheck->execute(['uid' => $userId]);
+        $reqUser = $roleCheck->fetch();
+        $viewerRole = $reqUser ? intval($reqUser['role_id']) : 3;
+        
+        if ($viewerRole === 2 || $viewerRole === 1) {
+            $canAccessPrivate = true;
+        } else {
+            // Check if teammate (share at least one task)
+            $collabCheck = $db->prepare("
+                SELECT 1 
+                FROM task_assignments ta1 
+                JOIN task_assignments ta2 ON ta1.task_id = ta2.task_id 
+                WHERE ta1.user_id = :viewer_id AND ta2.user_id = :target_id 
+                LIMIT 1
+            ");
+            $collabCheck->execute(['viewer_id' => $userId, 'target_id' => $targetId]);
+            if ($collabCheck->fetch()) {
+                $canAccessPrivate = true;
+            }
+        }
+
+        if (!$canAccessPrivate) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'This profile is private.']);
+            exit;
+        }
+
+        // Mask contact details for peers (non-HOD / non-Admin)
+        if ($viewerRole !== 2 && $viewerRole !== 1) {
+            $user['email'] = 'Locked (Private Profile)';
+            $user['phone'] = 'Locked (Private Profile)';
+        }
     }
 
     // Parse achievements

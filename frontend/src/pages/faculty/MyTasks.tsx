@@ -25,13 +25,16 @@ import {
   ArrowRight,
   BookOpen,
   Layers,
-  Link
+  Link,
+  Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
 import { cn, formatDate, getDownloadUrl, calculateProgress, getDeadlineStatus } from '@/lib/utils';
 import Swal from 'sweetalert2';
 import DateTimePicker from '@/components/ui/DateTimePicker';
+import { CollaboratorProfileModal } from '@/components/common/CollaboratorProfileModal';
+
 interface Attachment {
   id: number;
   file_name: string;
@@ -63,6 +66,18 @@ interface Task {
   private_remarks: string | null;
   my_remarks: string | null;
   is_delayed?: number;
+  assignment_mode: 'individual' | 'group' | 'broadcast';
+  team_members?: {
+    user_id: number;
+    status: string;
+    progress: number;
+    faculty_name: string;
+    faculty_pic: string | null;
+    faculty_email: string;
+    designation: string;
+    is_public: number;
+    department_name?: string;
+  }[];
   teammate_remarks?: {
     public_remarks: string;
     faculty_name: string;
@@ -112,6 +127,8 @@ const FacultyMyTasks: React.FC = () => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [selectedTeammateId, setSelectedTeammateId] = useState<number | null>(null);
+  const [isTeammateModalOpen, setIsTeammateModalOpen] = useState(false);
 
   const fetchTasks = async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -480,8 +497,20 @@ const FacultyMyTasks: React.FC = () => {
                     )}
 
                     <div className="flex items-start justify-between mb-5">
-                       <div className={cn("px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest", config.bg, config.color)}>
-                        {config.label}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className={cn("px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest", config.bg, config.color)}>
+                          {config.label}
+                        </div>
+                        <div className={cn(
+                          "px-2.5 py-1 rounded-xl text-[8px] font-black uppercase tracking-wider border flex items-center gap-1 shadow-sm",
+                          task.assignment_mode === 'group' ? 'bg-indigo-50 text-indigo-500 border-indigo-100 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30' :
+                          task.assignment_mode === 'broadcast' ? 'bg-amber-50 text-amber-500 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30' :
+                          'bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800/30'
+                        )}>
+                          {task.assignment_mode === 'group' && <Users className="w-2.5 h-2.5" />}
+                          {task.assignment_mode === 'broadcast' && <Sparkles className="w-2.5 h-2.5 animate-pulse" />}
+                          {task.assignment_mode || 'individual'}
+                        </div>
                       </div>
                       {task.is_delayed === 1 && (
                         <div className="bg-rose-100 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest animate-pulse">Delayed</div>
@@ -552,7 +581,19 @@ const FacultyMyTasks: React.FC = () => {
                   className="bg-slate-50/50 dark:bg-[#110A24]/40 rounded-[2rem] border border-slate-100 dark:border-violet-500/10 p-6 cursor-pointer hover:bg-white dark:hover:bg-[#1A0F35]/80 transition-all hover:shadow-xl group"
                 >
                   <div className="flex justify-between items-start mb-4">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                      <div className={cn(
+                        "px-2 py-0.5 rounded-lg text-[7px] font-black uppercase tracking-widest border flex items-center gap-1",
+                        task.assignment_mode === 'group' ? 'bg-indigo-50 text-indigo-500 border-indigo-100 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30' :
+                        task.assignment_mode === 'broadcast' ? 'bg-amber-50 text-amber-500 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30' :
+                        'bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800/30'
+                      )}>
+                        {task.assignment_mode === 'group' && <Users className="w-2 h-2" />}
+                        {task.assignment_mode === 'broadcast' && <Sparkles className="w-2 h-2 animate-pulse" />}
+                        {task.assignment_mode || 'individual'}
+                      </div>
+                    </div>
                      <div className="flex flex-col items-end gap-1">
                       <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-lg">+{task.points + task.bonus_points} pts</span>
                       {task.is_delayed === 1 && (
@@ -598,6 +639,17 @@ const FacultyMyTasks: React.FC = () => {
                       {getFlagConfig(selectedTask.flag_color)?.label}
                     </div>
                   )}
+                  {/* Assignment Mode Badge */}
+                  <span className={cn(
+                    "px-3.5 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] border flex items-center gap-1.5 shadow-sm",
+                    selectedTask.assignment_mode === 'group' ? 'bg-indigo-50 text-indigo-500 border-indigo-100 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30' :
+                    selectedTask.assignment_mode === 'broadcast' ? 'bg-amber-50 text-amber-500 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30' :
+                    'bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800/30'
+                  )}>
+                    {selectedTask.assignment_mode === 'group' && <Users className="w-3.5 h-3.5" />}
+                    {selectedTask.assignment_mode === 'broadcast' && <Sparkles className="w-3.5 h-3.5 animate-pulse" />}
+                    {selectedTask.assignment_mode || 'individual'} Task
+                  </span>
                 </div>
                 <button onClick={() => setIsDetailModalOpen(false)} className="p-3 bg-slate-50 dark:bg-[#1A0F35] text-slate-400 dark:text-violet-400/60 rounded-2xl hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-500 dark:hover:text-rose-400 transition-all border border-transparent dark:border-violet-500/10">
                   <X className="w-6 h-6" />
@@ -646,6 +698,63 @@ const FacultyMyTasks: React.FC = () => {
                         <p className="text-sm font-bold text-amber-900 dark:text-amber-300 leading-relaxed italic">
                           "{selectedTask.my_remarks}"
                         </p>
+                      </div>
+                    )}
+
+                    {/* Team Members Section for Group/Broadcast tasks */}
+                    {(selectedTask.assignment_mode === 'group' || selectedTask.assignment_mode === 'broadcast') && (
+                      <div className="space-y-6">
+                        <h3 className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest flex items-center gap-2">
+                          <User className="w-4 h-4 text-indigo-500" /> Team Members
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {selectedTask.team_members?.map((member) => (
+                            <div 
+                              key={member.user_id} 
+                              className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-[#1A0F35]/40 rounded-2xl border border-slate-100 dark:border-violet-500/10 hover:border-[#7C3AED]/30 transition-all"
+                            >
+                              <div className="w-10 h-10 bg-white dark:bg-[#110A24] rounded-xl flex items-center justify-center font-black text-[#1E184B] dark:text-indigo-100 shadow-sm border border-slate-100 dark:border-violet-500/10 overflow-hidden shrink-0">
+                                {member.faculty_pic ? (
+                                  <img 
+                                    src={`${import.meta.env.VITE_API_URL}/${member.faculty_pic}`} 
+                                    alt={member.faculty_name} 
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  member.faculty_name.charAt(0)
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <button 
+                                  onClick={() => {
+                                    setSelectedTeammateId(member.user_id);
+                                    setIsTeammateModalOpen(true);
+                                  }}
+                                  className="text-sm font-black text-[#1E184B] dark:text-indigo-100 hover:text-[#7C3AED] dark:hover:text-violet-400 text-left truncate block w-full cursor-pointer transition-colors"
+                                >
+                                  {member.faculty_name} {member.user_id === userId && <span className="text-[10px] text-slate-400 font-bold">(You)</span>}
+                                </button>
+                                <p className="text-[10px] font-bold text-slate-400 dark:text-violet-400/50 truncate leading-tight">
+                                  {member.designation || 'Faculty Member'} • {member.department_name || 'Department'}
+                                </p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <span className={cn(
+                                  "px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-tighter border",
+                                  member.status === 'Completed' || member.status === 'Approved' ? 'bg-emerald-50 text-emerald-500 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30' :
+                                  member.status === 'Submitted' ? 'bg-purple-50 text-purple-500 border-purple-100 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/30' :
+                                  member.status === 'Accepted' || member.status === 'In Progress' ? 'bg-indigo-50 text-indigo-500 border-indigo-100 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30' :
+                                  'bg-slate-50 text-slate-400 border-slate-100 dark:bg-slate-900/20 dark:border-slate-800/30'
+                                )}>
+                                  {member.status === 'Completed' || member.status === 'Approved' ? 'Finalized' : 
+                                   member.status === 'Submitted' ? 'For Review' : 
+                                   member.status === 'Accepted' || member.status === 'In Progress' ? 'Working' : 'Pending'}
+                                </span>
+                                <span className="block text-[8px] font-black text-slate-400 dark:text-violet-500/40 mt-1 uppercase tracking-wider">{member.progress}% Done</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
 
@@ -1312,6 +1421,16 @@ const FacultyMyTasks: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Collaborator Profile Modal */}
+      <CollaboratorProfileModal 
+        isOpen={isTeammateModalOpen}
+        onClose={() => {
+          setIsTeammateModalOpen(false);
+          setSelectedTeammateId(null);
+        }}
+        userId={selectedTeammateId}
+      />
     </div>
   );
 };
