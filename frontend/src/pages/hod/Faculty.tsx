@@ -304,6 +304,13 @@ const HODFaculty: React.FC = () => {
                     <div className="min-w-0">
                       <h2 className="text-lg md:text-2xl font-black text-[#1E184B] truncate leading-tight">{selectedFaculty.name}</h2>
                       <p className="text-xs md:text-sm font-bold text-slate-400 truncate">{selectedFaculty.email}</p>
+                      <button
+                        onClick={() => navigate(`/hod/reports?tab=personalized&facultyId=${selectedFaculty.id}`)}
+                        className="mt-3 flex items-center gap-1.5 px-4 py-2 bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 text-[#7C3AED] rounded-xl font-black text-[10px] uppercase tracking-wider transition-all cursor-pointer"
+                      >
+                        <Trophy className="w-3.5 h-3.5" />
+                        View Performance Report
+                      </button>
                     </div>
                   </div>
                   
