@@ -449,8 +449,10 @@ const HODTasks: React.FC = () => {
         return ['Submitted', 'Under Review'].includes(t.status) || 
                t.assignments.some(a => ['Submitted', 'Under Review'].includes(a.status));
       case 'Active': 
-        return ['Assigned', 'Accepted', 'In Progress', 'Rework Required'].includes(t.status) ||
-               t.assignments.some(a => ['Accepted', 'In Progress', 'Rework Required'].includes(a.status));
+        return !['Completed', 'Approved', 'Draft'].includes(t.status) && (
+          ['Assigned', 'Accepted', 'In Progress', 'Rework Required'].includes(t.status) ||
+          t.assignments.some(a => ['Accepted', 'In Progress', 'Rework Required'].includes(a.status))
+        );
       case 'Completed': 
         return ['Completed', 'Approved'].includes(t.status);
       case 'Drafts':
@@ -489,8 +491,10 @@ const HODTasks: React.FC = () => {
           return ['Submitted', 'Under Review'].includes(t.status) || 
                  t.assignments.some(a => ['Submitted', 'Under Review'].includes(a.status));
         case 'Active': 
-          return ['Assigned', 'Accepted', 'In Progress', 'Rework Required'].includes(t.status) ||
-                 t.assignments.some(a => ['Accepted', 'In Progress', 'Rework Required'].includes(a.status));
+          return !['Completed', 'Approved', 'Draft'].includes(t.status) && (
+            ['Assigned', 'Accepted', 'In Progress', 'Rework Required'].includes(t.status) ||
+            t.assignments.some(a => ['Accepted', 'In Progress', 'Rework Required'].includes(a.status))
+          );
         case 'Completed': 
           return ['Completed', 'Approved'].includes(t.status);
         case 'Drafts': return t.status === 'Draft';

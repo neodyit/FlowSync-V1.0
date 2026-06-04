@@ -33,10 +33,10 @@ try {
                 FROM tasks t
                 JOIN users u ON t.assigned_by_id = u.id
                 JOIN task_assignments ta ON t.id = ta.task_id
-                WHERE ta.user_id = :user_id
+                WHERE ta.user_id = :user_id AND t.season_id = :season_id
                 ORDER BY t.created_at DESC
             ");
-            $stmt->execute(['user_id' => $session['user_id']]);
+            $stmt->execute(['user_id' => $session['user_id'], 'season_id' => $currentSeasonId]);
             $tasks = $stmt->fetchAll();
 
             // Fetch attachments (HOD files + Faculty submissions)
@@ -102,6 +102,14 @@ try {
             // ACTION: Submit Task for Review (with files)
             $taskId = $_POST['task_id'] ?? null;
             if (!$taskId) throw new Exception("Task ID is required.");
+
+            // Season Lock Check
+            $seasonStmt = $db->prepare("SELECT season_id FROM tasks WHERE id = :id");
+            $seasonStmt->execute(['id' => $taskId]);
+            $taskSeasonId = $seasonStmt->fetchColumn();
+            if ($taskSeasonId && FlowSync\Utils\AcademicSeasonManager::isSeasonLocked($taskSeasonId)) {
+                throw new Exception("This task belongs to a locked academic season and cannot be modified or submitted.");
+            }
 
             // Verify ownership in assignments
             $checkStmt = $db->prepare("SELECT ta.id, t.title FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.task_id = :tid AND ta.user_id = :uid");
@@ -177,6 +185,14 @@ try {
 
             if (!$taskId || !$newStatus) {
                 throw new Exception("Task ID and new status are required.");
+            }
+
+            // Season Lock Check
+            $seasonStmt = $db->prepare("SELECT season_id FROM tasks WHERE id = :id");
+            $seasonStmt->execute(['id' => $taskId]);
+            $taskSeasonId = $seasonStmt->fetchColumn();
+            if ($taskSeasonId && FlowSync\Utils\AcademicSeasonManager::isSeasonLocked($taskSeasonId)) {
+                throw new Exception("This task belongs to a locked academic season and its status cannot be changed.");
             }
 
             // Verify ownership in assignments

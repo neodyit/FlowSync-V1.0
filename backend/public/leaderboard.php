@@ -43,10 +43,11 @@ try {
         LEFT JOIN departments d ON fd.department_id = d.id
         WHERE u.role_id = 3 -- Faculty only
           AND fd.department_id = :dept_id
+          AND lp.season_id = :season_id
         ORDER BY lp.total_points DESC, lp.tasks_completed DESC, lp.bonus_points DESC, lp.updated_at ASC
         LIMIT 10
     ");
-    $stmt->execute(['dept_id' => $myDeptId]);
+    $stmt->execute(['dept_id' => $myDeptId, 'season_id' => $currentSeasonId]);
     $topPerformers = $stmt->fetchAll();
 
     // 2. Get Current User's Standing within their department
@@ -57,9 +58,10 @@ try {
         JOIN faculty_departments fd ON u.id = fd.user_id
         WHERE u.role_id = 3
           AND fd.department_id = :dept_id
+          AND lp.season_id = :season_id
         ORDER BY lp.total_points DESC, lp.tasks_completed DESC, lp.bonus_points DESC, lp.updated_at ASC
     ");
-    $stmt->execute(['dept_id' => $myDeptId]);
+    $stmt->execute(['dept_id' => $myDeptId, 'season_id' => $currentSeasonId]);
     $rankings = $stmt->fetchAll();
 
     $myStanding = [

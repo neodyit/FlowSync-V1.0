@@ -39,6 +39,46 @@ export default function HODLayout() {
   const location = useLocation();
   const mainContentRef = useRef<HTMLDivElement>(null);
 
+  const [seasons, setSeasons] = useState<any[]>([]);
+  const [activeSeasonId, setActiveSeasonId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchSeasons = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/academic_seasons.php`, { credentials: 'include' });
+        const data = await res.json();
+        if (data.status === 'success') {
+          setSeasons(data.data);
+          
+          // Read cookie
+          const getCookie = (name: string) => {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop()?.split(';').shift();
+            return null;
+          };
+          const cookieVal = getCookie('active_season_id');
+          if (cookieVal) {
+            setActiveSeasonId(parseInt(cookieVal));
+          } else {
+            const defaultSeason = data.data.find((s: any) => s.is_default === 1);
+            if (defaultSeason) {
+              setActiveSeasonId(defaultSeason.id);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching seasons for switcher:', err);
+      }
+    };
+    fetchSeasons();
+  }, []);
+
+  const handleSeasonChange = (id: number) => {
+    document.cookie = `active_season_id=${id}; path=/; max-age=31536000; SameSite=Lax`;
+    window.location.reload();
+  };
+
   useEffect(() => {
     if (mainContentRef.current) {
       mainContentRef.current.scrollTo(0, 0);

@@ -43,9 +43,9 @@ try {
             SUM(CASE WHEN deadline < NOW() AND status NOT IN ('Completed', 'Approved') THEN 1 ELSE 0 END) as overdue_tasks,
             SUM(CASE WHEN status IN ('Submitted', 'Under Review') THEN 1 ELSE 0 END) as pending_review
         FROM tasks 
-        WHERE department_id = :dept_id
+        WHERE department_id = :dept_id AND season_id = :season_id
     ");
-    $statsStmt->execute(['dept_id' => $deptId]);
+    $statsStmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $stats = $statsStmt->fetch();
 
     // 2. Faculty Performance & Workload
@@ -53,26 +53,32 @@ try {
         SELECT 
             u.id, u.name, u.email, u.profile_pic,
             lp.total_points, lp.tasks_completed,
-            (SELECT COUNT(*) FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.user_id = u.id AND ta.status IN ('Accepted', 'In Progress', 'Rework Required')) as active_load,
-            (SELECT COUNT(*) FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.user_id = u.id AND ta.status = 'Approved' AND ta.completed_at <= t.deadline) as on_time_count,
-            (SELECT COUNT(*) FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.user_id = u.id AND ta.status = 'Approved' AND ta.completed_at > t.deadline) as late_count
+            (SELECT COUNT(*) FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.user_id = u.id AND ta.status IN ('Accepted', 'In Progress', 'Rework Required') AND t.season_id = :season_id1) as active_load,
+            (SELECT COUNT(*) FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.user_id = u.id AND ta.status = 'Approved' AND ta.completed_at <= t.deadline AND t.season_id = :season_id2) as on_time_count,
+            (SELECT COUNT(*) FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.user_id = u.id AND ta.status = 'Approved' AND ta.completed_at > t.deadline AND t.season_id = :season_id3) as late_count
         FROM users u
         JOIN faculty_departments fd ON u.id = fd.user_id
-        LEFT JOIN leaderboard_points lp ON u.id = lp.user_id
+        LEFT JOIN leaderboard_points lp ON u.id = lp.user_id AND lp.season_id = :season_id4
         WHERE fd.department_id = :dept_id AND u.role_id = 3
         ORDER BY lp.total_points DESC
     ");
-    $facultyStmt->execute(['dept_id' => $deptId]);
+    $facultyStmt->execute([
+        'dept_id' => $deptId, 
+        'season_id1' => $currentSeasonId, 
+        'season_id2' => $currentSeasonId, 
+        'season_id3' => $currentSeasonId, 
+        'season_id4' => $currentSeasonId
+    ]);
     $facultyPerformance = $facultyStmt->fetchAll();
 
     // 3. Category Distribution
     $categoryStmt = $db->prepare("
         SELECT category as name, COUNT(*) as value
         FROM tasks 
-        WHERE department_id = :dept_id
+        WHERE department_id = :dept_id AND season_id = :season_id
         GROUP BY category
     ");
-    $categoryStmt->execute(['dept_id' => $deptId]);
+    $categoryStmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $categoryDist = $categoryStmt->fetchAll();
 
     // 4. Rework Analysis
@@ -82,9 +88,9 @@ try {
             SUM(CASE WHEN tr.status = 'Rework Required' THEN 1 ELSE 0 END) as rework_count
         FROM task_reviews tr
         JOIN tasks t ON tr.task_id = t.id
-        WHERE t.department_id = :dept_id
+        WHERE t.department_id = :dept_id AND t.season_id = :season_id
     ");
-    $reworkStmt->execute(['dept_id' => $deptId]);
+    $reworkStmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $reworkStats = $reworkStmt->fetch();
 
     // 5. Monthly Completion Trend
@@ -94,13 +100,13 @@ try {
             COUNT(DISTINCT ta.task_id) as count
         FROM task_assignments ta
         JOIN tasks t ON ta.task_id = t.id
-        WHERE t.department_id = :dept_id 
+        WHERE t.department_id = :dept_id AND t.season_id = :season_id 
         AND ta.status = 'Approved'
         AND ta.completed_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
         GROUP BY YEAR(ta.completed_at), MONTH(ta.completed_at), month
         ORDER BY YEAR(ta.completed_at) ASC, MONTH(ta.completed_at) ASC
     ");
-    $trendStmt->execute(['dept_id' => $deptId]);
+    $trendStmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $completionTrend = $trendStmt->fetchAll();
 
     // 6. Detailed Pending Work List
@@ -112,11 +118,11 @@ try {
         FROM task_assignments ta
         JOIN tasks t ON ta.task_id = t.id
         JOIN users u ON ta.user_id = u.id
-        WHERE t.department_id = :dept_id 
+        WHERE t.department_id = :dept_id AND t.season_id = :season_id 
         AND ta.status IN ('Accepted', 'In Progress', 'Rework Required', 'Submitted')
         ORDER BY t.deadline ASC
     ");
-    $pendingListStmt->execute(['dept_id' => $deptId]);
+    $pendingListStmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $pendingWorkList = $pendingListStmt->fetchAll();
 
     echo json_encode([
