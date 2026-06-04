@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Users, 
   CheckSquare, 
@@ -11,9 +11,11 @@ import {
   ArrowRight,
   Clock,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  ChevronDown,
+  Check
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import { cn, formatDate } from '@/lib/utils';
@@ -34,6 +36,79 @@ interface Activity {
   assigned_to: string | null;
 }
 
+interface CustomSelectProps {
+  value: string | number;
+  onChange: (value: string | number) => void;
+  options: { value: string | number; label: string }[];
+  className?: string;
+}
+
+const CustomSelect: React.FC<CustomSelectProps> = ({ 
+  value, onChange, options, className 
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => opt.value.toString() === value.toString());
+
+  return (
+    <div className={`relative ${className}`} ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`
+          flex items-center justify-between gap-3 px-4 py-2.5 bg-white dark:bg-[#110A24] border rounded-2xl transition-all text-xs font-black text-[#1E1B4B] dark:text-[#A78BFA] cursor-pointer
+          ${isOpen ? 'border-[#7C3AED] dark:border-violet-400 ring-4 ring-[#7C3AED]/5 dark:ring-violet-400/5' : 'border-[#7C3AED]/10 dark:border-violet-500/20 hover:border-[#7C3AED]/30 dark:hover:border-violet-400/40'}
+        `}
+      >
+        <span className="truncate">{selectedOption ? selectedOption.label : 'Select...'}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-[#7C3AED] dark:text-violet-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            className="absolute top-full right-0 w-56 mt-2 bg-white dark:bg-[#110A24] rounded-2xl border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-2xl z-[150] overflow-hidden py-2"
+          >
+            <div className="max-h-60 overflow-y-auto">
+              {options.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`
+                    w-full px-5 py-3 text-left text-xs font-black transition-all flex items-center justify-between cursor-pointer
+                    ${opt.value.toString() === value.toString() ? 'bg-[#7C3AED] dark:bg-violet-600 text-white' : 'text-[#1E1B4B] dark:text-indigo-200 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/40 hover:text-[#7C3AED] dark:hover:text-violet-300'}
+                  `}
+                >
+                  {opt.label}
+                  {opt.value.toString() === value.toString() && <Check className="w-4 h-4 text-white" />}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 const HODDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<HODStats>({
@@ -46,6 +121,40 @@ const HODDashboard: React.FC = () => {
   });
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [seasons, setSeasons] = useState<any[]>([]);
+  const [activeSeasonId, setActiveSeasonId] = useState<number | null>(null);
+
+  const fetchSeasons = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/academic_seasons.php`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setSeasons(data.data);
+        const getCookie = (name: string) => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(';').shift();
+          return null;
+        };
+        const cookieVal = getCookie('active_season_id');
+        if (cookieVal) {
+          setActiveSeasonId(parseInt(cookieVal));
+        } else {
+          const defaultSeason = data.data.find((s: any) => s.is_default === 1);
+          if (defaultSeason) {
+            setActiveSeasonId(defaultSeason.id);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching seasons:', err);
+    }
+  };
+
+  const handleSeasonChange = (id: number) => {
+    document.cookie = `active_season_id=${id}; path=/; max-age=31536000; SameSite=Lax`;
+    window.location.reload();
+  };
 
   const fetchStats = async () => {
     try {
@@ -66,6 +175,7 @@ const HODDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchStats();
+    fetchSeasons();
 
     // Polling for stats every 10 seconds
     const interval = setInterval(() => {
@@ -105,13 +215,29 @@ const HODDashboard: React.FC = () => {
           <h1 className="text-4xl font-black text-[#1E184B] tracking-tight">Strategic Console</h1>
           <p className="text-[#1E184B]/40 font-bold mt-1">Commanding the academic flow of your department.</p>
         </div>
-        <button 
-          onClick={() => navigate('/hod/tasks')}
-          className="flex items-center gap-3 px-6 py-3 bg-[#7C3AED] text-white rounded-2xl font-black text-sm shadow-xl shadow-[#7C3AED]/20 hover:scale-105 transition-all active:scale-95"
-        >
-          <PlusCircle className="w-5 h-5" />
-          Create New Mission
-        </button>
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Season Selector */}
+          {seasons.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-[#7C3AED] dark:text-[#A78BFA] uppercase tracking-widest">Active Season:</span>
+              <CustomSelect
+                value={activeSeasonId || ''}
+                onChange={(val) => handleSeasonChange(parseInt(val.toString()))}
+                options={seasons.map((s: any) => ({
+                  value: s.id,
+                  label: `${s.name}${s.is_locked === 1 ? ' 🔒' : ''}`
+                }))}
+              />
+            </div>
+          )}
+          <button 
+            onClick={() => navigate('/hod/tasks')}
+            className="flex items-center gap-3 px-6 py-3 bg-[#7C3AED] text-white rounded-2xl font-black text-sm shadow-xl shadow-[#7C3AED]/20 hover:scale-105 transition-all active:scale-95 whitespace-nowrap"
+          >
+            <PlusCircle className="w-5 h-5" />
+            Create New Mission
+          </button>
+        </div>
       </div>
 
       {/* Stats Grid */}

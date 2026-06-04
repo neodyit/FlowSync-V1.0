@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import Swal from 'sweetalert2';
 
 interface DateTimePickerProps {
-  value: string; // Expected: "YYYY-MM-DDTHH:mm" format
+  value: string; // Expected: "YYYY-MM-DDTHH:mm" or "YYYY-MM-DD" format
   onChange: (value: string) => void;
   label?: string;
   className?: string;
@@ -14,6 +14,8 @@ interface DateTimePickerProps {
   minDate?: string;
   popoverDirection?: 'up' | 'down';
   onOpenChange?: (open: boolean) => void;
+  dateOnly?: boolean;
+  align?: 'left' | 'right';
 }
 
 const MONTH_NAMES = [
@@ -32,7 +34,9 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   required,
   minDate,
   popoverDirection = 'down',
-  onOpenChange
+  onOpenChange,
+  dateOnly = false,
+  align = 'left'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -90,10 +94,15 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   }, [isOpen, onOpenChange]);
 
   const updateValue = (newYear: number, newMonth: number, newDay: number, newH12: number, newMin: number, newAmPm: 'AM' | 'PM') => {
-    let h24 = newH12;
-    if (newAmPm === 'PM' && newH12 < 12) h24 += 12;
-    if (newAmPm === 'AM' && newH12 === 12) h24 = 0;
-    const formatted = `${newYear}-${pad(newMonth + 1)}-${pad(newDay)}T${pad(h24)}:${pad(newMin)}`;
+    let formatted = "";
+    if (dateOnly) {
+      formatted = `${newYear}-${pad(newMonth + 1)}-${pad(newDay)}`;
+    } else {
+      let h24 = newH12;
+      if (newAmPm === 'PM' && newH12 < 12) h24 += 12;
+      if (newAmPm === 'AM' && newH12 === 12) h24 = 0;
+      formatted = `${newYear}-${pad(newMonth + 1)}-${pad(newDay)}T${pad(h24)}:${pad(newMin)}`;
+    }
     if (minDate) {
       const selectedDateTime = new Date(formatted).getTime();
       const minDateTime = new Date(minDate.replace(' ', 'T')).getTime();
@@ -104,6 +113,9 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
       }
     }
     onChange(formatted);
+    if (dateOnly) {
+      setIsOpen(false);
+    }
   };
 
   const handlePrevMonth = () => {
@@ -114,6 +126,13 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const handleNextMonth = () => {
     if (viewMonth === 11) { setViewMonth(0); setViewYear(p => p + 1); }
     else setViewMonth(p => p + 1);
+  };
+
+  const handleToday = () => {
+    const now = new Date();
+    setViewMonth(now.getMonth());
+    setViewYear(now.getFullYear());
+    updateValue(now.getFullYear(), now.getMonth(), now.getDate(), hour12, minute, ampm);
   };
 
   const firstDayIndex = new Date(viewYear, viewMonth, 1).getDay();
@@ -133,8 +152,11 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   }
 
   const getDisplayValue = () => {
-    if (!value) return "Select Deadline Protocol...";
+    if (!value) return dateOnly ? "Select Date..." : "Select Deadline Protocol...";
     const parsed = parseDateTime(value);
+    if (dateOnly) {
+      return `${pad(parsed.day)}/${pad(parsed.month + 1)}/${parsed.year}`;
+    }
     return `${pad(parsed.day)}/${pad(parsed.month + 1)}/${parsed.year} ${pad(parsed.hour12)}:${pad(parsed.minute)} ${parsed.ampm}`;
   };
 
@@ -165,7 +187,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             <CalendarIcon className={cn("w-4 h-4 shrink-0 transition-colors", isOpen ? "text-[#7C3AED] dark:text-violet-400" : "text-slate-400 dark:text-indigo-400/50")} />
             <span className="truncate">{getDisplayValue()}</span>
           </div>
-          <Clock className={cn("w-4 h-4 transition-colors", isOpen ? "text-[#7C3AED] dark:text-violet-400" : "text-slate-400 dark:text-indigo-400/50")} />
+          {!dateOnly && <Clock className={cn("w-4 h-4 transition-colors", isOpen ? "text-[#7C3AED] dark:text-violet-400" : "text-slate-400 dark:text-indigo-400/50")} />}
         </button>
 
         <AnimatePresence>
@@ -176,7 +198,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
               exit={{ opacity: 0, y: popoverDirection === 'up' ? -10 : 10, scale: 0.96 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
               className={cn(
-                "absolute z-[350] left-0 p-5 rounded-[24px] shadow-2xl w-[340px] max-w-[95vw] overflow-hidden",
+                "absolute z-[350] p-4 sm:p-5 rounded-[24px] shadow-2xl w-[295px] sm:w-[325px] max-w-[95vw] overflow-hidden",
+                align === 'right' ? "right-0" : "left-0",
                 "bg-white dark:bg-[#110A24]",
                 "border border-[#7C3AED]/10 dark:border-violet-500/20",
                 "shadow-[#7C3AED]/10 dark:shadow-violet-900/60",
@@ -192,9 +215,30 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <span className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">
-                  {MONTH_NAMES[viewMonth]} {viewYear}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={viewMonth}
+                    onChange={(e) => setViewMonth(parseInt(e.target.value))}
+                    className="px-2 py-1 bg-slate-50 dark:bg-[#1A0F35] border border-slate-100 dark:border-violet-500/20 rounded-xl text-[10px] font-black text-[#1E184B] dark:text-indigo-100 focus:border-[#7C3AED] dark:focus:border-violet-500 outline-none cursor-pointer transition-colors uppercase tracking-wider"
+                  >
+                    {MONTH_NAMES.map((name, idx) => (
+                      <option key={idx} value={idx} className="bg-white dark:bg-[#110A24] text-[#1E184B] dark:text-indigo-100">
+                        {name.substring(0, 3)}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={viewYear}
+                    onChange={(e) => setViewYear(parseInt(e.target.value))}
+                    className="px-2 py-1 bg-slate-50 dark:bg-[#1A0F35] border border-slate-100 dark:border-violet-500/20 rounded-xl text-[10px] font-black text-[#1E184B] dark:text-indigo-100 focus:border-[#7C3AED] dark:focus:border-violet-500 outline-none cursor-pointer transition-colors tracking-wider"
+                  >
+                    {Array.from({ length: 51 }, (_, i) => today.getFullYear() - 30 + i).map((yr) => (
+                      <option key={yr} value={yr} className="bg-white dark:bg-[#110A24] text-[#1E184B] dark:text-indigo-100">
+                        {yr}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <button
                   type="button"
                   onClick={handleNextMonth}
@@ -214,7 +258,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
               </div>
 
               {/* Days Grid */}
-              <div className="grid grid-cols-7 gap-1 text-center mb-4">
+              <div className="grid grid-cols-7 gap-1 text-center mb-0">
                 {daysGrid.map((cell, idx) => {
                   const isSelected = cell.dayNum === day && cell.month === month && cell.year === year;
                   const cellDate = new Date(cell.year, cell.month, cell.dayNum).setHours(0, 0, 0, 0);
@@ -250,78 +294,100 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                 })}
               </div>
 
-              {/* Time Selection */}
-              <div className="border-t border-slate-100 dark:border-violet-500/15 pt-4 flex flex-col gap-3">
-                <div className="flex items-center gap-1.5 ml-1">
-                  <Clock className="w-3.5 h-3.5 text-[#7C3AED] dark:text-violet-400" />
-                  <span className="text-[9px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">
-                    Set Time Protocol
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-2 px-1">
-                  {/* Hours */}
-                  <div className="flex flex-col items-start gap-1">
-                    <span className="text-[8px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest ml-1">Hour</span>
-                    <select
-                      value={hour12}
-                      onChange={(e) => updateValue(year, month, day, parseInt(e.target.value), minute, ampm)}
-                      className="w-16 px-2 py-2 bg-slate-50 dark:bg-[#1A0F35] border border-slate-100 dark:border-violet-500/20 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-100 focus:border-[#7C3AED] dark:focus:border-violet-500 outline-none cursor-pointer transition-colors"
-                    >
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-                        <option key={h} value={h}>{pad(h)}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <span className="text-slate-400 dark:text-violet-400/50 font-bold self-end mb-2 text-lg">:</span>
-
-                  {/* Minutes */}
-                  <div className="flex flex-col items-start gap-1">
-                    <span className="text-[8px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest ml-1">Minute</span>
-                    <select
-                      value={minute}
-                      onChange={(e) => updateValue(year, month, day, hour12, parseInt(e.target.value), ampm)}
-                      className="w-16 px-2 py-2 bg-slate-50 dark:bg-[#1A0F35] border border-slate-100 dark:border-violet-500/20 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-100 focus:border-[#7C3AED] dark:focus:border-violet-500 outline-none cursor-pointer transition-colors"
-                    >
-                      {Array.from({ length: 60 }, (_, i) => i).map((m) => (
-                        <option key={m} value={m}>{pad(m)}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* AM/PM Toggle */}
-                  <div className="flex flex-col items-start gap-1">
-                    <span className="text-[8px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest ml-1">Period</span>
-                    <div className="flex bg-slate-100 dark:bg-[#1A0F35] p-0.5 rounded-xl border border-slate-200/50 dark:border-violet-500/20">
-                      {(['AM', 'PM'] as const).map((period) => (
-                        <button
-                          key={period}
-                          type="button"
-                          onClick={() => updateValue(year, month, day, hour12, minute, period)}
-                          className={cn(
-                            "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all",
-                            ampm === period
-                              ? "bg-[#7C3AED] dark:bg-violet-600 text-white shadow-md shadow-[#7C3AED]/30 dark:shadow-violet-900/60"
-                              : "text-slate-400 dark:text-violet-400/50 hover:text-slate-600 dark:hover:text-violet-300"
-                          )}
-                        >
-                          {period}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Confirm */}
+              {/* Today and Action Footer */}
+              <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-violet-500/15 pt-3">
+                <button
+                  type="button"
+                  onClick={handleToday}
+                  className="flex-1 py-2 bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/40 dark:hover:bg-violet-900/40 text-[#7C3AED] dark:text-violet-400 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-[#7C3AED]/15 dark:border-violet-500/20"
+                >
+                  Today
+                </button>
+                {dateOnly && (
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="self-end p-2.5 bg-[#7C3AED] dark:bg-violet-600 text-white rounded-xl hover:bg-[#6D28D9] dark:hover:bg-violet-700 shadow-lg shadow-[#7C3AED]/25 dark:shadow-violet-900/50 transition-all flex items-center justify-center shrink-0 active:scale-95"
+                    className="flex-1 py-2 bg-[#7C3AED] dark:bg-violet-600 hover:bg-[#6D28D9] dark:hover:bg-violet-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-[#7C3AED]/20 dark:shadow-violet-900/40"
                   >
-                    <Check className="w-4 h-4" />
+                    Done
                   </button>
-                </div>
+                )}
               </div>
+
+              {/* Time Selection */}
+              {!dateOnly && (
+                <div className="border-t border-slate-100 dark:border-violet-500/15 pt-4 mt-4 flex flex-col gap-3">
+                  <div className="flex items-center gap-1.5 ml-1">
+                    <Clock className="w-3.5 h-3.5 text-[#7C3AED] dark:text-violet-400" />
+                    <span className="text-[9px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">
+                      Set Time Protocol
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 px-1">
+                    {/* Hours */}
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="text-[8px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest ml-1">Hour</span>
+                      <select
+                        value={hour12}
+                        onChange={(e) => updateValue(year, month, day, parseInt(e.target.value), minute, ampm)}
+                        className="w-16 px-2 py-2 bg-slate-50 dark:bg-[#1A0F35] border border-slate-100 dark:border-violet-500/20 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-100 focus:border-[#7C3AED] dark:focus:border-violet-500 outline-none cursor-pointer transition-colors"
+                      >
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                          <option key={h} value={h}>{pad(h)}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <span className="text-slate-400 dark:text-violet-400/50 font-bold self-end mb-2 text-lg">:</span>
+
+                    {/* Minutes */}
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="text-[8px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest ml-1">Minute</span>
+                      <select
+                        value={minute}
+                        onChange={(e) => updateValue(year, month, day, hour12, parseInt(e.target.value), ampm)}
+                        className="w-16 px-2 py-2 bg-slate-50 dark:bg-[#1A0F35] border border-slate-100 dark:border-violet-500/20 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-100 focus:border-[#7C3AED] dark:focus:border-violet-500 outline-none cursor-pointer transition-colors"
+                      >
+                        {Array.from({ length: 60 }, (_, i) => i).map((m) => (
+                          <option key={m} value={m}>{pad(m)}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* AM/PM Toggle */}
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="text-[8px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest ml-1">Period</span>
+                      <div className="flex bg-slate-100 dark:bg-[#1A0F35] p-0.5 rounded-xl border border-slate-200/50 dark:border-violet-500/20">
+                        {(['AM', 'PM'] as const).map((period) => (
+                          <button
+                            key={period}
+                            type="button"
+                            onClick={() => updateValue(year, month, day, hour12, minute, period)}
+                            className={cn(
+                              "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all",
+                              ampm === period
+                                ? "bg-[#7C3AED] dark:bg-violet-600 text-white shadow-md shadow-[#7C3AED]/30 dark:shadow-violet-900/60"
+                                : "text-slate-400 dark:text-violet-400/50 hover:text-slate-600 dark:hover:text-violet-300"
+                            )}
+                          >
+                            {period}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Confirm */}
+                    <button
+                      type="button"
+                      onClick={() => setIsOpen(false)}
+                      className="self-end p-2.5 bg-[#7C3AED] dark:bg-violet-600 text-white rounded-xl hover:bg-[#6D28D9] dark:hover:bg-violet-700 shadow-lg shadow-[#7C3AED]/25 dark:shadow-violet-900/50 transition-all flex items-center justify-center shrink-0 active:scale-95"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

@@ -133,11 +133,16 @@ try {
 
                         // Add points using INSERT ON DUPLICATE KEY UPDATE so it works even if the user has 0 points initially
                         $pointsStmt = $db->prepare("
-                            INSERT INTO leaderboard_points (user_id, total_points, tasks_completed) 
-                            VALUES (:user_id, :points1, 0) 
+                            INSERT INTO leaderboard_points (user_id, season_id, total_points, tasks_completed) 
+                            VALUES (:user_id, :season_id, :points1, 0) 
                             ON DUPLICATE KEY UPDATE total_points = total_points + :points2
                         ");
-                        $pointsStmt->execute(['points1' => $notif['points'], 'points2' => $notif['points'], 'user_id' => $userId]);
+                        $pointsStmt->execute([
+                            'points1' => $notif['points'], 
+                            'points2' => $notif['points'], 
+                            'user_id' => $userId,
+                            'season_id' => $currentSeasonId
+                        ]);
 
                         $db->commit();
                         echo json_encode(['status' => 'success', 'message' => 'Points claimed successfully!', 'points_awarded' => $notif['points']]);

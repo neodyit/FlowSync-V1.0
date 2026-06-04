@@ -46,3 +46,9 @@ $uploadDir = __DIR__ . '/uploads';
 if (!file_exists($uploadDir)) {
     mkdir($uploadDir, 0777, true);
 }
+
+// Global Academic Season Context
+$currentSeasonId = null;
+if ($session) {
+    $currentSeasonId = \FlowSync\Utils\AcademicSeasonManager::getCurrentSeasonId($session['user_id']);
+}

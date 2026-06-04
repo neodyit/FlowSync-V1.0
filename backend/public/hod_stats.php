@@ -58,20 +58,20 @@ try {
     $stmt = $db->prepare("
         SELECT COUNT(*) 
         FROM tasks 
-        WHERE department_id = :dept_id 
+        WHERE department_id = :dept_id AND season_id = :season_id
         AND CAST(status AS CHAR) IN ('Assigned', 'Accepted', 'In Progress', 'Submitted', 'Under Review', 'Rework Required')
     ");
-    $stmt->execute(['dept_id' => $deptId]);
+    $stmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $activeTasks = $stmt->fetchColumn() ?: 0;
 
     // 3. Pending Reviews
     $stmt = $db->prepare("
         SELECT COUNT(*) 
         FROM tasks 
-        WHERE department_id = :dept_id 
+        WHERE department_id = :dept_id AND season_id = :season_id
         AND status = 'Under Review'
     ");
-    $stmt->execute(['dept_id' => $deptId]);
+    $stmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $pendingReviews = $stmt->fetchColumn() ?: 0;
 
     // 4. Department Points (Sum of all faculty points)
@@ -82,29 +82,30 @@ try {
         JOIN faculty_departments fd ON u.id = fd.user_id
         WHERE fd.department_id = :dept_id
         AND u.role_id = 3
+        AND lp.season_id = :season_id
     ");
-    $stmt->execute(['dept_id' => $deptId]);
+    $stmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $deptPoints = $stmt->fetchColumn() ?: 0;
 
     // 5. Institutional Excellence Metrics
     // Task Completion Rate
-    $stmt = $db->prepare("SELECT COUNT(*) FROM tasks WHERE department_id = :dept_id AND status = 'Completed'");
-    $stmt->execute(['dept_id' => $deptId]);
+    $stmt = $db->prepare("SELECT COUNT(*) FROM tasks WHERE department_id = :dept_id AND season_id = :season_id AND status = 'Completed'");
+    $stmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $completedTasksCount = $stmt->fetchColumn();
 
-    $stmt = $db->prepare("SELECT COUNT(*) FROM tasks WHERE department_id = :dept_id AND status != 'Draft'");
-    $stmt->execute(['dept_id' => $deptId]);
+    $stmt = $db->prepare("SELECT COUNT(*) FROM tasks WHERE department_id = :dept_id AND season_id = :season_id AND status != 'Draft'");
+    $stmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $totalTasksCount = $stmt->fetchColumn();
 
     $taskCompletionRate = ($totalTasksCount > 0) ? round(($completedTasksCount / $totalTasksCount) * 100) : 0;
 
     // Research Output (Research tasks completed vs total research tasks)
-    $stmt = $db->prepare("SELECT COUNT(*) FROM tasks WHERE department_id = :dept_id AND task_type = 'Research' AND status = 'Completed'");
-    $stmt->execute(['dept_id' => $deptId]);
+    $stmt = $db->prepare("SELECT COUNT(*) FROM tasks WHERE department_id = :dept_id AND season_id = :season_id AND task_type = 'Research' AND status = 'Completed'");
+    $stmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $completedResearchCount = $stmt->fetchColumn();
 
-    $stmt = $db->prepare("SELECT COUNT(*) FROM tasks WHERE department_id = :dept_id AND task_type = 'Research' AND status != 'Draft'");
-    $stmt->execute(['dept_id' => $deptId]);
+    $stmt = $db->prepare("SELECT COUNT(*) FROM tasks WHERE department_id = :dept_id AND season_id = :season_id AND task_type = 'Research' AND status != 'Draft'");
+    $stmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $totalResearchCount = $stmt->fetchColumn();
 
     $researchOutputRate = ($totalResearchCount > 0) ? round(($completedResearchCount / $totalResearchCount) * 100) : 0;
@@ -114,11 +115,11 @@ try {
         SELECT t.title, t.status, t.updated_at, u.name as assigned_to
         FROM tasks t
         LEFT JOIN users u ON t.assigned_to_id = u.id
-        WHERE t.department_id = :dept_id
+        WHERE t.department_id = :dept_id AND t.season_id = :season_id
         ORDER BY t.updated_at DESC
         LIMIT 5
     ");
-    $stmt->execute(['dept_id' => $deptId]);
+    $stmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
     $recentActivity = $stmt->fetchAll();
 
     echo json_encode([

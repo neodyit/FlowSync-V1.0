@@ -30,10 +30,10 @@ try {
                        (SELECT COALESCE(SUM(bonus_points), 0) FROM task_assignments WHERE task_id = t.id) as aggregated_bonus_points
                 FROM tasks t
                 LEFT JOIN users u ON t.assigned_to_id = u.id
-                WHERE t.department_id = :dept_id
+                WHERE t.department_id = :dept_id AND t.season_id = :season_id
                 ORDER BY t.created_at DESC
             ");
-            $stmt->execute(['dept_id' => $deptId]);
+            $stmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
             $tasks = $stmt->fetchAll();
 
             // Fetch assignments and attachments for each task
@@ -99,6 +99,20 @@ try {
             
             $taskId = $data['id'] ?? null;
             $isDraft = filter_var($data['is_draft'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+            // Season Lock Check
+            if ($taskId) {
+                $stmtCheck = $db->prepare("SELECT season_id FROM tasks WHERE id = :id");
+                $stmtCheck->execute(['id' => $taskId]);
+                $oldTaskSeason = $stmtCheck->fetchColumn();
+                if ($oldTaskSeason && FlowSync\Utils\AcademicSeasonManager::isSeasonLocked($oldTaskSeason)) {
+                    throw new Exception("This task belongs to a locked academic season and cannot be modified.");
+                }
+            } else {
+                if (FlowSync\Utils\AcademicSeasonManager::isSeasonLocked($currentSeasonId)) {
+                    throw new Exception("The current academic season is locked. You cannot create new tasks.");
+                }
+            }
             
             if (!$isDraft && !$taskId && FlowSync\Utils\SystemSettings::get('pause_new_tasks') === 'true') {
                 throw new Exception("New task creation is currently paused by the system administrator.");
@@ -157,15 +171,16 @@ try {
                 $wasDraft = false;
                 $status = $isDraft ? 'Draft' : ($isBroadcast ? 'Broadcasted' : 'Assigned');
                 $stmt = $db->prepare("
-                    INSERT INTO tasks (college_id, department_id, assigned_by_id, assigned_to_id, assignment_mode, title, description, deadline, priority, task_type, category, status, assigned_at, task_link)
-                    VALUES (:college_id, :dept_id, :assigned_by, :assigned_to, :assignment_mode, :title, :description, :deadline, :priority, :task_type, :category, :status, NOW(), :task_link)
+                    INSERT INTO tasks (college_id, department_id, assigned_by_id, assigned_to_id, assignment_mode, title, description, deadline, priority, task_type, category, status, assigned_at, task_link, season_id)
+                    VALUES (:college_id, :dept_id, :assigned_by, :assigned_to, :assignment_mode, :title, :description, :deadline, :priority, :task_type, :category, :status, NOW(), :task_link, :season_id)
                 ");
                 $stmt->execute([
                     'college_id' => $collegeId, 'dept_id' => $deptId, 'assigned_by' => $session['user_id'],
                     'assigned_to' => $assignedToId, 'assignment_mode' => $assignmentMode, 'title' => $data['title'], 'description' => $data['description'] ?? '',
                     'deadline' => $data['deadline'], 'priority' => $data['priority'], 
                     'task_type' => $data['task_type'], 'category' => $data['category'] ?? 'General',
-                    'status' => $status, 'task_link' => $data['task_link'] ?? null
+                    'status' => $status, 'task_link' => $data['task_link'] ?? null,
+                    'season_id' => $currentSeasonId
                 ]);
                 $taskId = $db->lastInsertId();
             }
@@ -236,10 +251,14 @@ try {
             $db->beginTransaction();
 
             // Fetch task to verify ownership
-            $check = $db->prepare("SELECT id, title, assigned_to_id, status FROM tasks WHERE id = :id AND department_id = :dept_id");
+            $check = $db->prepare("SELECT id, title, assigned_to_id, status, season_id FROM tasks WHERE id = :id AND department_id = :dept_id");
             $check->execute(['id' => $taskId, 'dept_id' => $deptId]);
             $task = $check->fetch();
             if (!$task) throw new Exception("Task not found or access denied.");
+
+            if ($task['season_id'] && FlowSync\Utils\AcademicSeasonManager::isSeasonLocked($task['season_id'])) {
+                throw new Exception("This task belongs to a locked academic season and cannot be modified or evaluated.");
+            }
 
             // If reviewing specific assignments
             if (!empty($assignmentUserIds)) {
@@ -306,20 +325,20 @@ try {
 
                     if (!$wasCompleted && $isCompleted) {
                         $stmt = $db->prepare("
-                            INSERT INTO leaderboard_points (user_id, total_points, tasks_completed) 
-                            VALUES (:uid, :pts, 1) 
+                            INSERT INTO leaderboard_points (user_id, season_id, total_points, tasks_completed) 
+                            VALUES (:uid, :season_id, :pts, 1) 
                             ON DUPLICATE KEY UPDATE total_points = total_points + :pts_inc, tasks_completed = tasks_completed + 1
                         ");
-                        $stmt->execute(['uid' => $assignmentUserId, 'pts' => $newTotal, 'pts_inc' => $newTotal]);
+                        $stmt->execute(['uid' => $assignmentUserId, 'season_id' => $task['season_id'], 'pts' => $newTotal, 'pts_inc' => $newTotal]);
                     } else if ($wasCompleted && $isCompleted) {
                         $delta = $newTotal - $oldTotal;
                         if ($delta !== 0) {
-                            $stmt = $db->prepare("UPDATE leaderboard_points SET total_points = total_points + :delta WHERE user_id = :uid");
-                            $stmt->execute(['uid' => $assignmentUserId, 'delta' => $delta]);
+                            $stmt = $db->prepare("UPDATE leaderboard_points SET total_points = total_points + :delta WHERE user_id = :uid AND season_id = :season_id");
+                            $stmt->execute(['uid' => $assignmentUserId, 'delta' => $delta, 'season_id' => $task['season_id']]);
                         }
                     } else if ($wasCompleted && !$isCompleted) {
-                        $stmt = $db->prepare("UPDATE leaderboard_points SET total_points = GREATEST(0, total_points - :pts), tasks_completed = GREATEST(0, tasks_completed - 1) WHERE user_id = :uid");
-                        $stmt->execute(['uid' => $assignmentUserId, 'pts' => $oldTotal]);
+                        $stmt = $db->prepare("UPDATE leaderboard_points SET total_points = GREATEST(0, total_points - :pts), tasks_completed = GREATEST(0, tasks_completed - 1) WHERE user_id = :uid AND season_id = :season_id");
+                        $stmt->execute(['uid' => $assignmentUserId, 'pts' => $oldTotal, 'season_id' => $task['season_id']]);
                     }
 
                     // Log history

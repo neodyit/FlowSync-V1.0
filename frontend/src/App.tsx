@@ -23,6 +23,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import ControlsPage from './pages/admin/ControlsPage';
 import Feedbacks from './pages/admin/Feedbacks';
 import EngagementTracker from './pages/admin/EngagementTracker';
+import AcademicSeasons from './pages/admin/AcademicSeasons';
 
 // HOD Pages
 import HODLayout from './layouts/HODLayout';
@@ -121,6 +122,7 @@ function App() {
                 <Route path="controls" element={<ControlsPage />} />
                 <Route path="feedbacks" element={<Feedbacks />} />
                 <Route path="engagement" element={<EngagementTracker />} />
+                <Route path="seasons" element={<AcademicSeasons />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="profile/:id" element={<PublicProfile />} />
               </Route>
