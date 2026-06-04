@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
-  Users, 
   CheckCircle2, 
-  Clock, 
   AlertTriangle,
   Download,
   Filter,
@@ -16,10 +14,8 @@ import {
   Calendar,
   Layers,
   Tag,
-  Search,
   Activity,
-  History,
-  AlertCircle
+  History
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
@@ -51,16 +47,190 @@ interface Distribution {
   value: number;
 }
 
-interface PendingWork {
-  faculty_name: string;
-  profile_pic: string | null;
-  task_title: string;
-  category: string;
-  priority: string;
-  deadline: string;
-  assignment_status: string;
-  progress: number;
+interface TrendChartProps {
+  trend: { month: string; count: number }[];
 }
+
+const TrendChart: React.FC<TrendChartProps> = ({ trend }) => {
+  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+
+  if (!trend || trend.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-48 bg-[#1A1235]/40 rounded-3xl border border-[#7C3AED]/10">
+        <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">No productivity trend data available</p>
+      </div>
+    );
+  }
+
+  // If there's only one data point, duplicate it to draw a line
+  const chartData = trend.length === 1 
+    ? [trend[0], { ...trend[0], month: 'Next' }] 
+    : trend;
+
+  const width = 600;
+  const height = 200;
+  const paddingLeft = 40;
+  const paddingRight = 20;
+  const paddingTop = 20;
+  const paddingBottom = 30;
+
+  const chartWidth = width - paddingLeft - paddingRight;
+  const chartHeight = height - paddingTop - paddingBottom;
+
+  const maxVal = Math.max(...chartData.map(x => Number(x.count) || 0), 1);
+  
+  // Calculate points
+  const points = chartData.map((d, i) => {
+    const countVal = Number(d.count) || 0;
+    const x = (i / (chartData.length - 1)) * chartWidth + paddingLeft;
+    const y = chartHeight - (countVal / maxVal) * chartHeight + paddingTop;
+    return { x, y, label: d.month, value: countVal };
+  });
+
+  // Construct path strings
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const areaPath = `${linePath} L ${points[points.length - 1].x} ${chartHeight + paddingTop} L ${points[0].x} ${chartHeight + paddingTop} Z`;
+
+  // Grid values
+  const gridLines = [0, 0.5, 1];
+
+  return (
+    <div className="relative w-full">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible select-none">
+        <defs>
+          {/* Fill Gradient */}
+          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#7C3AED" stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+
+        {/* Grid Lines */}
+        {gridLines.map((ratio, idx) => {
+          const y = chartHeight - ratio * chartHeight + paddingTop;
+          const gridVal = Math.round(ratio * maxVal);
+          return (
+            <g key={idx}>
+              <line 
+                x1={paddingLeft} 
+                y1={y} 
+                x2={width - paddingRight} 
+                y2={y} 
+                stroke="currentColor" 
+                strokeWidth={1} 
+                strokeDasharray="4 4" 
+                className="stroke-slate-200 dark:stroke-slate-700/50"
+              />
+              <text 
+                x={paddingLeft - 10} 
+                y={y + 4} 
+                fontSize="9" 
+                fontWeight="bold"
+                className="text-right fill-slate-400 dark:fill-white/30 font-mono"
+                textAnchor="end"
+              >
+                {gridVal}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Area below the line */}
+        <motion.path 
+          d={areaPath}
+          fill="url(#chartGradient)"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+        />
+
+        {/* Main Line */}
+        <motion.path 
+          d={linePath}
+          fill="none"
+          stroke="#9F67FF"
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1.0, ease: "easeInOut" }}
+        />
+
+        {/* Dots and interactive zones */}
+        {points.map((p, idx) => (
+          <g 
+            key={idx} 
+            className="cursor-pointer"
+            onMouseEnter={() => setHoveredIndex(idx)}
+            onMouseLeave={() => setHoveredIndex(null)}
+          >
+            {/* Hover Indicator Vertical Line */}
+            {hoveredIndex === idx && (
+              <line 
+                x1={p.x} 
+                y1={paddingTop} 
+                x2={p.x} 
+                y2={chartHeight + paddingTop} 
+                stroke="#7C3AED" 
+                strokeWidth={1.5} 
+                strokeDasharray="2 2"
+                className="opacity-40"
+              />
+            )}
+
+            {/* Glowing background for dot */}
+            <circle 
+              cx={p.x} 
+              cy={p.y} 
+              r={hoveredIndex === idx ? 8 : 0} 
+              fill="#7C3AED" 
+              className="opacity-30 transition-all duration-200" 
+            />
+
+            {/* Outer Circle */}
+            <circle 
+              cx={p.x} 
+              cy={p.y} 
+              r={hoveredIndex === idx ? 6 : 4} 
+              fill="#9F67FF" 
+              stroke="currentColor"
+              strokeWidth={2}
+              className="stroke-white dark:stroke-[#1E184B] transition-all duration-200"
+            />
+
+            {/* X Axis Label */}
+            <text 
+              x={p.x} 
+              y={height - 5} 
+              fontSize="9" 
+              fontWeight="bold"
+              className="fill-slate-400 dark:fill-white/30 uppercase tracking-widest text-center"
+              textAnchor="middle"
+            >
+              {p.label}
+            </text>
+          </g>
+        ))}
+      </svg>
+
+      {/* Tooltip Overlay */}
+      {hoveredIndex !== null && points[hoveredIndex] && (
+        <div 
+          className="absolute z-30 bg-white dark:bg-[#1A1235] text-[#1E184B] dark:text-white px-3 py-2 rounded-xl border border-slate-100 dark:border-slate-800 shadow-xl pointer-events-none transition-all duration-150"
+          style={{
+            left: `${(points[hoveredIndex].x / width) * 100}%`,
+            top: `${(points[hoveredIndex].y / height) * 100 - 15}%`,
+            transform: 'translate(-50%, -100%)'
+          }}
+        >
+          <p className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-0.5">{points[hoveredIndex].label}</p>
+          <p className="text-xs font-black text-[#7C3AED]">{points[hoveredIndex].value} Missions Completed</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Reports: React.FC = () => {
   const [data, setData] = useState<{
@@ -69,17 +239,10 @@ const Reports: React.FC = () => {
     category_distribution: Distribution[];
     rework_stats: { total_reviews: number; rework_count: number };
     trend: { month: string; count: number }[];
-    pending_list: PendingWork[];
   } | null>(null);
   
   const [isLoading, setIsLoading] = useState(true);
-  const [activeReportTab, setActiveReportTab] = useState<'overview' | 'pending' | 'workload' | 'categories' | 'advanced_tracking'>('overview');
-  
-  // Filters
-  const [categoryFilter, setCategoryFilter] = useState('All');
-  const [facultyFilter, setFacultyFilter] = useState('All');
-  const [priorityFilter, setPriorityFilter] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeReportTab, setActiveReportTab] = useState<'overview' | 'categories' | 'advanced_tracking'>('overview');
 
   useEffect(() => {
     fetchReports();
@@ -112,17 +275,7 @@ const Reports: React.FC = () => {
     return Math.round((data.rework_stats.rework_count / data.rework_stats.total_reviews) * 100);
   };
 
-  const getFilteredPending = () => {
-    if (!data) return [];
-    return data.pending_list.filter(p => {
-      const matchesCategory = categoryFilter === 'All' || p.category === categoryFilter;
-      const matchesFaculty = facultyFilter === 'All' || p.faculty_name === facultyFilter;
-      const matchesPriority = priorityFilter === 'All' || p.priority === priorityFilter;
-      const matchesSearch = p.task_title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            p.faculty_name.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesFaculty && matchesPriority && matchesSearch;
-    });
-  };
+
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -156,8 +309,6 @@ const Reports: React.FC = () => {
         <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-slate-100 shadow-sm overflow-x-auto scrollbar-hide shrink-0">
           {[
             { id: 'overview', label: 'Overview', icon: Target },
-            { id: 'pending', label: 'Pending Intel', icon: AlertCircle },
-            { id: 'workload', label: 'Workload', icon: Users },
             { id: 'categories', label: 'Categories', icon: Tag },
             { id: 'advanced_tracking', label: 'Advanced Tracking', icon: Activity },
           ].map((tab) => (
@@ -307,31 +458,14 @@ const Reports: React.FC = () => {
                 </div>
 
                 {/* Completion Trend */}
-                <div className="bg-[#1E184B] p-10 rounded-[3rem] shadow-2xl relative overflow-hidden group">
-                  <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#7C3AED]/10 rounded-full blur-[100px] group-hover:scale-125 transition-all duration-1000" />
-                  <h3 className="text-xl font-black text-white mb-10 flex items-center gap-3 relative z-10">
+                <div className="bg-white dark:bg-[#1E184B] p-10 rounded-[3rem] border border-slate-100 dark:border-transparent shadow-sm dark:shadow-2xl relative overflow-hidden group">
+                  <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#7C3AED]/5 dark:bg-[#7C3AED]/10 rounded-full blur-[100px] group-hover:scale-125 transition-all duration-1000" />
+                  <h3 className="text-xl font-black text-[#1E184B] dark:text-white mb-10 flex items-center gap-3 relative z-10">
                     <TrendingUp className="w-6 h-6 text-[#7C3AED]" />
                     Productivity Timeline
                   </h3>
-                  <div className="flex items-end justify-between h-48 gap-4 relative z-10">
-                    {data.trend.map((t, i) => {
-                      const maxVal = Math.max(...data.trend.map(x => x.count), 1);
-                      const height = (t.count / maxVal) * 100;
-                      return (
-                        <div key={i} className="flex-1 flex flex-col items-center gap-4 group/bar">
-                          <div className="relative w-full h-full flex items-end">
-                            <motion.div 
-                              initial={{ height: 0 }} animate={{ height: `${height}%` }}
-                              className="w-full bg-[#7C3AED]/40 rounded-t-xl group-hover/bar:bg-[#7C3AED] transition-all relative"
-                            >
-                              <div className="absolute inset-x-0 top-0 h-1.5 bg-[#7C3AED] brightness-125 rounded-t-xl" />
-                            </motion.div>
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-[9px] font-black text-white opacity-0 group-hover/bar:opacity-100 transition-all">{t.count} Missions</div>
-                          </div>
-                          <span className="text-[9px] font-black text-white/40 uppercase tracking-widest rotate-45 lg:rotate-0">{t.month}</span>
-                        </div>
-                      );
-                    })}
+                  <div className="relative z-10 pt-4">
+                    <TrendChart trend={data.trend} />
                   </div>
                 </div>
               </div>
@@ -366,173 +500,15 @@ const Reports: React.FC = () => {
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-200 mb-2">Efficiency Rating</h4>
                   <p className="text-3xl font-black mb-4">Strategic</p>
                   <p className="text-[11px] font-medium text-indigo-100 leading-relaxed">The department is currently maintaining a "Strategic" efficiency level with a {calculateCompletionRate()}% success rate.</p>
-                  <button onClick={() => setActiveReportTab('pending')} className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest bg-white/10 hover:bg-white/20 py-3 px-6 rounded-xl transition-all">
-                    Resolve Blockers <ChevronRight className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
             </div>
           </motion.div>
         )}
 
-        {activeReportTab === 'pending' && (
-          <motion.div
-            key="pending"
-            initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
-            className="space-y-10"
-          >
-            {/* Multi-Filters */}
-            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row gap-6 items-center">
-              <div className="relative flex-1 w-full">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input 
-                  type="text" 
-                  placeholder="Search faculty or mission name..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-6 py-4 bg-slate-50 border-none rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 transition-all outline-none"
-                />
-              </div>
-              <div className="flex items-center gap-4 w-full md:w-auto">
-                <select 
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="px-6 py-4 bg-slate-50 border-none rounded-2xl text-[10px] font-black uppercase tracking-widest text-[#1E184B] outline-none cursor-pointer"
-                >
-                  <option value="All">All Categories</option>
-                  {data.category_distribution.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-                </select>
-                <select 
-                  value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
-                  className="px-6 py-4 bg-slate-50 border-none rounded-2xl text-[10px] font-black uppercase tracking-widest text-[#1E184B] outline-none cursor-pointer"
-                >
-                  <option value="All">All Priority</option>
-                  <option value="Critical">Critical</option>
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </select>
-              </div>
-            </div>
 
-            {/* Pending List Intelligence */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {getFilteredPending().length > 0 ? (
-                getFilteredPending().map((pending, i) => (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                    key={i} 
-                    className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden"
-                  >
-                    <div className={cn(
-                      "absolute top-0 right-0 px-4 py-1.5 rounded-bl-2xl text-[8px] font-black uppercase tracking-widest",
-                      pending.priority === 'Critical' ? 'bg-rose-500 text-white' : 
-                      pending.priority === 'High' ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-500'
-                    )}>
-                      {pending.priority}
-                    </div>
-                    
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="w-12 h-12 rounded-2xl overflow-hidden bg-slate-100 border border-slate-100 shadow-inner">
-                        {pending.profile_pic ? (
-                          <img src={`${import.meta.env.VITE_API_URL}/${pending.profile_pic}`} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center font-black text-slate-300">{pending.faculty_name.charAt(0)}</div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-[#1E184B]">{pending.faculty_name}</p>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{pending.category}</p>
-                      </div>
-                    </div>
 
-                    <h4 className="text-sm font-black text-[#1E184B] mb-4 group-hover:text-[#7C3AED] transition-colors">{pending.task_title}</h4>
-                    
-                    <div className="space-y-4 pt-6 border-t border-slate-50">
-                      <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                        <span className="text-slate-400">Progress</span>
-                        <span className="text-indigo-600">{pending.progress}%</span>
-                      </div>
-                      <div className="h-2 bg-slate-50 rounded-full overflow-hidden">
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${pending.progress}%` }} className="h-full bg-[#7C3AED] rounded-full" />
-                      </div>
-                      <div className="flex justify-between items-center text-[9px] font-bold text-slate-400">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3 h-3" />
-                          Due {formatDate(pending.deadline)}
-                        </div>
-                        <div className="flex items-center gap-1.5 italic">
-                          {pending.assignment_status}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="col-span-full py-20 bg-white rounded-[3rem] border border-dashed border-slate-200 text-center">
-                  <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
-                    <Search className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-xl font-black text-[#1E184B]/30 uppercase tracking-widest">No matching pending missions</h3>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
 
-        {activeReportTab === 'workload' && (
-          <motion.div
-            key="workload"
-            initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          >
-            {data.faculty_performance.map((faculty, i) => (
-              <div key={faculty.id} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm relative group overflow-hidden">
-                <div className="flex items-center gap-5 mb-8">
-                  <div className="w-14 h-14 rounded-[1.2rem] overflow-hidden bg-slate-50 border border-slate-100">
-                    {faculty.profile_pic ? (
-                      <img src={`${import.meta.env.VITE_API_URL}/${faculty.profile_pic}`} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center font-black text-slate-300 text-lg">{faculty.name.charAt(0)}</div>
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="text-base font-black text-[#1E184B]">{faculty.name}</h4>
-                    <p className="text-[9px] font-black text-[#7C3AED] uppercase tracking-widest">{faculty.active_load} Active Missions</p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-slate-50 rounded-2xl text-center">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">On-Time</p>
-                    <p className="text-xl font-black text-emerald-500">{faculty.on_time_count}</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-2xl text-center">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Delayed</p>
-                    <p className="text-xl font-black text-rose-500">{faculty.late_count}</p>
-                  </div>
-                </div>
-
-                <div className="mt-8 space-y-4">
-                   <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-slate-400">
-                     <span>Capacity Usage</span>
-                     <span>{Math.min(100, faculty.active_load * 20)}%</span>
-                   </div>
-                   <div className="h-2 bg-slate-50 rounded-full overflow-hidden">
-                     <div 
-                      className={cn(
-                        "h-full rounded-full transition-all duration-500",
-                        faculty.active_load >= 5 ? "bg-rose-500" : faculty.active_load >= 3 ? "bg-amber-500" : "bg-[#7C3AED]"
-                      )} 
-                      style={{width: `${Math.min(100, faculty.active_load * 20)}%`}} 
-                    />
-                   </div>
-                </div>
-              </div>
-            ))}
-          </motion.div>
-        )}
 
         {activeReportTab === 'categories' && (
           <motion.div
