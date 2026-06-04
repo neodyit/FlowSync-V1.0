@@ -42,13 +42,15 @@ try {
                     COALESCE(ta.status, t.status) as status, 
                     t.priority, 
                     t.deadline, 
+                    t.category,
                     COALESCE(ta.accepted_at, t.accepted_at) as accepted_at, 
                     COALESCE(ta.submitted_at, t.submitted_at) as submitted_at, 
                     COALESCE(ta.completed_at, t.completed_at) as completed_at,
                     t.declined_at, 
                     t.created_at,
                     COALESCE(ta.points, 0) as points,
-                    COALESCE(ta.bonus_points, 0) as bonus_points
+                    COALESCE(ta.bonus_points, 0) as bonus_points,
+                    (SELECT COUNT(*) FROM task_reminders WHERE task_id = t.id AND user_id = :uid4) as reminder_count
                 FROM tasks t
                 LEFT JOIN task_assignments ta ON t.id = ta.task_id AND ta.user_id = :uid1
                 WHERE t.assigned_to_id = :uid2 
@@ -60,6 +62,7 @@ try {
                 'uid1' => $member['id'],
                 'uid2' => $member['id'],
                 'uid3' => $member['id'],
+                'uid4' => $member['id'],
                 'dept_id' => $deptId
             ]);
             $member['tasks'] = $taskStmt->fetchAll();

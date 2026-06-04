@@ -15,12 +15,17 @@ import {
   Layers,
   Tag,
   Activity,
-  History
+  History,
+  ArrowLeft,
+  Search,
+  AlertCircle,
+  Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
 import { cn } from '@/lib/utils';
 import { AdvancedTracking } from './AdvancedTracking';
+import { useSearchParams } from 'react-router-dom';
 
 interface Stats {
   total_tasks: number;
@@ -233,6 +238,8 @@ const TrendChart: React.FC<TrendChartProps> = ({ trend }) => {
 };
 
 const Reports: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [data, setData] = useState<{
     stats: Stats;
     faculty_performance: FacultyPerf[];
@@ -242,11 +249,67 @@ const Reports: React.FC = () => {
   } | null>(null);
   
   const [isLoading, setIsLoading] = useState(true);
-  const [activeReportTab, setActiveReportTab] = useState<'overview' | 'categories' | 'advanced_tracking'>('overview');
+  const [activeReportTab, setActiveReportTab] = useState<'overview' | 'categories' | 'advanced_tracking' | 'personalized'>('overview');
+
+  const [facultyData, setFacultyData] = useState<any[] | null>(null);
+  const [isFacultyLoading, setIsFacultyLoading] = useState(false);
+  const [selectedFacultyId, setSelectedFacultyId] = useState<number | null>(null);
+  const [facultySearchQuery, setFacultySearchQuery] = useState('');
+  const [personalizedSubTab, setPersonalizedSubTab] = useState<'tasks' | 'deadlines' | 'rewards'>('tasks');
 
   useEffect(() => {
     fetchReports();
   }, []);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    const facultyIdParam = searchParams.get('facultyId');
+    
+    if (tabParam && ['overview', 'categories', 'advanced_tracking', 'personalized'].includes(tabParam)) {
+      setActiveReportTab(tabParam as any);
+    }
+    if (facultyIdParam) {
+      setSelectedFacultyId(parseInt(facultyIdParam, 10));
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (activeReportTab === 'personalized' && !facultyData) {
+      fetchFacultyData();
+    }
+  }, [activeReportTab, facultyData]);
+
+  const fetchFacultyData = async () => {
+    setIsFacultyLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/hod/faculty.php`, {
+        credentials: 'include'
+      });
+      const json = await response.json();
+      if (json.status === 'success') {
+        setFacultyData(json.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch faculty performance details:", error);
+    } finally {
+      setIsFacultyLoading(false);
+    }
+  };
+
+  const handleTabChange = (tabId: any) => {
+    setActiveReportTab(tabId);
+    setSearchParams(tabId === 'personalized' && selectedFacultyId ? { tab: tabId, facultyId: selectedFacultyId.toString() } : { tab: tabId });
+  };
+
+  const handleSelectFaculty = (id: number) => {
+    setSelectedFacultyId(id);
+    setSearchParams({ tab: 'personalized', facultyId: id.toString() });
+  };
+
+  const handleBackToFacultyList = () => {
+    setSelectedFacultyId(null);
+    setSearchParams({ tab: 'personalized' });
+  };
 
   const fetchReports = async () => {
     setIsLoading(true);
@@ -311,10 +374,11 @@ const Reports: React.FC = () => {
             { id: 'overview', label: 'Overview', icon: Target },
             { id: 'categories', label: 'Categories', icon: Tag },
             { id: 'advanced_tracking', label: 'Advanced Tracking', icon: Activity },
+            { id: 'personalized', label: 'Personalized', icon: Award },
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveReportTab(tab.id as any)}
+              onClick={() => handleTabChange(tab.id as any)}
               className={cn(
                 "flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap",
                 activeReportTab === tab.id ? "bg-[#7C3AED] text-white shadow-lg shadow-[#7C3AED]/20" : "text-slate-400 hover:bg-slate-50 hover:text-[#1E184B]"
@@ -535,6 +599,413 @@ const Reports: React.FC = () => {
             initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
           >
             <AdvancedTracking />
+          </motion.div>
+        )}
+
+        {activeReportTab === 'personalized' && (
+          <motion.div
+            key="personalized"
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="space-y-10"
+          >
+            {isFacultyLoading ? (
+              <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+                <div className="w-12 h-12 border-4 border-[#7C3AED]/20 border-t-[#7C3AED] rounded-full animate-spin" />
+                <p className="text-xs font-black text-[#1E184B] dark:text-white uppercase tracking-[0.2em] animate-pulse">Analyzing Faculty Performance Data...</p>
+              </div>
+            ) : selectedFacultyId === null ? (
+              <div className="space-y-10">
+                {/* Search Bar */}
+                <div className="bg-white dark:bg-[#1E184B] p-6 rounded-[2.5rem] border border-slate-100 dark:border-transparent shadow-sm dark:shadow-2xl flex items-center gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input 
+                      type="text" 
+                      placeholder="Search faculty name or email..."
+                      value={facultySearchQuery}
+                      onChange={(e) => setFacultySearchQuery(e.target.value)}
+                      className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-[#1A1235]/40 border-none rounded-2xl text-xs font-bold text-[#1E184B] dark:text-white focus:ring-4 focus:ring-[#7C3AED]/5 transition-all outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Faculty Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {((facultyData || []).filter(f => 
+                    f.name.toLowerCase().includes(facultySearchQuery.toLowerCase()) ||
+                    f.email.toLowerCase().includes(facultySearchQuery.toLowerCase())
+                  )).map(f => (
+                    <div key={f.id} className="bg-white dark:bg-[#1E184B] p-8 rounded-[3rem] border border-slate-100 dark:border-transparent shadow-sm dark:shadow-2xl flex flex-col items-center text-center group hover:border-[#7C3AED]/20 transition-all relative overflow-hidden">
+                      <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-50 dark:bg-[#1A1235] border border-slate-200 dark:border-slate-800/80 mb-6 group-hover:scale-105 transition-transform duration-300">
+                        {f.profile_pic ? (
+                          <img src={`${import.meta.env.VITE_API_URL}/${f.profile_pic}`} alt={f.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center font-black text-slate-400 text-xl">{f.name.charAt(0)}</div>
+                        )}
+                      </div>
+                      <h4 className="text-base font-black text-[#1E184B] dark:text-white mb-1">{f.name}</h4>
+                      <p className="text-[10px] font-bold text-slate-400 italic mb-6">{f.email}</p>
+                      
+                      <div className="grid grid-cols-2 gap-4 w-full border-t border-slate-50 dark:border-slate-800/40 pt-6 mb-6">
+                        <div>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Points</p>
+                          <p className="text-xl font-black text-[#7C3AED] dark:text-[#A78BFA]">{f.total_points || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Completed</p>
+                          <p className="text-xl font-black text-[#1E184B] dark:text-white">{f.completed_count || 0}</p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleSelectFaculty(f.id)}
+                        className="w-full bg-[#7C3AED] text-white py-3 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-md shadow-[#7C3AED]/10 cursor-pointer"
+                      >
+                        View Report
+                      </button>
+                    </div>
+                  ))}
+                  {((facultyData || []).filter(f => 
+                    f.name.toLowerCase().includes(facultySearchQuery.toLowerCase()) ||
+                    f.email.toLowerCase().includes(facultySearchQuery.toLowerCase())
+                  )).length === 0 && (
+                    <div className="col-span-full py-20 bg-white dark:bg-[#1E184B] rounded-[3rem] border border-dashed border-slate-200 dark:border-slate-800 text-center">
+                      <div className="w-16 h-16 bg-slate-50 dark:bg-[#1A1235] rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+                        <Search className="w-8 h-8" />
+                      </div>
+                      <h3 className="text-xl font-black text-[#1E184B]/30 dark:text-white/20 uppercase tracking-widest">No matching faculty members</h3>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (() => {
+              const faculty = (facultyData || []).find(f => f.id === selectedFacultyId);
+              if (!faculty) return null;
+
+              const tasks = faculty.tasks || [];
+              const totalAssigned = tasks.length;
+              
+              // Acceptance
+              const acceptedTasks = tasks.filter(t => t.accepted_at !== null || ['Accepted', 'In Progress', 'Submitted', 'Under Review', 'Approved', 'Completed', 'Rework Required'].includes(t.status));
+              const totalAccepted = acceptedTasks.length;
+              const unacceptedTasks = tasks.filter(t => t.accepted_at === null && t.status === 'Assigned');
+              const totalUnaccepted = unacceptedTasks.length;
+
+              // Completion
+              const completedTasks = tasks.filter(t => t.status === 'Completed' || t.status === 'Approved');
+              const totalCompleted = completedTasks.length;
+              const incompleteTasks = tasks.filter(t => t.status !== 'Completed' && t.status !== 'Approved');
+              const totalIncomplete = incompleteTasks.length;
+
+              // Review Status
+              const awaitingReviewTasks = tasks.filter(t => t.status === 'Submitted' || t.status === 'Under Review');
+              const totalAwaitingReview = awaitingReviewTasks.length;
+
+              // Deadlines
+              const completedOnTime = completedTasks.filter(t => t.completed_at && new Date(t.completed_at) <= new Date(t.deadline));
+              const totalOnTime = completedOnTime.length;
+              
+              const completedLate = completedTasks.filter(t => t.completed_at && new Date(t.completed_at) > new Date(t.deadline));
+              const totalLate = completedLate.length;
+              
+              const overdueIncomplete = incompleteTasks.filter(t => new Date() > new Date(t.deadline));
+              const totalOverdueIncomplete = overdueIncomplete.length;
+              
+              const totalDeadlineViolations = totalLate + totalOverdueIncomplete;
+
+              // Reminders
+              const totalReminders = tasks.reduce((sum, t) => sum + (Number(t.reminder_count) || 0), 0);
+              const multipleRemindersTasks = tasks.filter(t => (Number(t.reminder_count) || 0) > 1);
+
+              // Points
+              const totalPointsEarned = tasks.reduce((sum, t) => sum + (Number(t.points) || 0), 0);
+              const totalBonusPointsEarned = tasks.reduce((sum, t) => sum + (Number(t.bonus_points) || 0), 0);
+
+              const completionRate = totalAssigned > 0 ? Math.round((totalCompleted / totalAssigned) * 100) : 0;
+              const acceptanceRate = totalAssigned > 0 ? Math.round((totalAccepted / totalAssigned) * 100) : 0;
+
+              return (
+                <div className="space-y-10">
+                  {/* Dashboard Header */}
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800/40">
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => handleBackToFacultyList()}
+                        className="p-3 bg-white dark:bg-[#1E184B] border border-slate-100 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850 transition-all text-[#1E184B] dark:text-white cursor-pointer"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                      </button>
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#1A1235]">
+                          {faculty.profile_pic ? (
+                            <img src={`${import.meta.env.VITE_API_URL}/${faculty.profile_pic}`} alt={faculty.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center font-black text-slate-400">{faculty.name.charAt(0)}</div>
+                          )}
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-black text-[#1E184B] dark:text-white">{faculty.name}</h2>
+                          <p className="text-xs font-bold text-slate-400">{faculty.email} • Faculty Reports Dashboard</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Overall Performance Metrics Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[
+                      { label: 'Total Assigned', value: totalAssigned, sub: 'Missions issued', icon: Target, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
+                      { label: 'Total Accepted', value: totalAccepted, sub: `${totalUnaccepted} pending acceptance`, icon: CheckCircle2, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-500/10' },
+                      { label: 'Total Completed', value: totalCompleted, sub: `${completionRate}% completion rate`, icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
+                      { label: 'Active Incomplete', value: totalIncomplete, sub: `${totalAwaitingReview} under review`, icon: Activity, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-500/10' },
+                      { label: 'Awaiting HOD Review', value: totalAwaitingReview, sub: 'Reviews pending', icon: AlertCircle, color: 'text-sky-500', bg: 'bg-sky-50 dark:bg-sky-500/10' },
+                      { label: 'Reminders Received', value: totalReminders, sub: 'Across all missions', icon: Clock, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-500/10' },
+                      { label: 'Deadlines Missed', value: totalLate, sub: `${totalDeadlineViolations} total violations`, icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-500/10' },
+                      { label: 'Points Accumulation', value: totalPointsEarned + totalBonusPointsEarned, sub: `${totalBonusPointsEarned} bonus points`, icon: Award, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-500/10' }
+                    ].map((kpi, idx) => (
+                      <div key={idx} className="bg-white dark:bg-[#1E184B] p-8 rounded-[2.5rem] border border-slate-100 dark:border-transparent shadow-sm relative overflow-hidden group">
+                        <div className={cn("absolute top-0 right-0 w-24 h-24 rounded-bl-[4rem] transition-all group-hover:scale-110", kpi.bg)} />
+                        <kpi.icon className={cn("w-6 h-6 mb-6 relative z-10", kpi.color)} />
+                        <div className="relative z-10">
+                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{kpi.label}</h4>
+                          <p className="text-3xl font-black text-[#1E184B] dark:text-white">{kpi.value}</p>
+                          <p className="text-[9px] font-bold text-slate-400 mt-2">{kpi.sub}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Sub Tabs Selection */}
+                  <div className="flex items-center gap-2 bg-white dark:bg-[#1E184B] p-1.5 rounded-2xl border border-slate-100 dark:border-transparent shadow-sm overflow-x-auto scrollbar-hide shrink-0 w-full md:w-max">
+                    {[
+                      { id: 'tasks', label: 'Tasks & Progress', icon: Target },
+                      { id: 'deadlines', label: 'Deadlines & Reminders', icon: Clock },
+                      { id: 'rewards', label: 'Points & Rewards', icon: Award }
+                    ].map((sub) => (
+                      <button
+                        key={sub.id}
+                        onClick={() => setPersonalizedSubTab(sub.id as any)}
+                        className={cn(
+                          "flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap cursor-pointer",
+                          personalizedSubTab === sub.id ? "bg-[#7C3AED] text-white shadow-lg shadow-[#7C3AED]/20" : "text-slate-400 dark:text-slate-500 hover:bg-slate-5 dark:hover:bg-slate-800 hover:text-[#1E184B] dark:hover:text-white"
+                        )}
+                      >
+                        <sub.icon className="w-3.5 h-3.5" />
+                        {sub.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Sub Tab Contents */}
+                  <div className="space-y-6">
+                    {/* Sub Tab: Tasks & Progress */}
+                    {personalizedSubTab === 'tasks' && (
+                      <div className="bg-white dark:bg-[#1E184B] rounded-[3rem] border border-slate-100 dark:border-transparent shadow-sm overflow-hidden p-8 space-y-8">
+                        <div>
+                          <h3 className="text-lg font-black text-[#1E184B] dark:text-white flex items-center gap-3">
+                            <Target className="w-5 h-5 text-indigo-500" />
+                            Mission Assignment Ledger
+                          </h3>
+                          <p className="text-xs font-bold text-slate-450 mt-1">Detailed list of all assigned tasks and current statuses.</p>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left">
+                            <thead>
+                              <tr className="bg-slate-50/50 dark:bg-[#1A1235]/40">
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Mission Title</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Category</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Priority</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Acceptance</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/40">
+                              {tasks.map((t: any) => (
+                                <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-[#1A1235]/20 transition-all">
+                                  <td className="px-6 py-4 text-sm font-black text-[#1E184B] dark:text-white">{t.title}</td>
+                                  <td className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400">{t.category || 'General'}</td>
+                                  <td className="px-6 py-4 text-center">
+                                    <span className={cn(
+                                      "px-2.5 py-1 rounded-md text-[8px] font-black uppercase tracking-wider",
+                                      t.priority === 'Critical' ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' :
+                                      t.priority === 'High' ? 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' :
+                                      t.priority === 'Medium' ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' :
+                                      'bg-slate-50 text-slate-650 dark:bg-slate-500/10 dark:text-slate-400'
+                                    )}>
+                                      {t.priority}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 text-center">
+                                    {t.accepted_at ? (
+                                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-wider">Accepted</span>
+                                    ) : (
+                                      <span className="text-[10px] font-black text-rose-500 uppercase tracking-wider">Pending</span>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 text-right">
+                                    <span className={cn(
+                                      "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest",
+                                      ['Completed', 'Approved'].includes(t.status) ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
+                                      ['Submitted', 'Under Review'].includes(t.status) ? 'bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400' :
+                                      t.status === 'Rework Required' ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' :
+                                      'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                                    )}>
+                                      {t.status}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                              {tasks.length === 0 && (
+                                <tr>
+                                  <td colSpan={5} className="py-12 text-center text-slate-400 dark:text-slate-600 text-xs font-bold uppercase tracking-widest">No tasks assigned to this faculty member.</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sub Tab: Deadlines & Reminders */}
+                    {personalizedSubTab === 'deadlines' && (
+                      <div className="bg-white dark:bg-[#1E184B] rounded-[3rem] border border-slate-100 dark:border-transparent shadow-sm overflow-hidden p-8 space-y-8">
+                        <div>
+                          <h3 className="text-lg font-black text-[#1E184B] dark:text-white flex items-center gap-3">
+                            <Clock className="w-5 h-5 text-rose-500" />
+                            Deadline & Reminder Compliance Ledger
+                          </h3>
+                          <p className="text-xs font-bold text-slate-450 mt-1">Audit trail of deadline violations and administrator reminders sent.</p>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left">
+                            <thead>
+                              <tr className="bg-slate-50/50 dark:bg-[#1A1235]/40">
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Mission Title</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Deadline</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Completed At</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Reminders</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">Adherence</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/40">
+                              {tasks.map((t: any) => {
+                                const isCompleted = ['Completed', 'Approved'].includes(t.status);
+                                const isLate = isCompleted && t.completed_at && new Date(t.completed_at) > new Date(t.deadline);
+                                const isOverdue = !isCompleted && new Date() > new Date(t.deadline);
+                                const reminderCount = Number(t.reminder_count) || 0;
+
+                                return (
+                                  <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-[#1A1235]/20 transition-all">
+                                    <td className="px-6 py-4 text-sm font-black text-[#1E184B] dark:text-white">{t.title}</td>
+                                    <td className="px-6 py-4 text-center text-xs font-bold text-slate-500 dark:text-slate-400">{formatDate(t.deadline)}</td>
+                                    <td className="px-6 py-4 text-center text-xs font-bold text-slate-550 dark:text-slate-400">
+                                      {t.completed_at ? formatDate(t.completed_at) : '—'}
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                      {reminderCount > 0 ? (
+                                        <span className={cn(
+                                          "px-2.5 py-1 rounded-md text-[8px] font-black uppercase tracking-wider",
+                                          reminderCount > 1 ? "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400" : "bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400"
+                                        )}>
+                                          {reminderCount} {reminderCount === 1 ? 'Reminder' : 'Reminders'}
+                                        </span>
+                                      ) : (
+                                        <span className="text-[10px] font-bold text-slate-350 dark:text-slate-655">None</span>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                      {isCompleted ? (
+                                        isLate ? (
+                                          <span className="text-[10px] font-black text-rose-500 uppercase tracking-wider">Delayed Submission</span>
+                                        ) : (
+                                          <span className="text-[10px] font-black text-emerald-500 uppercase tracking-wider">On-Time</span>
+                                        )
+                                      ) : isOverdue ? (
+                                        <span className="text-[10px] font-black text-red-500 uppercase tracking-wider animate-pulse">Critical Overdue</span>
+                                      ) : (
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Pending</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                              {tasks.length === 0 && (
+                                <tr>
+                                  <td colSpan={5} className="py-12 text-center text-slate-400 dark:text-slate-600 text-xs font-bold uppercase tracking-widest">No audit data available.</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sub Tab: Points & Rewards */}
+                    {personalizedSubTab === 'rewards' && (
+                      <div className="bg-white dark:bg-[#1E184B] rounded-[3rem] border border-slate-100 dark:border-transparent shadow-sm overflow-hidden p-8 space-y-8">
+                        <div>
+                          <h3 className="text-lg font-black text-[#1E184B] dark:text-white flex items-center gap-3">
+                            <Award className="w-5 h-5 text-amber-500" />
+                            Leaderboard Points & Reward Ledger
+                          </h3>
+                          <p className="text-xs font-bold text-slate-455 mt-1">Detailed history of base rewards and bonuses earned from assignments.</p>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left">
+                            <thead>
+                              <tr className="bg-slate-50/50 dark:bg-[#1A1235]/40">
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Mission Title</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Completed Date</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Base Points</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Bonus Points</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">Net Points</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/40">
+                              {tasks.map((t: any) => {
+                                const basePoints = Number(t.points) || 0;
+                                const bonusPoints = Number(t.bonus_points) || 0;
+                                const netPoints = basePoints + bonusPoints;
+
+                                return (
+                                  <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-[#1A1235]/20 transition-all">
+                                    <td className="px-6 py-4 text-sm font-black text-[#1E184B] dark:text-white">{t.title}</td>
+                                    <td className="px-6 py-4 text-center text-xs font-bold text-slate-550 dark:text-slate-400">
+                                      {t.completed_at ? formatDate(t.completed_at) : '—'}
+                                    </td>
+                                    <td className="px-6 py-4 text-center text-sm font-black text-slate-700 dark:text-slate-300">
+                                      {basePoints > 0 ? `+${basePoints}` : '0'}
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                      {bonusPoints > 0 ? (
+                                        <span className="text-sm font-black text-emerald-500">+{bonusPoints} Bonus</span>
+                                      ) : (
+                                        <span className="text-xs font-bold text-slate-350 dark:text-slate-655">0</span>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 text-right text-sm font-black text-[#7C3AED] dark:text-[#A78BFA]">
+                                      {netPoints > 0 ? `+${netPoints} pts` : '—'}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                              {tasks.length === 0 && (
+                                <tr>
+                                  <td colSpan={5} className="py-12 text-center text-slate-400 dark:text-slate-600 text-xs font-bold uppercase tracking-widest">No points ledger records found.</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </motion.div>
         )}
       </AnimatePresence>

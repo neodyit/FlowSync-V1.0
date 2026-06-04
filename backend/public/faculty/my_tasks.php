@@ -70,6 +70,19 @@ try {
                 $teamStmt->execute(['task_id' => $task['id'], 'user_id' => $session['user_id']]);
                 $task['teammate_remarks'] = $teamStmt->fetchAll();
 
+                // Fetch all team members assigned to this task
+                $teamMembersStmt = $db->prepare("
+                    SELECT ta.user_id, ta.status, ta.progress,
+                           u.name as faculty_name, u.profile_pic as faculty_pic, u.email as faculty_email, u.designation, u.is_public,
+                           d.name as department_name
+                    FROM task_assignments ta
+                    JOIN users u ON ta.user_id = u.id
+                    LEFT JOIN departments d ON EXISTS(SELECT 1 FROM faculty_departments fd WHERE fd.user_id = u.id AND fd.department_id = d.id)
+                    WHERE ta.task_id = :task_id
+                ");
+                $teamMembersStmt->execute(['task_id' => $task['id']]);
+                $task['team_members'] = $teamMembersStmt->fetchAll();
+
                 // Fetch comments chain
                 $commentStmt = $db->prepare("
                     SELECT tc.*, u.name as user_name, u.profile_pic as user_pic
@@ -177,8 +190,8 @@ try {
             $updateFields = ["status = :status"];
             $params = ['status' => $newStatus, 'tid' => $taskId, 'uid' => $session['user_id']];
 
-            if ($newStatus === 'Accepted') {
-                $updateFields[] = "accepted_at = NOW()";
+            if ($newStatus === 'Accepted' || $newStatus === 'In Progress') {
+                $updateFields[] = "accepted_at = COALESCE(accepted_at, NOW())";
             }
             
             // Add progress and remarks update if provided

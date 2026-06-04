@@ -40,13 +40,15 @@ try {
             foreach ($tasks as &$task) {
                 // Fetch all assignments for this task
                 $assignStmt = $db->prepare("
-                    SELECT ta.*, u.name as faculty_name, u.email as faculty_email, u.profile_pic as faculty_pic,
+                    SELECT ta.*, u.name as faculty_name, u.email as faculty_email, u.profile_pic as faculty_pic, u.designation, u.is_public, u.phone, u.bio,
+                           d.name as department_name,
                            CASE WHEN ta.submitted_at IS NOT NULL AND DATE(ta.submitted_at) > t.deadline THEN 1 ELSE 0 END as is_delayed,
                            (SELECT COUNT(*) FROM task_reminders WHERE task_id = ta.task_id AND user_id = ta.user_id) as reminder_count,
                            (SELECT COUNT(*) FROM task_reminders WHERE task_id = ta.task_id AND user_id = ta.user_id AND type = 'Warning') as warning_count
                     FROM task_assignments ta
                     JOIN users u ON ta.user_id = u.id
                     JOIN tasks t ON ta.task_id = t.id
+                    LEFT JOIN departments d ON EXISTS(SELECT 1 FROM faculty_departments fd WHERE fd.user_id = u.id AND fd.department_id = d.id)
                     WHERE ta.task_id = :task_id
                 ");
                 $assignStmt->execute(['task_id' => $task['id']]);
