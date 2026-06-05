@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Settings, 
   Shield, 
@@ -35,7 +36,9 @@ interface Session {
 }
 
 const FacultySettings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'Security' | 'Notifications' | 'Profile'>('Profile');
+  const [searchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as 'Security' | 'Notifications' | 'Profile') || 'Profile';
+  const [activeTab, setActiveTab] = useState<'Security' | 'Notifications' | 'Profile'>(initialTab);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   

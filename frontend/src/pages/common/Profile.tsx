@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   User, 
   Mail, 
@@ -49,6 +49,7 @@ interface UserProfile {
 
 const Profile = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const targetId = searchParams.get('id');
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -415,6 +416,25 @@ const Profile = () => {
               </p>
             </div>
           )}
+
+          {isOwnProfile && (
+            <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Lock className="w-4 h-4 text-slate-400" /> Security Credentials
+              </h3>
+              <p className="text-slate-400 text-xs font-bold leading-relaxed mb-6">
+                Protect your institutional account by keeping your passcodes updated periodically.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate(currentUser.role_id === 2 ? '/hod/settings?tab=Security' : '/faculty/settings?tab=Security')}
+                className="w-full py-4 bg-slate-50 hover:bg-slate-100 border border-slate-100 text-[#1E184B] rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-sm"
+              >
+                <Lock className="w-4 h-4 text-[#7C3AED]" />
+                Change Password
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Bio & Achievements */}
@@ -422,17 +442,54 @@ const Profile = () => {
           <form onSubmit={handleUpdate} className="space-y-8">
             <div className="bg-white rounded-[3rem] border border-slate-100 p-8 md:p-10 shadow-sm">
               <div className="space-y-8">
+                {/* Edit Form Fields */}
+                {isEditing && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Full Name</label>
+                      <input 
+                        value={profile.name}
+                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Designation</label>
+                      <input 
+                        value={profile.designation || ''}
+                        onChange={(e) => setProfile({ ...profile, designation: e.target.value })}
+                        placeholder="e.g. Associate Professor"
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Phone Line</label>
+                      <input 
+                        type="tel"
+                        value={profile.phone || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const sanitized = val.replace(/[^0-9+\s-]/g, '').replace(/(?!^)\+/g, '');
+                          setProfile({ ...profile, phone: sanitized });
+                        }}
+                        placeholder="+91 XXXXX XXXXX"
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* Bio Section */}
-                <div className="space-y-4">
+                <div className="space-y-1">
                   <h3 className="text-xs font-black text-[#1E184B] uppercase tracking-widest flex items-center gap-2">
                     <User className="w-4 h-4 text-[#7C3AED]" />
-                    Professional Mission Bio
+                    Professional Bio
                   </h3>
                   {isEditing ? (
                     <textarea 
                       value={profile.bio}
                       onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                      className="w-full p-6 bg-slate-50 border border-slate-100 rounded-[2rem] text-sm font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all min-h-[200px] resize-none"
+                      className="w-full p-6 bg-slate-50 border border-slate-100 rounded-[2rem] text-sm font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all min-h-[100px] resize-none"
                       placeholder="Define your academic vision and professional focus..."
                     />
                   ) : (
@@ -524,38 +581,6 @@ const Profile = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Edit Form Fields */}
-                {isEditing && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8 border-t border-slate-100">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Full Name</label>
-                      <input 
-                        value={profile.name}
-                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Designation</label>
-                      <input 
-                        value={profile.designation || ''}
-                        onChange={(e) => setProfile({ ...profile, designation: e.target.value })}
-                        placeholder="e.g. Associate Professor"
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Phone Line</label>
-                      <input 
-                        value={profile.phone || ''}
-                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                        placeholder="+91 XXXXX XXXXX"
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
 
               {isEditing && (

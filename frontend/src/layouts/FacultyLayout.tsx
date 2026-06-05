@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  LayoutGrid, 
-  Building2, 
-  CheckSquare, 
-  ListTodo, 
-  Bell, 
-  Trophy, 
+import {
+  LayoutGrid,
+  Building2,
+  CheckSquare,
+  ListTodo,
+  Bell,
+  Trophy,
   Settings,
   LogOut,
   Menu,
@@ -23,6 +23,7 @@ import { checkSession } from '../utils/auth';
 import { cn, formatDate } from "@/lib/utils";
 import Swal from 'sweetalert2';
 import { useTheme } from '../components/ThemeProvider';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function FacultyLayout() {
   const { theme, toggleTheme } = useTheme();
@@ -44,7 +45,7 @@ export default function FacultyLayout() {
         const data = await res.json();
         if (data.status === 'success') {
           setSeasons(data.data);
-          
+
           // Read cookie
           const getCookie = (name: string) => {
             const value = `; ${document.cookie}`;
@@ -79,12 +80,13 @@ export default function FacultyLayout() {
       mainContentRef.current.scrollTo(0, 0);
     }
   }, [location.pathname]);
-  
+
   // Get user from localStorage
   const [user, setUser] = useState(() => {
     const raw = localStorage.getItem('user');
     return raw ? JSON.parse(raw) : { name: 'Faculty Member', role: 'Faculty', role_id: 3, features: {} };
   });
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const fetchUserData = async () => {
     try {
@@ -100,6 +102,20 @@ export default function FacultyLayout() {
         };
         setUser(updatedUser);
         localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        // Check completeness: name, designation, phone, profile_pic
+        const p = result.data;
+        const isIncomplete = !p.name || p.name.trim() === '' ||
+          p.name.trim() === 'Faculty Member' || p.name.trim() === 'Faculty User' ||
+          !p.designation || p.designation.trim() === '' ||
+          !p.phone || p.phone.trim() === '' ||
+          !p.profile_pic;
+
+        if (isIncomplete && !location.pathname.includes('/profile')) {
+          setShowOnboarding(true);
+        } else {
+          setShowOnboarding(false);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch user data:', error);
@@ -112,8 +128,8 @@ export default function FacultyLayout() {
     const handleUpdate = () => fetchUserData();
     window.addEventListener('profile-updated', handleUpdate);
     return () => window.removeEventListener('profile-updated', handleUpdate);
-  }, []);
-  
+  }, [location.pathname]);
+
   const navigation = [
     { name: 'Dashboard', icon: LayoutGrid, path: '/faculty/dashboard' },
     { name: 'My Department', icon: Building2, path: '/faculty/department' },
@@ -211,7 +227,7 @@ export default function FacultyLayout() {
           if (typeof notifSettings === 'string') {
             try {
               notifSettings = JSON.parse(notifSettings);
-            } catch (e) {}
+            } catch (e) { }
           }
 
           if (notifSettings) {
@@ -375,7 +391,7 @@ export default function FacultyLayout() {
     if (latest && !latest.is_read && latest.id !== lastPopupId) {
       if (latest.type === 'HOD_PUSH' && !latest.is_actioned) {
         setLastPopupId(latest.id);
-        
+
         Swal.fire({
           title: latest.title || 'HOD NOTIFICATION',
           html: `
@@ -398,14 +414,14 @@ export default function FacultyLayout() {
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                     Attached File Preview
                   </p>
-                  ${latest.attachment_url.match(/\.(jpeg|jpg|gif|png)$/i) 
-                    ? `<img src="${import.meta.env.VITE_API_URL}${latest.attachment_url}" class="max-w-full max-h-[30vh] object-contain rounded-xl shadow-sm border border-slate-200 mx-auto" />` 
-                    : latest.attachment_url.match(/\.pdf$/i)
-                      ? `<iframe src="${import.meta.env.VITE_API_URL}${latest.attachment_url}" class="w-full h-[30vh] rounded-xl border border-slate-200"></iframe>`
-                      : `<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl w-full text-center">
+                  ${latest.attachment_url.match(/\.(jpeg|jpg|gif|png)$/i)
+                ? `<img src="${import.meta.env.VITE_API_URL}${latest.attachment_url}" class="max-w-full max-h-[30vh] object-contain rounded-xl shadow-sm border border-slate-200 mx-auto" />`
+                : latest.attachment_url.match(/\.pdf$/i)
+                  ? `<iframe src="${import.meta.env.VITE_API_URL}${latest.attachment_url}" class="w-full h-[30vh] rounded-xl border border-slate-200"></iframe>`
+                  : `<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl w-full text-center">
                            <p class="text-xs font-bold text-slate-500">Preview not available.</p>
                          </div>`
-                  }
+              }
                   <div class="text-center mt-4">
                     <a href="${import.meta.env.VITE_API_URL}/download.php?file=${encodeURIComponent(latest.attachment_url.replace(/^\//, ''))}" class="inline-flex items-center gap-2 text-[10px] font-black text-[#1E184B] uppercase tracking-widest hover:underline bg-slate-50 px-4 py-2 rounded-xl border border-slate-200 hover:border-slate-300 transition-all shadow-sm">
                       <svg class="w-3.5 h-3.5 text-[#7C3AED]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -453,13 +469,13 @@ export default function FacultyLayout() {
                 });
                 fetchNotifications();
               }
-            } catch (err) {}
+            } catch (err) { }
           }
         });
       } else if (latest.message.includes('[Reminder]') || latest.message.includes('[Warning]')) {
         setLastPopupId(latest.id);
         const isWarning = latest.message.includes('[Warning]');
-        
+
         Swal.fire({
           title: isWarning ? 'MISSION WARNING' : 'MISSION REMINDER',
           text: latest.message.replace(/\[.*?\]\s*/, ''),
@@ -513,7 +529,7 @@ export default function FacultyLayout() {
 
           const deadlineDate = new Date(task.deadline);
           const timeDiff = deadlineDate.getTime() - now.getTime();
-          
+
           if (timeDiff < 0) {
             const storageKey = `deadline_missed_${task.id}`;
             if (!localStorage.getItem(storageKey)) {
@@ -541,7 +557,7 @@ export default function FacultyLayout() {
             let title = '';
             let text = '';
             let confirmButtonColor = '';
-            
+
             if (type === 'missed') {
               title = 'DEADLINE MISSED';
               text = `You have missed the deadline for mission: <strong>${task.title}</strong>.<br/><br/>Original Deadline: ${formatDate(task.deadline)}`;
@@ -619,7 +635,7 @@ export default function FacultyLayout() {
     <div className="flex h-screen bg-[#F8FAFC] dark:bg-[#0E0820] overflow-hidden font-sans">
       {/* Sidebar Backdrop */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[150] lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -698,7 +714,7 @@ export default function FacultyLayout() {
         {/* Header */}
         <header className="h-20 bg-white/80 dark:bg-[#0E0820]/80 backdrop-blur-md border-b border-[#7C3AED]/10 dark:border-violet-500/10 sticky top-0 z-[100] px-6 md:px-10 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <button 
+            <button
               className="lg:hidden p-2.5 rounded-xl bg-white dark:bg-[#110A24] text-[#1E184B] dark:text-indigo-100 shadow-sm border border-[#7C3AED]/10 dark:border-violet-500/10"
               onClick={() => setIsSidebarOpen(true)}
             >
@@ -706,9 +722,9 @@ export default function FacultyLayout() {
             </button>
             <div className="hidden md:flex relative group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#1E184B]/30 dark:text-violet-400/30" />
-              <input 
-                type="text" 
-                placeholder="Search resources..." 
+              <input
+                type="text"
+                placeholder="Search resources..."
                 className="pl-12 pr-6 py-2.5 bg-[#7C3AED]/5 dark:bg-violet-950/30 border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-xl text-sm font-medium focus:bg-white dark:focus:bg-[#150D2E] focus:border-[#7C3AED] dark:focus:border-violet-500 focus:ring-4 focus:ring-[#7C3AED]/5 dark:focus:ring-violet-500/5 transition-all w-80 text-[#1E184B] dark:text-indigo-100 outline-none"
               />
             </div>
@@ -729,7 +745,7 @@ export default function FacultyLayout() {
             </button>
 
             <div className="relative">
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsNotificationsOpen(!isNotificationsOpen);
@@ -770,13 +786,13 @@ export default function FacultyLayout() {
                       </div>
                     ) : (
                       notifications.map((notif) => (
-                        <div 
-                           key={notif.id} 
-                           onClick={(e) => { e.stopPropagation(); toggleReadStatus(notif.id, notif.is_read == 1); }}
-                           className={cn(
-                             "p-4 border-b border-[#7C3AED]/5 dark:border-violet-500/5 flex gap-3 hover:bg-slate-50 dark:hover:bg-violet-950/30 transition-colors cursor-pointer relative group",
-                             notif.is_read != 1 && "bg-[#7C3AED]/[0.02] dark:bg-violet-950/10"
-                           )}
+                        <div
+                          key={notif.id}
+                          onClick={(e) => { e.stopPropagation(); toggleReadStatus(notif.id, notif.is_read == 1); }}
+                          className={cn(
+                            "p-4 border-b border-[#7C3AED]/5 dark:border-violet-500/5 flex gap-3 hover:bg-slate-50 dark:hover:bg-violet-950/30 transition-colors cursor-pointer relative group",
+                            notif.is_read != 1 && "bg-[#7C3AED]/[0.02] dark:bg-violet-950/10"
+                          )}
                         >
                           <div className={cn(
                             "w-8 h-8 rounded-full shrink-0 flex items-center justify-center",
@@ -794,7 +810,7 @@ export default function FacultyLayout() {
                           </div>
                           <div className="flex flex-col items-center gap-2">
                             {notif.is_read != 1 && <div className="w-2 h-2 rounded-full bg-[#7C3AED] dark:bg-violet-500 shadow-sm shadow-[#7C3AED]/40" />}
-                            <button 
+                            <button
                               onClick={(e) => deleteNotification(e, notif.id)}
                               className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg transition-all"
                             >
@@ -805,7 +821,7 @@ export default function FacultyLayout() {
                       ))
                     )}
                   </div>
-                  <button 
+                  <button
                     onClick={() => navigate('/faculty/notifications')}
                     className="w-full py-3 bg-[#7C3AED] dark:bg-violet-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#6D28D9] dark:hover:bg-violet-700 transition-all"
                   >
@@ -818,7 +834,7 @@ export default function FacultyLayout() {
             <div className="h-8 w-px bg-[#7C3AED]/10 dark:bg-violet-500/10 mx-1" />
 
             <div className="relative">
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsProfileOpen(!isProfileOpen);
@@ -845,7 +861,7 @@ export default function FacultyLayout() {
                     <p className="text-[10px] text-[#7C3AED] dark:text-violet-400 mt-1 font-bold">Academic Member</p>
                   </div>
                   <div className="p-2">
-                    <button 
+                    <button
                       onClick={() => navigate('/faculty/profile')}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-100 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/30 transition-all"
                     >
@@ -857,7 +873,7 @@ export default function FacultyLayout() {
                       Activity Log
                     </button>
                     <div className="h-px bg-[#7C3AED]/5 dark:bg-violet-500/10 my-2" />
-                    <button 
+                    <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all"
                     >
@@ -876,7 +892,7 @@ export default function FacultyLayout() {
             <div className="flex-1">
               <Outlet />
             </div>
-            
+
             <footer className="mt-20 pt-12 pb-12 border-t border-[#7C3AED]/10 text-center">
               <div className="flex flex-col items-center gap-6">
                 {/* Branding Mark */}
@@ -884,17 +900,17 @@ export default function FacultyLayout() {
                   <LayoutGrid className="w-5 h-5" />
                   <span className="text-sm font-black tracking-[0.3em] uppercase">FlowSync</span>
                 </div>
-                
+
                 {/* Credits Section */}
                 <div className="space-y-3">
                   <p className="text-[11px] font-black text-[#1E184B]/60 dark:text-indigo-200/60 uppercase tracking-[0.15em]">
-                    Made with <span className="text-rose-500 animate-pulse mx-1">❤️</span> by 
+                    Made with <span className="text-rose-500 animate-pulse mx-1">❤️</span> by
                     <span className="ml-1.5 space-x-1">
                       <a href="https://mayank.neodyit.in/" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Mayank Tiwari</a>,
                       <a href="" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Saurabh Upadhyay</a>
                     </span>
                   </p>
-                  
+
                   {/* <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mt-1 text-[10px] font-bold text-slate-400">
                     <p className="tracking-wide">
                       Created and Managed by <a href="https://neodyit.in" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] hover:text-[#6D28D9] transition-colors font-black">Neody IT</a>
@@ -929,6 +945,50 @@ export default function FacultyLayout() {
           </div>
         </div>
       </div>
+
+      {/* Onboarding Full-Screen Modal */}
+      <AnimatePresence>
+        {showOnboarding && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-[#0B061A]/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className="relative bg-white dark:bg-[#110A24] w-full max-w-lg rounded-[3rem] p-8 md:p-10 shadow-2xl border border-[#7C3AED]/15 dark:border-violet-500/20 text-center overflow-hidden flex flex-col items-center gap-6"
+            >
+              <div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600" />
+
+              {/* Premium Icon Badge */}
+              <div className="w-20 h-20 bg-[#7C3AED]/10 dark:bg-violet-950/40 rounded-[2rem] flex items-center justify-center text-[#7C3AED] dark:text-violet-400 border border-[#7C3AED]/20 animate-bounce">
+                <User className="w-10 h-10" />
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight">
+                  Authenticity & Professionalization
+                </h2>
+                <p className="text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest text-[9px] font-black leading-none">
+                  Institutional Profile Protocol
+                </p>
+              </div>
+
+              <p className="text-slate-500 dark:text-indigo-200/70 text-sm font-semibold leading-relaxed">
+                To maintain transparency, security, and the highest standards of professional collaboration on FlowSync, you are required to complete your onboarding protocol. Please update your profile picture, designation, and contact phone line. Also pdate your password from  <b> flowsync </b> to something more secure to prevent unauthorized access to your account
+              </p>
+
+              <button
+                onClick={() => {
+                  setShowOnboarding(false);
+                  navigate('/faculty/profile');
+                }}
+                className="w-full py-4.5 bg-gradient-to-r from-[#7C3AED] to-purple-600 hover:from-purple-600 hover:to-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-purple-500/20 active:scale-95 cursor-pointer mt-4"
+              >
+                Complete Profile Setup
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
