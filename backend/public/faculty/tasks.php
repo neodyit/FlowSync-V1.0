@@ -49,7 +49,7 @@ try {
 
             // Fetch attachments for broadcasted tasks
             foreach ($tasks as &$task) {
-                $attStmt = $db->prepare("SELECT id, file_name, file_path FROM attachments WHERE entity_type = 'Task' AND entity_id = :task_id");
+                $attStmt = $db->prepare("SELECT a.id, a.original_name AS file_name, CONCAT('tasks_data/', c.short_name, '/task_', a.task_id, '/', a.stored_name) AS file_path FROM attachments a JOIN colleges c ON a.institution_id = c.id WHERE a.entity_type = 'Task' AND a.task_id = :task_id");
                 $attStmt->execute(['task_id' => $task['id']]);
                 $task['attachments'] = $attStmt->fetchAll();
                 $task['attachment_count'] = count($task['attachments']);
@@ -74,7 +74,7 @@ try {
 
             // Fetch attachments for pending tasks
             foreach ($pending as &$task) {
-                $attStmt = $db->prepare("SELECT id, file_name, file_path FROM attachments WHERE entity_type = 'Task' AND entity_id = :task_id");
+                $attStmt = $db->prepare("SELECT a.id, a.original_name AS file_name, CONCAT('tasks_data/', c.short_name, '/task_', a.task_id, '/', a.stored_name) AS file_path FROM attachments a JOIN colleges c ON a.institution_id = c.id WHERE a.entity_type = 'Task' AND a.task_id = :task_id");
                 $attStmt->execute(['task_id' => $task['id']]);
                 $task['attachments'] = $attStmt->fetchAll();
                 $task['attachment_count'] = count($task['attachments']);

@@ -49,10 +49,13 @@ try {
                 $task['bonus_points'] = $task['my_bonus'];
                 $task['remarks'] = $task['my_remarks'];
                 $attStmt = $db->prepare("
-                    SELECT id, file_name, file_path, entity_type, created_at, uploader_id
-                    FROM attachments 
-                    WHERE (entity_type = 'Task' OR entity_type = 'Task_Submission') 
-                    AND entity_id = :task_id
+                    SELECT a.id, a.original_name AS file_name, 
+                           CONCAT('tasks_data/', c.short_name, '/task_', a.task_id, '/', a.stored_name) AS file_path, 
+                           a.entity_type, a.created_at, a.uploader_id
+                    FROM attachments a
+                    JOIN colleges c ON a.institution_id = c.id
+                    WHERE (a.entity_type = 'Task' OR a.entity_type = 'Task_Submission') 
+                    AND a.task_id = :task_id
                 ");
                 $attStmt->execute(['task_id' => $task['id']]);
                 $task['attachments'] = $attStmt->fetchAll();
@@ -144,24 +147,40 @@ try {
 
             // Handle uploads
             if (!empty($_FILES['attachments'])) {
+                $collegeStmt = $db->prepare("
+                    SELECT c.id, c.short_name 
+                    FROM colleges c
+                    JOIN users u ON u.college_id = c.id
+                    WHERE u.id = :uid
+                    LIMIT 1
+                ");
+                $collegeStmt->execute(['uid' => $session['user_id']]);
+                $college = $collegeStmt->fetch(PDO::FETCH_ASSOC);
+                $institutionId = $college['id'];
+                $shortName = trim($college['short_name']);
+
+                $taskDir = __DIR__ . '/../../storage/tasks_data/' . $shortName . '/task_' . $taskId . '/';
+                if (!is_dir($taskDir)) {
+                    mkdir($taskDir, 0777, true);
+                }
+
                 $files = $_FILES['attachments'];
-                $uploadDir = __DIR__ . '/../uploads/';
                 foreach ($files['name'] as $key => $name) {
                     if ($files['error'][$key] === UPLOAD_ERR_OK) {
                         $tmpName = $files['tmp_name'][$key];
                         $ext = pathinfo($name, PATHINFO_EXTENSION);
-                        $newName = 'faculty_task_' . $taskId . '_' . uniqid() . '.' . $ext;
-                        $path = 'uploads/' . $newName;
-                        if (move_uploaded_file($tmpName, $uploadDir . $newName)) {
+                        $storedName = 'faculty_task_' . $taskId . '_' . uniqid() . '.' . $ext;
+                        if (move_uploaded_file($tmpName, $taskDir . $storedName)) {
                             $attStmt = $db->prepare("
-                                INSERT INTO attachments (entity_type, entity_id, uploader_id, file_name, file_path, file_size, mime_type)
-                                VALUES ('Task_Submission', :task_id, :uploader_id, :name, :path, :size, :mime)
+                                INSERT INTO attachments (entity_type, task_id, institution_id, uploader_id, original_name, stored_name, file_size, file_type)
+                                VALUES ('Task_Submission', :task_id, :inst_id, :uploader_id, :name, :stored_name, :size, :mime)
                             ");
                             $attStmt->execute([
                                 'task_id' => $taskId,
+                                'inst_id' => $institutionId,
                                 'uploader_id' => $session['user_id'],
                                 'name' => $name,
-                                'path' => $path,
+                                'stored_name' => $storedName,
                                 'size' => $files['size'][$key],
                                 'mime' => $files['type'][$key]
                             ]);

@@ -15,7 +15,8 @@ import {
   Award,
   Users,
   ArrowRight,
-  Send
+  Send,
+  Paperclip
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
@@ -915,8 +916,16 @@ const HODTasks: React.FC = () => {
                   )}
 
                   <div className="flex items-start justify-between mb-5">
-                    <div className={cn("px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border", config.bg.replace('bg-', 'text-'), config.bg.replace('bg-', 'bg-').replace('500', '50'))}>
-                      {displayStatus}
+                    <div className="flex items-center gap-2">
+                      <div className={cn("px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border", config.bg.replace('bg-', 'text-'), config.bg.replace('bg-', 'bg-').replace('500', '50'))}>
+                        {displayStatus}
+                      </div>
+                      {task.attachments && task.attachments.length > 0 && (
+                        <div className="flex items-center gap-1 px-2.5 py-1 bg-violet-50 dark:bg-violet-950/20 text-[#7C3AED] dark:text-violet-400 rounded-full text-[9px] font-black border border-violet-100 dark:border-violet-900/50" title="Task contains attachments">
+                          <Paperclip className="w-2.5 h-2.5" />
+                          <span>{task.attachments.length}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
                       <button 

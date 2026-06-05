@@ -239,14 +239,14 @@ if ($method === 'GET') {
         $file = $_FILES['profile_pic'];
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
         $fileName = 'profile_' . $userId . '_' . time() . '.' . $ext;
-        $uploadDir = __DIR__ . '/uploads/profiles/';
+        $uploadDir = __DIR__ . '/../storage/profiles/';
         
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
         
         if (move_uploaded_file($file['tmp_name'], $uploadDir . $fileName)) {
-            $profilePicUrl = 'uploads/profiles/' . $fileName;
+            $profilePicUrl = 'download.php?file=profiles/' . $fileName;
             $stmt = $db->prepare("UPDATE users SET profile_pic = :pic WHERE id = :id");
             $stmt->execute(['pic' => $profilePicUrl, 'id' => $userId]);
             echo json_encode(['status' => 'success', 'message' => 'Profile picture updated.', 'url' => $profilePicUrl]);

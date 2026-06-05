@@ -58,9 +58,12 @@ try {
             foreach ($tasks as &$task) {
                 // Fetch attachments
                 $attStmt = $db->prepare("
-                    SELECT id, file_name, file_path, entity_type, created_at 
-                    FROM attachments 
-                    WHERE entity_id = :task_id AND (entity_type = 'Task' OR entity_type = 'Task_Submission')
+                    SELECT a.id, a.original_name AS file_name, 
+                           CONCAT('tasks_data/', c.short_name, '/task_', a.task_id, '/', a.stored_name) AS file_path, 
+                           a.entity_type, a.created_at 
+                    FROM attachments a
+                    JOIN colleges c ON a.institution_id = c.id
+                    WHERE a.task_id = :task_id AND (a.entity_type = 'Task' OR a.entity_type = 'Task_Submission')
                 ");
                 $attStmt->execute(['task_id' => $task['id']]);
                 $task['attachments'] = $attStmt->fetchAll();

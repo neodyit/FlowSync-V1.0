@@ -22,9 +22,10 @@ try {
 
     // 1. Get attachment info and verify ownership (via entity_id task)
     $stmt = $db->prepare("
-        SELECT a.*, t.department_id 
+        SELECT a.id, a.original_name, a.stored_name, a.task_id, a.institution_id, t.department_id, c.short_name
         FROM attachments a
-        JOIN tasks t ON a.entity_id = t.id AND a.entity_type = 'Task'
+        JOIN tasks t ON a.task_id = t.id AND a.entity_type = 'Task'
+        JOIN colleges c ON a.institution_id = c.id
         WHERE a.id = :id
     ");
     $stmt->execute(['id' => $id]);
@@ -42,7 +43,7 @@ try {
     }
 
     // 3. Delete physical file
-    $filePath = __DIR__ . '/../' . $attachment['file_path'];
+    $filePath = __DIR__ . '/../../storage/tasks_data/' . trim($attachment['short_name']) . '/task_' . $attachment['task_id'] . '/' . $attachment['stored_name'];
     if (file_exists($filePath)) {
         unlink($filePath);
     }
@@ -51,7 +52,7 @@ try {
     $delStmt = $db->prepare("DELETE FROM attachments WHERE id = :id");
     $delStmt->execute(['id' => $id]);
 
-    $logger->log($session['user_id'], 'HOD_DELETE_ATTACHMENT', 'ATTACHMENT', $id, ['file_name' => $attachment['file_name']]);
+    $logger->log($session['user_id'], 'HOD_DELETE_ATTACHMENT', 'ATTACHMENT', $id, ['file_name' => $attachment['original_name']]);
 
     echo json_encode(['status' => 'success', 'message' => 'Attachment deleted successfully']);
 

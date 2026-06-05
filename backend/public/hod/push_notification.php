@@ -43,7 +43,7 @@ try {
     // Handle file upload
     $attachmentUrl = null;
     if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = __DIR__ . '/../uploads/push_notices/';
+        $uploadDir = __DIR__ . '/../storage/push_notices/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
@@ -51,7 +51,7 @@ try {
         $fileName = uniqid('push_') . '.' . $fileExtension;
         
         if (move_uploaded_file($_FILES['attachment']['tmp_name'], $uploadDir . $fileName)) {
-            $attachmentUrl = '/uploads/push_notices/' . $fileName;
+            $attachmentUrl = '/download.php?file=push_notices/' . $fileName;
         } else {
             throw new Exception("Failed to upload attachment.");
         }

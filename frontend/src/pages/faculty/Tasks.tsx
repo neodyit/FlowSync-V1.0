@@ -12,7 +12,12 @@ import {
   ThumbsDown,
   Download,
   Eye,
-  X
+  X,
+  Paperclip,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
@@ -20,6 +25,7 @@ import { cn, formatDate, getDownloadUrl } from '@/lib/utils';
 import Swal from 'sweetalert2';
 
 interface Task {
+  my_status: any;
   id: number;
   title: string;
   description: string;
@@ -43,6 +49,8 @@ const FacultyTasks: React.FC = () => {
   const [selectedTaskFiles, setSelectedTaskFiles] = useState<Task | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<{url: string, name: string, type: string} | null>(null);
+  const [previewZoom, setPreviewZoom] = useState(1);
+  const [previewRotate, setPreviewRotate] = useState(0);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const allowDecline = user.features ? (user.features.allow_task_decline !== false) : true;
@@ -211,9 +219,11 @@ const FacultyTasks: React.FC = () => {
   };
 
   const handlePreview = (file: any) => {
-    const url = `${import.meta.env.VITE_API_URL}/${file.file_path}`;
+    const url = `${getDownloadUrl(file.file_path)}&inline=1`;
     const ext = file.file_name.split('.').pop().toLowerCase();
     setPreviewFile({ url, name: file.file_name, type: ext });
+    setPreviewZoom(1);
+    setPreviewRotate(0);
     setIsPreviewOpen(true);
   };
 
@@ -425,8 +435,9 @@ const FacultyTasks: React.FC = () => {
                             {task.assigned_by_name}
                           </div>
                           {task.attachment_count > 0 && (
-                            <span className="text-[10px] font-black text-[#7C3AED] bg-[#7C3AED]/5 dark:bg-[#7C3AED]/15 px-2 py-1 rounded-lg">
-                              {task.attachment_count} Resources
+                            <span className="text-[10px] font-black text-[#7C3AED] bg-[#7C3AED]/5 dark:bg-[#7C3AED]/15 px-2 py-1 rounded-lg flex items-center gap-1" title="Attachments Available">
+                              <Paperclip className="w-3 h-3" />
+                              <span>{task.attachment_count}</span>
                             </span>
                           )}
                         </div>
@@ -686,13 +697,58 @@ const FacultyTasks: React.FC = () => {
               </div>
 
               {/* Preview Content */}
-              <div className="flex-1 bg-slate-100/50 dark:bg-[#0E0820] p-2 overflow-hidden relative flex items-center justify-center">
+              <div className="flex-1 bg-slate-100/50 dark:bg-[#0E0820] p-2 overflow-hidden relative flex flex-col">
                 {['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(previewFile.type) ? (
-                  <img 
-                    src={previewFile.url} 
-                    alt={previewFile.name}
-                    className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-                  />
+                  <div className="relative w-full h-full flex flex-col overflow-hidden">
+                    {/* Floating Glassmorphic Toolbar */}
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-4 py-2 rounded-2xl shadow-lg border border-slate-700/50">
+                      <button 
+                        onClick={() => setPreviewZoom(z => Math.max(0.5, z - 0.25))}
+                        className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg transition-colors"
+                        title="Zoom Out"
+                      >
+                        <ZoomOut className="w-4 h-4" />
+                      </button>
+                      <span className="text-white text-xs font-black min-w-[36px] text-center select-none">{Math.round(previewZoom * 100)}%</span>
+                      <button 
+                        onClick={() => setPreviewZoom(z => Math.min(4, z + 0.25))}
+                        className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg transition-colors"
+                        title="Zoom In"
+                      >
+                        <ZoomIn className="w-4 h-4" />
+                      </button>
+                      <div className="w-[1px] h-4 bg-slate-700" />
+                      <button 
+                        onClick={() => setPreviewRotate(r => (r + 90) % 360)}
+                        className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg transition-colors"
+                        title="Rotate Right"
+                      >
+                        <RotateCw className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => { setPreviewZoom(1); setPreviewRotate(0); }}
+                        className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg transition-colors"
+                        title="Reset"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Scrollable Container with Pan Effect */}
+                    <div className="flex-1 overflow-auto p-12 flex items-center justify-center bg-slate-900/5 dark:bg-slate-950/10 min-h-0">
+                      <img 
+                        src={previewFile.url} 
+                        alt={previewFile.name}
+                        style={{ 
+                          transform: `scale(${previewZoom}) rotate(${previewRotate}deg)`, 
+                          transition: 'transform 0.15s ease-out',
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          objectFit: 'contain'
+                        }} 
+                      />
+                    </div>
+                  </div>
                 ) : previewFile.type === 'pdf' ? (
                   <iframe 
                     src={`${previewFile.url}#toolbar=0`}
