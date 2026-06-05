@@ -29,6 +29,7 @@ import { checkSession } from '../utils/auth';
 import { cn, formatDate } from "@/lib/utils";
 import Swal from 'sweetalert2';
 import { useTheme } from '../components/ThemeProvider';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function HODLayout() {
   const { theme, toggleTheme } = useTheme();
@@ -89,6 +90,7 @@ export default function HODLayout() {
     const raw = localStorage.getItem('user');
     return raw ? JSON.parse(raw) : { name: 'HOD User', role: 'Head of Department', role_id: 2, features: {} };
   });
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const fetchUserData = async () => {
     try {
@@ -104,6 +106,20 @@ export default function HODLayout() {
         };
         setUser(updatedUser);
         localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        // Check completeness: name, designation, phone, profile_pic
+        const p = result.data;
+        const isIncomplete = !p.name || p.name.trim() === '' || 
+                             p.name.trim() === 'HOD User' || p.name.trim() === 'HOD Member' || 
+                             !p.designation || p.designation.trim() === '' || 
+                             !p.phone || p.phone.trim() === '' || 
+                             !p.profile_pic;
+
+        if (isIncomplete && !location.pathname.includes('/profile')) {
+          setShowOnboarding(true);
+        } else {
+          setShowOnboarding(false);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch user data:', error);
@@ -116,7 +132,7 @@ export default function HODLayout() {
     const handleUpdate = () => fetchUserData();
     window.addEventListener('profile-updated', handleUpdate);
     return () => window.removeEventListener('profile-updated', handleUpdate);
-  }, []);
+  }, [location.pathname]);
   
   const navigation = [
     { name: 'Dashboard', icon: LayoutGrid, path: '/hod/dashboard' },
@@ -752,6 +768,50 @@ export default function HODLayout() {
           </div>
         </div>
       </div>
+      
+      {/* Onboarding Full-Screen Modal */}
+      <AnimatePresence>
+        {showOnboarding && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-[#0B061A]/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className="relative bg-white dark:bg-[#110A24] w-full max-w-lg rounded-[3rem] p-8 md:p-10 shadow-2xl border border-[#7C3AED]/15 dark:border-violet-500/20 text-center overflow-hidden flex flex-col items-center gap-6"
+            >
+              <div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600" />
+              
+              {/* Premium Icon Badge */}
+              <div className="w-20 h-20 bg-[#7C3AED]/10 dark:bg-violet-950/40 rounded-[2rem] flex items-center justify-center text-[#7C3AED] dark:text-violet-400 border border-[#7C3AED]/20 animate-bounce">
+                <User className="w-10 h-10" />
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight">
+                  Authenticity & Professionalization
+                </h2>
+                <p className="text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest text-[9px] font-black leading-none">
+                  Institutional Profile Protocol
+                </p>
+              </div>
+
+              <p className="text-slate-500 dark:text-indigo-200/70 text-sm font-semibold leading-relaxed">
+                To maintain transparency, security, and the highest standards of professional collaboration on FlowSync, you are required to complete your onboarding protocol. Please update your profile picture, designation, and contact phone line. Also pdate your password from  <b> flowsync </b> to something more secure to prevent unauthorized access to your account
+              </p>
+
+              <button
+                onClick={() => {
+                  setShowOnboarding(false);
+                  navigate('/hod/profile');
+                }}
+                className="w-full py-4.5 bg-gradient-to-r from-[#7C3AED] to-purple-600 hover:from-purple-600 hover:to-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-purple-500/20 active:scale-95 cursor-pointer mt-4"
+              >
+                Complete Profile Setup
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

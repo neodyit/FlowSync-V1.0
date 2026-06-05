@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Settings as SettingsIcon, 
   Shield, 
@@ -33,7 +34,9 @@ interface Session {
 
 const Settings: React.FC = () => {
   const { theme: currentTheme, setTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState<'Security' | 'Notifications' | 'Department'>('Department');
+  const [searchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as 'Security' | 'Notifications' | 'Department') || 'Department';
+  const [activeTab, setActiveTab] = useState<'Security' | 'Notifications' | 'Department'>(initialTab);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
