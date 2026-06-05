@@ -62,9 +62,9 @@ try {
         SELECT 
             u.id, u.name, u.email, u.profile_pic,
             lp.total_points, lp.tasks_completed,
-            (SELECT COUNT(*) FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.user_id = u.id AND ta.status IN ('Accepted', 'In Progress', 'Rework Required') AND t.season_id = :season_id1) as active_load,
-            (SELECT COUNT(*) FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.user_id = u.id AND ta.status = 'Approved' AND ta.completed_at <= t.deadline AND t.season_id = :season_id2) as on_time_count,
-            (SELECT COUNT(*) FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.user_id = u.id AND ta.status = 'Approved' AND ta.completed_at > t.deadline AND t.season_id = :season_id3) as late_count
+            (SELECT COUNT(*) FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.user_id = u.id AND ta.status IN ('Accepted', 'In Progress', 'Rework Required') AND t.season_id = :season_id1 AND (t.created_at >= u.created_at OR ta.is_manually_included = 1)) as active_load,
+            (SELECT COUNT(*) FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.user_id = u.id AND ta.status = 'Approved' AND ta.completed_at <= t.deadline AND t.season_id = :season_id2 AND (t.created_at >= u.created_at OR ta.is_manually_included = 1)) as on_time_count,
+            (SELECT COUNT(*) FROM task_assignments ta JOIN tasks t ON ta.task_id = t.id WHERE ta.user_id = u.id AND ta.status = 'Approved' AND ta.completed_at > t.deadline AND t.season_id = :season_id3 AND (t.created_at >= u.created_at OR ta.is_manually_included = 1)) as late_count
         FROM users u
         JOIN faculty_departments fd ON u.id = fd.user_id
         LEFT JOIN leaderboard_points lp ON u.id = lp.user_id AND lp.season_id = :season_id4
@@ -129,6 +129,7 @@ try {
         JOIN users u ON ta.user_id = u.id
         WHERE t.department_id = :dept_id AND t.season_id = :season_id 
         AND ta.status IN ('Accepted', 'In Progress', 'Rework Required', 'Submitted')
+        AND (t.created_at >= u.created_at OR ta.is_manually_included = 1)
         ORDER BY t.deadline ASC
     ");
     $pendingListStmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);

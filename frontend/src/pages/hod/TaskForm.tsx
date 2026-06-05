@@ -138,6 +138,7 @@ const HODTaskForm: React.FC = () => {
   const [systemSettings, setSystemSettings] = useState({ pause_new_tasks: 'false' });
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isDirty, setIsDirty] = useState(false);
+  const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
   
   const [formData, setFormData] = useState({
     id: null as number | null,
@@ -227,6 +228,7 @@ const HODTaskForm: React.FC = () => {
               task_link: task.task_link || '',
               attachments: []
             });
+            setExistingAttachments(task.attachments?.filter((a: any) => a.entity_type === 'Task') || []);
             setTimeout(() => setIsDirty(false), 100);
           }
         }
@@ -241,6 +243,39 @@ const HODTaskForm: React.FC = () => {
     fetchGroups();
     fetchTaskDetails();
   }, [id]);
+
+  const handleDeleteExistingAttachment = async (attachmentId: number, fileName: string) => {
+    const result = await Swal.fire({
+      title: 'Delete Attachment?',
+      text: `Are you sure you want to permanently delete "${fileName}"? This action cannot be undone.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#f43f5e',
+      cancelButtonColor: '#cbd5e1',
+      confirmButtonText: 'Yes, delete it',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/hod/delete_attachment.php?id=${attachmentId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+          Swal.fire('Deleted!', 'Attachment has been deleted.', 'success');
+          setExistingAttachments(prev => prev.filter(att => att.id !== attachmentId));
+          fetchTaskDetails();
+        } else {
+          Swal.fire('Error', data.message || 'Failed to delete attachment', 'error');
+        }
+      } catch (error) {
+        console.error('Delete attachment error:', error);
+        Swal.fire('Error', 'Failed to delete attachment due to network error.', 'error');
+      }
+    }
+  };
 
   const handleCreateOrUpdate = async (e: React.FormEvent, isDraft = false) => {
     e?.preventDefault();
@@ -799,6 +834,46 @@ const HODTaskForm: React.FC = () => {
                         </div>
                       </div>
                     </div>
+
+                    {existingAttachments.length > 0 && (
+                      <div className="grid grid-cols-1 gap-2 mt-4">
+                        <p className="text-[9px] font-black text-[#1E184B] dark:text-indigo-200 uppercase tracking-widest ml-1">Existing Attachments</p>
+                        {existingAttachments.map((att) => (
+                          <div 
+                            key={att.id} 
+                            className="flex items-center justify-between p-3.5 bg-white dark:bg-[#130C24] border-2 border-slate-100 dark:border-violet-500/15 rounded-[1.25rem] shadow-sm hover:border-slate-200 dark:hover:border-violet-500/30 transition-colors"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                                <FileText className="w-4 h-4" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs font-black text-[#1E184B] dark:text-indigo-100 truncate max-w-[180px] sm:max-w-[200px]" title={att.file_name}>
+                                  {att.file_name}
+                                </span>
+                                <span className="text-[9px] font-bold text-slate-400 dark:text-violet-400/60 uppercase tracking-widest mt-0.5">Stored File</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <a 
+                                href={getDownloadUrl(att.file_path)} 
+                                download 
+                                className="p-2 bg-slate-50 dark:bg-[#1A0F35] hover:bg-[#7C3AED]/10 text-slate-400 dark:text-violet-400/50 hover:text-[#7C3AED] rounded-xl transition-all"
+                              >
+                                <Download className="w-4 h-4" />
+                              </a>
+                              <button 
+                                type="button"
+                                onClick={() => handleDeleteExistingAttachment(att.id, att.file_name)}
+                                className="p-2 bg-slate-50 dark:bg-[#1A0F35] hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 dark:text-violet-400/50 hover:text-rose-500 dark:hover:text-rose-400 rounded-xl transition-all"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     <AnimatePresence>
                       {formData.attachments.length > 0 && (

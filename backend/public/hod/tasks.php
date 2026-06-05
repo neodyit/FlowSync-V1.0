@@ -56,10 +56,13 @@ try {
                 
                 // Fetch all attachments
                 $attStmt = $db->prepare("
-                    SELECT id, file_name, file_path, entity_type, created_at, CAST(uploader_id AS UNSIGNED) as uploader_id 
-                    FROM attachments 
-                    WHERE (entity_type = 'Task' OR entity_type = 'Task_Submission') 
-                    AND entity_id = :task_id
+                    SELECT a.id, a.original_name AS file_name, 
+                           CONCAT('tasks_data/', c.short_name, '/task_', a.task_id, '/', a.stored_name) AS file_path, 
+                           a.entity_type, a.created_at, CAST(a.uploader_id AS UNSIGNED) as uploader_id 
+                    FROM attachments a
+                    JOIN colleges c ON a.institution_id = c.id
+                    WHERE (a.entity_type = 'Task' OR a.entity_type = 'Task_Submission') 
+                    AND a.task_id = :task_id
                 ");
                 $attStmt->execute(['task_id' => $task['id']]);
                 $task['attachments'] = $attStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -194,21 +197,77 @@ try {
                 $autoAccept = $col ? ($col['auto_accept_tasks'] == 1) : true;
                 $assignmentStatus = $autoAccept ? 'Accepted' : 'Assigned';
 
-                $stmt = $db->prepare("INSERT INTO task_assignments (task_id, user_id, status) VALUES (:tid, :uid, :status) ON DUPLICATE KEY UPDATE status = VALUES(status)");
+                // Fetch task created_at
+                $taskCreatedAtVal = date('Y-m-d H:i:s');
+                if ($taskId) {
+                    $stmtTaskTime = $db->prepare("SELECT created_at FROM tasks WHERE id = :id LIMIT 1");
+                    $stmtTaskTime->execute(['id' => $taskId]);
+                    $dbTaskTime = $stmtTaskTime->fetchColumn();
+                    if ($dbTaskTime) {
+                        $taskCreatedAtVal = $dbTaskTime;
+                    }
+                }
+
+                $stmtUser = $db->prepare("SELECT created_at FROM users WHERE id = :uid LIMIT 1");
+                $stmt = $db->prepare("
+                    INSERT INTO task_assignments (task_id, user_id, status, is_manually_included) 
+                    VALUES (:tid, :uid, :status, :is_manually) 
+                    ON DUPLICATE KEY UPDATE status = VALUES(status), is_manually_included = VALUES(is_manually_included)
+                ");
                 foreach ($assignedToIds as $uid) {
-                    $stmt->execute(['tid' => $taskId, 'uid' => $uid, 'status' => $assignmentStatus]);
+                    $stmtUser->execute(['uid' => $uid]);
+                    $userCreatedAtVal = $stmtUser->fetchColumn();
+                    
+                    $isManuallyIncludedVal = 0;
+                    if ($userCreatedAtVal && strtotime($userCreatedAtVal) > strtotime($taskCreatedAtVal)) {
+                        $isManuallyIncludedVal = 1;
+                    }
+                    
+                    $stmt->execute([
+                        'tid' => $taskId, 
+                        'uid' => $uid, 
+                        'status' => $assignmentStatus,
+                        'is_manually' => $isManuallyIncludedVal
+                    ]);
                 }
             }
 
             // Handle File Uploads
             if (!empty($_FILES['attachments'])) {
+                $collegeStmt = $db->prepare("
+                    SELECT c.id, c.short_name 
+                    FROM colleges c
+                    JOIN users u ON u.college_id = c.id
+                    WHERE u.id = :uid
+                    LIMIT 1
+                ");
+                $collegeStmt->execute(['uid' => $session['user_id']]);
+                $college = $collegeStmt->fetch(PDO::FETCH_ASSOC);
+                $institutionId = $college['id'];
+                $shortName = trim($college['short_name']);
+
+                $taskDir = __DIR__ . '/../../storage/tasks_data/' . $shortName . '/task_' . $taskId . '/';
+                if (!is_dir($taskDir)) {
+                    mkdir($taskDir, 0777, true);
+                }
+
                 $files = $_FILES['attachments'];
                 foreach ($files['name'] as $key => $name) {
                     if ($files['error'][$key] === UPLOAD_ERR_OK) {
-                        $newName = 'task_' . $taskId . '_' . uniqid() . '.' . pathinfo($name, PATHINFO_EXTENSION);
-                        if (move_uploaded_file($files['tmp_name'][$key], __DIR__ . '/../uploads/' . $newName)) {
-                            $db->prepare("INSERT INTO attachments (entity_type, entity_id, uploader_id, file_name, file_path, file_size, mime_type) VALUES ('Task', :tid, :uid, :name, :path, :size, :mime)")
-                               ->execute(['tid' => $taskId, 'uid' => $session['user_id'], 'name' => $name, 'path' => 'uploads/' . $newName, 'size' => $files['size'][$key], 'mime' => $files['type'][$key]]);
+                        $storedName = 'task_' . $taskId . '_' . uniqid() . '.' . pathinfo($name, PATHINFO_EXTENSION);
+                        if (move_uploaded_file($files['tmp_name'][$key], $taskDir . $storedName)) {
+                            $db->prepare("
+                                INSERT INTO attachments (entity_type, task_id, institution_id, uploader_id, original_name, stored_name, file_size, file_type) 
+                                VALUES ('Task', :tid, :inst_id, :uid, :orig_name, :stored_name, :size, :mime)
+                            ")->execute([
+                                'tid' => $taskId, 
+                                'inst_id' => $institutionId,
+                                'uid' => $session['user_id'], 
+                                'orig_name' => $name, 
+                                'stored_name' => $storedName, 
+                                'size' => $files['size'][$key], 
+                                'mime' => $files['type'][$key]
+                            ]);
                         }
                     }
                 }

@@ -41,10 +41,18 @@ try {
     exit;
 }
 
-// Ensure uploads directory exists
-$uploadDir = __DIR__ . '/uploads';
-if (!file_exists($uploadDir)) {
-    mkdir($uploadDir, 0777, true);
+// Ensure storage directories exist outside public folder
+$storageRoot = __DIR__ . '/../storage';
+$storageDirs = [
+    $storageRoot,
+    $storageRoot . '/profiles',
+    $storageRoot . '/push_notices',
+    $storageRoot . '/tasks_data'
+];
+foreach ($storageDirs as $dir) {
+    if (!file_exists($dir)) {
+        mkdir($dir, 0777, true);
+    }
 }
 
 // Global Academic Season Context

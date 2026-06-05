@@ -15,7 +15,9 @@ import {
   CheckCircle2,
   Sparkles,
   ShieldCheck,
-  Building2
+  Building2,
+  Calendar,
+  Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Swal from 'sweetalert2';
@@ -29,6 +31,7 @@ interface Achievement {
 }
 
 interface UserProfile {
+  role_id: number;
   id: number;
   name: string;
   email: string;
@@ -45,6 +48,8 @@ interface UserProfile {
   tasks_completed?: number;
   leaderboard_rank?: number | string;
   adherence_rate?: number;
+  created_at?: string;
+  is_active?: number | boolean;
 }
 
 const Profile = () => {
@@ -306,50 +311,90 @@ const Profile = () => {
       </div>
 
       {/* Analytics Dashboard Stats Card */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-        {/* Total Points */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Points (Season)</span>
-          <div className="flex items-baseline gap-2 mt-4">
-            <span className="text-3xl font-black text-[#7C3AED]">{profile.total_points ?? 0}</span>
-            <span className="text-xs text-slate-400 font-bold">PTS</span>
+      {profile.role_id === 2 || profile.role_name?.toLowerCase().includes('hod') ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {/* Department Points */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Department Points</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-[#7C3AED]">{profile.total_points ?? 0}</span>
+              <span className="text-xs text-slate-400 font-bold">PTS</span>
+            </div>
           </div>
-        </div>
 
-        {/* Leaderboard Standing */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Leaderboard Stand</span>
-          <div className="flex items-baseline gap-2 mt-4">
-            <span className="text-3xl font-black text-[#1E184B]">#{profile.leaderboard_rank ?? 'N/A'}</span>
-            <span className="text-xs text-slate-400 font-bold">RANK</span>
+          {/* Department Completion Rate */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dept Completion Rate</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-[#1E184B]">{profile.leaderboard_rank ?? '0%'}</span>
+              <span className="text-xs text-slate-400 font-bold">RATE</span>
+            </div>
           </div>
-        </div>
 
-        {/* Tasks Completed */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tasks Completed</span>
-          <div className="flex items-baseline gap-2 mt-4">
-            <span className="text-3xl font-black text-emerald-500">{profile.tasks_completed ?? 0}</span>
-            <span className="text-xs text-slate-400 font-bold">TASKS</span>
+          {/* Pending Reviews */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Reviews</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-emerald-500">{profile.tasks_completed ?? 0}</span>
+              <span className="text-xs text-slate-400 font-bold">REVIEWS</span>
+            </div>
           </div>
-        </div>
 
-        {/* Adherence Rate */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Task Adherence</span>
-          <div className="flex items-baseline gap-2 mt-4">
-            <span className="text-3xl font-black text-blue-500">{profile.adherence_rate ?? 100}%</span>
-            <span className="text-xs text-slate-400 font-bold">ON-TIME</span>
+          {/* Active Department Load */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Dept Load</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-blue-500">{profile.adherence_rate ?? 0}</span>
+              <span className="text-xs text-slate-400 font-bold">TASKS</span>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {/* Total Points */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Points (Season)</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-[#7C3AED]">{profile.total_points ?? 0}</span>
+              <span className="text-xs text-slate-400 font-bold">PTS</span>
+            </div>
+          </div>
+
+          {/* Leaderboard Standing */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Leaderboard Stand</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-[#1E184B]">#{profile.leaderboard_rank ?? 'N/A'}</span>
+              <span className="text-xs text-slate-400 font-bold">RANK</span>
+            </div>
+          </div>
+
+          {/* Tasks Completed */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tasks Completed</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-emerald-500">{profile.tasks_completed ?? 0}</span>
+              <span className="text-xs text-slate-400 font-bold">TASKS</span>
+            </div>
+          </div>
+
+          {/* Adherence Rate */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Task Adherence</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-blue-500">{profile.adherence_rate ?? 100}%</span>
+              <span className="text-xs text-slate-400 font-bold">ON-TIME</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Basic Info */}
         <div className="lg:col-span-4 space-y-8">
           <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4" /> Contact Protocol
+              <ShieldCheck className="w-4 h-4 text-[#7C3AED]" /> Contact & System Details
             </h3>
             <div className="space-y-6">
               <div className="flex items-center gap-4 group">
@@ -368,6 +413,29 @@ const Profile = () => {
                 <div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Comm Line</p>
                   <p className="text-sm font-bold text-[#1E1B4B]">{profile.phone || 'No active line'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 group">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[#7C3AED]/10 group-hover:text-[#7C3AED] transition-all">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Joining Date</p>
+                  <p className="text-sm font-bold text-[#1E1B4B]">{profile.created_at ? new Date(profile.created_at).toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 group">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[#7C3AED]/10 group-hover:text-[#7C3AED] transition-all">
+                  <Activity className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Active Status</p>
+                  <span className={cn(
+                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-widest",
+                    profile.is_active ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                  )}>
+                    {profile.is_active ? "Active" : "Inactive"}
+                  </span>
                 </div>
               </div>
             </div>
