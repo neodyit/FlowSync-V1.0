@@ -505,15 +505,19 @@ const HODTasks: React.FC = () => {
     }).length;
   };
 
+  const showGroup = user.features ? (user.features.task_group !== false) : true;
+  const showBroadcast = user.features ? (user.features.task_broadcast !== false) : true;
+  const showDeadlineTracking = user.features ? (user.features.task_deadline_tracking !== false) : true;
+
   const tabs: {id: typeof activeTab, label: string, count: number}[] = [
     { id: 'All', label: 'All Tasks', count: filterCount('All') },
     { id: 'Individual', label: 'Individual', count: filterCount('Individual') },
-    { id: 'Group', label: 'Group', count: filterCount('Group') },
-    { id: 'Broadcasted', label: 'Broadcasted', count: filterCount('Broadcasted') },
+    showGroup && { id: 'Group', label: 'Group', count: filterCount('Group') },
+    showBroadcast && { id: 'Broadcasted', label: 'Broadcasted', count: filterCount('Broadcasted') },
     { id: 'Active', label: 'Active', count: filterCount('Active') },
     { id: 'Pending Submissions', label: 'Pending Submissions', count: filterCount('Pending Submissions') },
     { id: 'Review Pending', label: 'Review Pending', count: filterCount('Review Pending') },
-    { id: 'Extensions', label: 'Extensions', count: extensionRequests.filter(r => {
+    showDeadlineTracking && { id: 'Extensions', label: 'Extensions', count: extensionRequests.filter(r => {
       if (r.status !== 'Pending') return false;
       if (filterStartDate) {
         const start = new Date(filterStartDate);
@@ -529,7 +533,7 @@ const HODTasks: React.FC = () => {
     }).length },
     { id: 'Completed', label: 'Completed', count: filterCount('Completed') },
     { id: 'Drafts', label: 'Drafts', count: filterCount('Drafts') },
-  ];
+  ].filter(Boolean) as {id: typeof activeTab, label: string, count: number}[];
 
   return (
     <div className="space-y-8 pb-20">
@@ -553,7 +557,7 @@ const HODTasks: React.FC = () => {
         </button>
       </div>
       {/* Extension Requests Banner (Only show when NOT on Extensions tab) */}
-      {activeTab !== 'Extensions' && extensionRequests.filter(r => r.status === 'Pending').length > 0 && (
+      {showDeadlineTracking && activeTab !== 'Extensions' && extensionRequests.filter(r => r.status === 'Pending').length > 0 && (
         <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="flex items-center gap-2 mb-4 px-2">
             <div className="w-2 h-2 bg-rose-500 rounded-full animate-ping" />
@@ -605,15 +609,15 @@ const HODTasks: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         Swal.fire({
-                          title: 'Reject Request',
-                          input: 'text',
-                          inputLabel: 'Reason for rejection',
-                          showCancelButton: true,
-                          confirmButtonColor: '#f43f5e'
+                           title: 'Reject Request',
+                           input: 'text',
+                           inputLabel: 'Reason for rejection',
+                           showCancelButton: true,
+                           confirmButtonColor: '#f43f5e'
                         }).then((result) => {
-                          if (result.isConfirmed) {
-                            handleReviewExtension(req.id, 'Rejected', result.value);
-                          }
+                           if (result.isConfirmed) {
+                             handleReviewExtension(req.id, 'Rejected', result.value);
+                           }
                         });
                       }}
                       className="py-3 bg-white text-rose-500 border border-rose-100 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-rose-50 transition-all"
@@ -668,7 +672,7 @@ const HODTasks: React.FC = () => {
               placeholder={activeTab === 'Extensions' ? "Search requests or faculty..." : "Search tasks, faculty, or IDs..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-6 py-3.5 md:py-4 bg-white border border-slate-100 rounded-2xl md:rounded-3xl text-xs md:text-sm font-bold text-[#1E184B] focus:outline-none focus:ring-4 focus:ring-[#7C3AED]/10 focus:border-[#7C3AED] transition-all placeholder:text-slate-300 shadow-sm"
+              className="w-full pl-12 pr-6 py-3.5 md:py-4 bg-white border border-slate-100 rounded-2xl md:rounded-3xl text-xs md:text-sm font-bold text-[#1E184B] focus:outline-none ring-[#7C3AED]/10 focus:border-[#7C3AED] transition-all placeholder:text-slate-300 shadow-sm"
             />
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 bg-white border border-slate-100 rounded-2xl md:rounded-3xl p-1.5 focus-within:border-[#7C3AED] focus-within:ring-4 focus-within:ring-[#7C3AED]/10 transition-all shadow-sm">
@@ -725,20 +729,26 @@ const HODTasks: React.FC = () => {
                   className="absolute right-0 mt-2 w-full sm:w-56 bg-white border border-slate-100 shadow-xl rounded-2xl p-3 z-50 flex flex-col gap-2"
                 >
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1">Filter by Mode</p>
-                  {['individual', 'group', 'broadcast'].map(mode => (
-                    <label key={mode} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors">
-                      <input 
-                        type="checkbox"
-                        checked={filterModes.includes(mode)}
-                        onChange={(e) => {
-                           if (e.target.checked) setFilterModes([...filterModes, mode]);
-                           else setFilterModes(filterModes.filter(m => m !== mode));
-                        }}
-                        className="w-4 h-4 rounded text-[#7C3AED] focus:ring-[#7C3AED]/20"
-                      />
-                      <span className="text-sm font-bold text-[#1E184B] capitalize">{mode}</span>
-                    </label>
-                  ))}
+                  {['individual', 'group', 'broadcast']
+                    .filter(mode => {
+                      if (mode === 'group') return showGroup;
+                      if (mode === 'broadcast') return showBroadcast;
+                      return true;
+                    })
+                    .map(mode => (
+                      <label key={mode} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors">
+                        <input 
+                          type="checkbox"
+                          checked={filterModes.includes(mode)}
+                          onChange={(e) => {
+                             if (e.target.checked) setFilterModes([...filterModes, mode]);
+                             else setFilterModes(filterModes.filter(m => m !== mode));
+                          }}
+                          className="w-4 h-4 rounded text-[#7C3AED] focus:ring-[#7C3AED]/20"
+                        />
+                        <span className="text-sm font-bold text-[#1E184B] capitalize">{mode}</span>
+                      </label>
+                    ))}
                   {filterModes.length > 0 && (
                     <button 
                       onClick={() => setFilterModes([])}

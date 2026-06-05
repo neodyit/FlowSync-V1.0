@@ -192,12 +192,15 @@ const HODDashboard: React.FC = () => {
     { label: 'Merit Points', value: stats.dept_points.toLocaleString(), icon: Trophy, color: 'text-emerald-500', bg: 'bg-emerald-50', trend: 'Dept. Performance' },
   ];
 
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const showBroadcast = user.features ? (user.features.task_broadcast !== false) : true;
+
   const quickActions = [
     { name: 'Assign Task', icon: PlusCircle, path: '/hod/tasks', color: 'bg-[#7C3AED]', desc: 'Direct mission assignment' },
-    { name: 'Broadcast', icon: Send, path: '/hod/tasks', color: 'bg-blue-600', desc: 'Alert all faculty members' },
+    showBroadcast && { name: 'Broadcast', icon: Send, path: '/hod/tasks', color: 'bg-blue-600', desc: 'Alert all faculty members' },
     { name: 'Department', icon: Building2, path: '/hod/department', color: 'bg-slate-800', desc: 'View resource allocation' },
     { name: 'Portal Control', icon: ShieldCheck, path: '/hod/settings', color: 'bg-rose-600', desc: 'Security & preferences' },
-  ];
+  ].filter(Boolean) as { name: string; icon: any; path: string; color: string; desc: string }[];
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">

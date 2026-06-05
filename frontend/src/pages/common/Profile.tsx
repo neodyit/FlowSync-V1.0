@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   User, 
   Mail, 
@@ -33,29 +34,44 @@ interface UserProfile {
   email: string;
   role_name: string;
   department_name?: string;
+  college_name?: string;
   phone: string;
   bio: string;
   achievements: Achievement[];
   profile_pic: string | null;
   is_public: number;
   designation: string;
+  total_points?: number;
+  tasks_completed?: number;
+  leaderboard_rank?: number | string;
+  adherence_rate?: number;
 }
 
 const Profile = () => {
+  const [searchParams] = useSearchParams();
+  const targetId = searchParams.get('id');
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const isOwnProfile = !targetId || targetId === currentUser.id?.toString();
+
   const fetchProfile = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/profile.php`, {
+      const url = targetId 
+        ? `${import.meta.env.VITE_API_URL}/profile.php?id=${targetId}`
+        : `${import.meta.env.VITE_API_URL}/profile.php`;
+      const response = await fetch(url, {
         credentials: 'include'
       });
       const result = await response.json();
       if (result.status === 'success') {
         setProfile(result.data);
+      } else {
+        Swal.fire('Error', result.message || 'Profile not accessible.', 'error');
       }
     } catch (error) {
       console.error('Failed to fetch profile:', error);
@@ -66,7 +82,7 @@ const Profile = () => {
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [targetId]);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,19 +235,23 @@ const Profile = () => {
                 </div>
               )}
             </div>
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-2 right-2 p-3 bg-[#7C3AED] text-white rounded-2xl shadow-lg shadow-[#7C3AED]/20 hover:scale-110 transition-transform"
-            >
-              <Camera className="w-5 h-5" />
-            </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept="image/*" 
-              onChange={handleImageUpload}
-            />
+            {isOwnProfile && (
+              <>
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute bottom-2 right-2 p-3 bg-[#7C3AED] text-white rounded-2xl shadow-lg shadow-[#7C3AED]/20 hover:scale-110 transition-transform"
+                >
+                  <Camera className="w-5 h-5" />
+                </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleImageUpload}
+                />
+              </>
+            )}
           </div>
 
           <div className="flex-1 text-center md:text-left">
@@ -256,22 +276,70 @@ const Profile = () => {
               {profile.designation || 'Academic Professional'}
             </p>
             {profile.department_name && (
-              <p className="text-sm font-bold text-slate-400 mt-2 flex items-center justify-center md:justify-start gap-2">
-                <Building2 className="w-4 h-4" />
-                {profile.department_name}
-              </p>
+              <div className="text-sm font-bold text-slate-400 mt-2 flex flex-col gap-1 items-center md:items-start">
+                <p className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-[#7C3AED]" />
+                  {profile.department_name}
+                </p>
+                {profile.college_name && (
+                  <p className="text-xs text-[#7C3AED]/70 pl-6 uppercase tracking-wider font-extrabold">
+                    {profile.college_name}
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
-          <button 
-            onClick={() => setIsEditing(!isEditing)}
-            className={cn(
-              "px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95",
-              isEditing ? "bg-slate-100 text-slate-500" : "bg-[#7C3AED] text-white shadow-xl shadow-[#7C3AED]/20 hover:bg-[#6D28D9]"
-            )}
-          >
-            {isEditing ? "Cancel Mission" : "Edit Credentials"}
-          </button>
+          {isOwnProfile && (
+            <button 
+              onClick={() => setIsEditing(!isEditing)}
+              className={cn(
+                "px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95",
+                isEditing ? "bg-slate-100 text-slate-500" : "bg-[#7C3AED] text-white shadow-xl shadow-[#7C3AED]/20 hover:bg-[#6D28D9]"
+              )}
+            >
+              {isEditing ? "Cancel Mission" : "Edit Credentials"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Analytics Dashboard Stats Card */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        {/* Total Points */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Points (Season)</span>
+          <div className="flex items-baseline gap-2 mt-4">
+            <span className="text-3xl font-black text-[#7C3AED]">{profile.total_points ?? 0}</span>
+            <span className="text-xs text-slate-400 font-bold">PTS</span>
+          </div>
+        </div>
+
+        {/* Leaderboard Standing */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Leaderboard Stand</span>
+          <div className="flex items-baseline gap-2 mt-4">
+            <span className="text-3xl font-black text-[#1E184B]">#{profile.leaderboard_rank ?? 'N/A'}</span>
+            <span className="text-xs text-slate-400 font-bold">RANK</span>
+          </div>
+        </div>
+
+        {/* Tasks Completed */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tasks Completed</span>
+          <div className="flex items-baseline gap-2 mt-4">
+            <span className="text-3xl font-black text-emerald-500">{profile.tasks_completed ?? 0}</span>
+            <span className="text-xs text-slate-400 font-bold">TASKS</span>
+          </div>
+        </div>
+
+        {/* Adherence Rate */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Task Adherence</span>
+          <div className="flex items-baseline gap-2 mt-4">
+            <span className="text-3xl font-black text-blue-500">{profile.adherence_rate ?? 100}%</span>
+            <span className="text-xs text-slate-400 font-bold">ON-TIME</span>
+          </div>
         </div>
       </div>
 
@@ -289,7 +357,7 @@ const Profile = () => {
                 </div>
                 <div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Email Channel</p>
-                  <p className="text-sm font-bold text-[#1E184B]">{profile.email}</p>
+                  <p className="text-sm font-bold text-[#1E1B4B]">{profile.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 group">
@@ -298,45 +366,55 @@ const Profile = () => {
                 </div>
                 <div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Comm Line</p>
-                  <p className="text-sm font-bold text-[#1E184B]">{profile.phone || 'No active line'}</p>
+                  <p className="text-sm font-bold text-[#1E1B4B]">{profile.phone || 'No active line'}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-[#1E184B] to-[#110D2C] rounded-[2.5rem] p-8 text-white shadow-xl flex flex-col justify-between">
-            <div>
-              <Sparkles className="w-8 h-8 text-amber-400 mb-4" />
-              <h3 className="text-xl font-black mb-2">Profile Privacy</h3>
-              <p className="text-white/60 text-xs font-medium leading-relaxed mb-6">
-                Choose if others can discover and view your professional credentials on department rosters and leaderboards.
-              </p>
-              
-              <div className="flex items-center gap-3 mb-6 p-4 bg-white/5 rounded-2xl border border-white/10">
-                <div className={cn(
-                  "w-3 h-3 rounded-full animate-pulse",
-                  profile.is_public ? "bg-emerald-400" : "bg-amber-400"
-                )} />
-                <span className="text-xs font-black uppercase tracking-widest text-white/95">
-                  Status: {profile.is_public ? "Public Profile" : "Private Session"}
-                </span>
+          {isOwnProfile ? (
+            <div className="bg-gradient-to-br from-[#1E184B] to-[#110D2C] rounded-[2.5rem] p-8 text-white shadow-xl flex flex-col justify-between">
+              <div>
+                <Sparkles className="w-8 h-8 text-amber-400 mb-4" />
+                <h3 className="text-xl font-black mb-2">Profile Privacy</h3>
+                <p className="text-white/60 text-xs font-medium leading-relaxed mb-6">
+                  Choose if others can discover and view your professional credentials on department rosters and leaderboards.
+                </p>
+                
+                <div className="flex items-center gap-3 mb-6 p-4 bg-white/5 rounded-2xl border border-white/10">
+                  <div className={cn(
+                    "w-3 h-3 rounded-full animate-pulse",
+                    profile.is_public ? "bg-emerald-400" : "bg-amber-400"
+                  )} />
+                  <span className="text-xs font-black uppercase tracking-widest text-white/95">
+                    Status: {profile.is_public ? "Public Profile" : "Private Session"}
+                  </span>
+                </div>
               </div>
+              
+              <button 
+                type="button"
+                onClick={handleToggleVisibility}
+                className={cn(
+                  "w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95",
+                  profile.is_public 
+                    ? "bg-slate-100/10 hover:bg-slate-100/20 text-white border border-white/10" 
+                    : "bg-[#7C3AED] hover:bg-[#6D28D9] text-white"
+                )}
+              >
+                {profile.is_public ? <Lock className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+                {profile.is_public ? "Make Profile Private" : "Make Profile Public"}
+              </button>
             </div>
-            
-            <button 
-              type="button"
-              onClick={handleToggleVisibility}
-              className={cn(
-                "w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95",
-                profile.is_public 
-                  ? "bg-slate-100/10 hover:bg-slate-100/20 text-white border border-white/10" 
-                  : "bg-[#7C3AED] hover:bg-[#6D28D9] text-white"
-              )}
-            >
-              {profile.is_public ? <Lock className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
-              {profile.is_public ? "Make Profile Private" : "Make Profile Public"}
-            </button>
-          </div>
+          ) : (
+            <div className="bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] rounded-[2.5rem] p-8 text-white shadow-xl shadow-[#7C3AED]/20">
+              <Sparkles className="w-8 h-8 text-amber-300 mb-4" />
+              <h3 className="text-xl font-black mb-2">FlowSync Professional</h3>
+              <p className="text-white/80 text-xs font-medium leading-relaxed">
+                This professional is an active contributor to FlowSync's mission objectives and institutional excellence.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Bio & Achievements */}

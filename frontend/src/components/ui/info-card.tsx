@@ -19,6 +19,7 @@ export type ProfileCardProps = {
   onToggleStatus?: () => void
   onDelete?: () => void
   onLogs?: () => void
+  onClickName?: () => void
 }
 
 export default function AnimatedProfileCard() {
@@ -63,7 +64,7 @@ export default function AnimatedProfileCard() {
 
 export function ProfileCard({ 
   name, role, status, avatar, tags = [], isVerified, followers, 
-  college, department, email, id, onEdit, onToggleStatus, onDelete, onLogs 
+  college, department, email, id, onEdit, onToggleStatus, onDelete, onLogs, onClickName
 }: ProfileCardProps) {
   return (
     <div className={cn(
@@ -101,7 +102,12 @@ export function ProfileCard({
       {/* Profile Photo with enhanced hover effects */}
       <div className="mb-6 flex justify-center relative z-10">
         <div className="relative">
-          <div className="h-24 w-24 overflow-hidden rounded-[2rem] bg-slate-50 dark:bg-[#110A24] p-1 shadow-[inset_6px_6px_12px_rgba(0,0,0,0.05)] transition-all duration-500 group-hover:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.1)] group-hover:scale-105 border border-slate-100 dark:border-violet-500/10">
+          <div className={cn(
+            "h-24 w-24 overflow-hidden rounded-[2rem] bg-slate-50 dark:bg-[#110A24] p-1 shadow-[inset_6px_6px_12px_rgba(0,0,0,0.05)] transition-all duration-500 group-hover:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.1)] group-hover:scale-105 border border-slate-100 dark:border-violet-500/10",
+            onClickName && "cursor-pointer"
+          )}
+            onClick={onClickName}
+          >
             {avatar ? (
               <img
                 src={avatar}
@@ -115,13 +121,19 @@ export function ProfileCard({
             )}
           </div>
           {/* Glowing ring on hover */}
-          <div className="absolute inset-0 rounded-[2rem] border-2 border-[#7C3AED]/20 opacity-0 group-hover:opacity-100 transition-all duration-500 animate-pulse"></div>
+          <div className="absolute inset-0 rounded-[2rem] border-2 border-[#7C3AED]/20 opacity-0 group-hover:opacity-100 transition-all duration-500 animate-pulse pointer-events-none"></div>
         </div>
       </div>
 
       {/* Profile Info */}
       <div className="text-center relative z-10 transition-transform duration-300 group-hover:-translate-y-1">
-        <h3 className="text-xl font-black text-[#1E1B4B] dark:text-indigo-100 group-hover:text-[#7C3AED] dark:group-hover:text-violet-300 transition-colors duration-300">
+        <h3 
+          className={cn(
+            "text-xl font-black text-[#1E1B4B] dark:text-indigo-100 group-hover:text-[#7C3AED] dark:group-hover:text-violet-300 transition-colors duration-300",
+            onClickName && "cursor-pointer hover:underline"
+          )}
+          onClick={onClickName}
+        >
           {name}
         </h3>
         <p className="mt-1 text-xs font-bold text-slate-400 dark:text-violet-400/60 uppercase tracking-widest truncate">

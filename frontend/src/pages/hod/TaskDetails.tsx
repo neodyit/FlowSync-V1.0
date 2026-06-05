@@ -83,6 +83,8 @@ export default function HODTaskDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const showReminder = user.features ? (user.features.task_reminder_system !== false) : true;
+  const showDeadlineTracking = user.features ? (user.features.task_deadline_tracking !== false) : true;
   
   const [task, setTask] = useState<Task | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -1085,34 +1087,36 @@ export default function HODTaskDetails() {
                   )}
 
                   {/* Bulk Alerts Transmission Panel inside Right Workspace */}
-                  <div className="border-t border-slate-100 pt-6 space-y-4">
-                    <h4 className="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-1.5">
-                      <Bell className="w-4 h-4 text-rose-500 animate-bounce" /> Bulk Alert Transmission
-                    </h4>
-                    <div className="grid grid-cols-3 gap-3">
-                      <button 
-                        type="button"
-                        onClick={() => handleBulkReminders('Gentle Reminder')}
-                        className="py-3.5 px-2 bg-slate-50 hover:bg-[#7C3AED] hover:text-white text-[#7C3AED] hover:shadow-lg hover:shadow-indigo-500/20 border-2 border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex flex-col items-center gap-1.5 group active:scale-95"
-                      >
-                        <Info className="w-5 h-5 text-[#7C3AED] group-hover:text-white transition-colors" /> Gentle
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => handleBulkReminders('Reminder')}
-                        className="py-3.5 px-2 bg-slate-50 hover:bg-amber-500 hover:text-white text-amber-600 hover:shadow-lg hover:shadow-amber-500/20 border-2 border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex flex-col items-center gap-1.5 group active:scale-95"
-                      >
-                        <Bell className="w-5 h-5 text-amber-500 group-hover:text-white transition-colors" /> Reminder
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => handleBulkReminders('Warning')}
-                        className="py-3.5 px-2 bg-slate-50 hover:bg-rose-600 hover:text-white text-rose-600 hover:shadow-lg hover:shadow-rose-500/20 border-2 border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex flex-col items-center gap-1.5 group active:scale-95"
-                      >
-                        <AlertTriangle className="w-5 h-5 text-rose-600 group-hover:text-white transition-colors" /> Warning
-                      </button>
+                  {showReminder && (
+                    <div className="border-t border-slate-100 pt-6 space-y-4">
+                      <h4 className="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-1.5">
+                        <Bell className="w-4 h-4 text-rose-500 animate-bounce" /> Bulk Alert Transmission
+                      </h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        <button 
+                          type="button"
+                          onClick={() => handleBulkReminders('Gentle Reminder')}
+                          className="py-3.5 px-2 bg-slate-50 hover:bg-[#7C3AED] hover:text-white text-[#7C3AED] hover:shadow-lg hover:shadow-indigo-500/20 border-2 border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex flex-col items-center gap-1.5 group active:scale-95"
+                        >
+                          <Info className="w-5 h-5 text-[#7C3AED] group-hover:text-white transition-colors" /> Gentle
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => handleBulkReminders('Reminder')}
+                          className="py-3.5 px-2 bg-slate-50 hover:bg-amber-500 hover:text-white text-amber-600 hover:shadow-lg hover:shadow-amber-500/20 border-2 border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex flex-col items-center gap-1.5 group active:scale-95"
+                        >
+                          <Bell className="w-5 h-5 text-amber-500 group-hover:text-white transition-colors" /> Reminder
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => handleBulkReminders('Warning')}
+                          className="py-3.5 px-2 bg-slate-50 hover:bg-rose-600 hover:text-white text-rose-600 hover:shadow-lg hover:shadow-rose-500/20 border-2 border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex flex-col items-center gap-1.5 group active:scale-95"
+                        >
+                          <AlertTriangle className="w-5 h-5 text-rose-600 group-hover:text-white transition-colors" /> Warning
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })()
@@ -1171,7 +1175,7 @@ export default function HODTaskDetails() {
                             <p className="text-[10px] font-bold text-indigo-700/70 dark:text-indigo-400/80">{formatDate(currentAssign.submitted_at)}</p>
                           </div>
                         </div>
-                        {currentAssign.is_delayed === 1 && (
+                        {showDeadlineTracking && currentAssign.is_delayed === 1 && (
                           <div className="text-right">
                             <span className="px-2 py-0.5 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/35 text-rose-600 dark:text-rose-400 rounded-lg text-[8px] font-black uppercase tracking-widest">Delay Checked</span>
                             <p className="text-[10px] font-bold text-rose-500/70 dark:text-rose-400/80 mt-1">
@@ -1304,7 +1308,7 @@ export default function HODTaskDetails() {
                     )}
 
                     {/* Push Alerts triggers if not approved and not submitted */}
-                    {!['Approved', 'Completed', 'Submitted', 'Under Review'].includes(currentAssign.status) && (
+                    {showReminder && !['Approved', 'Completed', 'Submitted', 'Under Review'].includes(currentAssign.status) && (
                       <div className="p-4 bg-slate-50 dark:bg-[#1A0F35] rounded-2xl border border-slate-100 dark:border-violet-500/15 space-y-3">
                         <h4 className="text-[9px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest flex items-center gap-1.5"><Bell className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" /> Dispatch Push Reminders</h4>
                         <div className="grid grid-cols-3 gap-2">
@@ -1541,7 +1545,7 @@ export default function HODTaskDetails() {
                 
                 {unacceptedFaculty.length > 0 && (
                   <div className="flex items-center gap-3">
-                    {selectedUnacceptedFacultyIds.length > 0 && (
+                    {showReminder && selectedUnacceptedFacultyIds.length > 0 && (
                       <button
                         type="button"
                         onClick={handleBulkPingFaculty}
@@ -1617,14 +1621,16 @@ export default function HODTaskDetails() {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handlePingFaculty(task.id, fac.id, fac.name)}
-                          className="px-3.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg shadow-amber-500/10 flex items-center gap-1.5 active:scale-95 shrink-0"
-                          title="Send interactive push notice to accept this broadcast task"
-                        >
-                          <Bell className="w-3.5 h-3.5" /> Ping
-                        </button>
+                        {showReminder && (
+                          <button
+                            type="button"
+                            onClick={() => handlePingFaculty(task.id, fac.id, fac.name)}
+                            className="px-3.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg shadow-amber-500/10 flex items-center gap-1.5 active:scale-95 shrink-0"
+                            title="Send interactive push notice to accept this broadcast task"
+                          >
+                            <Bell className="w-3.5 h-3.5" /> Ping
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
