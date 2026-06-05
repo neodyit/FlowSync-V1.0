@@ -34,6 +34,14 @@ try {
     $collegeId = $context['college_id'];
     $myDeptId = $context['department_id'];
 
+    require_once __DIR__ . '/../../src/Utils/FeatureService.php';
+    if (!\FlowSync\Utils\FeatureService::isEnabled($collegeId, 'leaderboard_faculty') && 
+        !\FlowSync\Utils\FeatureService::isEnabled($collegeId, 'leaderboard_department')) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Leaderboard features are disabled for your institution.']);
+        exit;
+    }
+
     // 2. Departmental Comparison (Within the same College)
     $stmt = $db->prepare("
         SELECT 

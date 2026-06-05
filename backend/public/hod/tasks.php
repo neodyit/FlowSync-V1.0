@@ -187,9 +187,16 @@ try {
 
             // Create assignment record for individual and group tasks only if not draft
             if (!$isDraft && !$isBroadcast && !empty($assignedToIds)) {
-                $stmt = $db->prepare("INSERT INTO task_assignments (task_id, user_id, status) VALUES (:tid, :uid, 'Accepted') ON DUPLICATE KEY UPDATE status = 'Accepted'");
+                // Fetch college auto_accept_tasks setting
+                $stmtCol = $db->prepare("SELECT auto_accept_tasks FROM colleges WHERE id = :cid LIMIT 1");
+                $stmtCol->execute(['cid' => $collegeId]);
+                $col = $stmtCol->fetch();
+                $autoAccept = $col ? ($col['auto_accept_tasks'] == 1) : true;
+                $assignmentStatus = $autoAccept ? 'Accepted' : 'Assigned';
+
+                $stmt = $db->prepare("INSERT INTO task_assignments (task_id, user_id, status) VALUES (:tid, :uid, :status) ON DUPLICATE KEY UPDATE status = VALUES(status)");
                 foreach ($assignedToIds as $uid) {
-                    $stmt->execute(['tid' => $taskId, 'uid' => $uid]);
+                    $stmt->execute(['tid' => $taskId, 'uid' => $uid, 'status' => $assignmentStatus]);
                 }
             }
 

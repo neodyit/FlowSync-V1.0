@@ -38,10 +38,14 @@ interface Task {
 
 const FacultyTasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTaskFiles, setSelectedTaskFiles] = useState<Task | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<{url: string, name: string, type: string} | null>(null);
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const allowDecline = user.features ? (user.features.allow_task_decline !== false) : true;
 
   const fetchTasks = async () => {
     try {
@@ -51,6 +55,7 @@ const FacultyTasks: React.FC = () => {
       const data = await response.json();
       if (data.status === 'success') {
         setTasks(data.data);
+        setPendingTasks(data.pending || []);
       }
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
@@ -77,7 +82,7 @@ const FacultyTasks: React.FC = () => {
     }
   }, [tasks]);
 
-  const handleAccept = async (taskId: number) => {
+  const handleAccept = async (taskId: number, isPendingAssigned = false) => {
     const result = await Swal.fire({
       title: 'Accept Task?',
       text: "You are committing to complete this task.",
@@ -96,11 +101,19 @@ const FacultyTasks: React.FC = () => {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/faculty/tasks.php`, {
-          method: 'POST',
+        const url = isPendingAssigned 
+          ? `${import.meta.env.VITE_API_URL}/faculty/my_tasks.php`
+          : `${import.meta.env.VITE_API_URL}/faculty/tasks.php`;
+        const method = isPendingAssigned ? 'PUT' : 'POST';
+        const body = isPendingAssigned 
+          ? JSON.stringify({ task_id: taskId, status: 'In Progress' })
+          : JSON.stringify({ task_id: taskId, action: 'accept' });
+
+        const response = await fetch(url, {
+          method,
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ task_id: taskId, action: 'accept' })
+          body
         });
         const data = await response.json();
         if (data.status === 'success') {
@@ -110,6 +123,52 @@ const FacultyTasks: React.FC = () => {
             icon: 'success',
             timer: 2000,
             showConfirmButton: false
+          });
+          fetchTasks();
+        } else {
+          Swal.fire('Error', data.message, 'error');
+        }
+      } catch (error) {
+        Swal.fire('Error', 'Connection failed', 'error');
+      }
+    }
+  };
+
+  const handleDeclineAssigned = async (taskId: number) => {
+    const result = await Swal.fire({
+      title: 'Decline Task?',
+      text: "Are you sure you want to decline this assigned task?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EF4444',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: 'Yes, Decline',
+      background: '#ffffff',
+      customClass: {
+        popup: 'rounded-[2rem]',
+        confirmButton: 'rounded-xl font-bold px-6 py-3',
+        cancelButton: 'rounded-xl font-bold px-6 py-3'
+      }
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/faculty/my_tasks.php`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ task_id: taskId, status: 'Declined' })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+          Swal.fire({
+            title: 'Declined',
+            text: 'Task declined successfully.',
+            icon: 'info',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1500
           });
           fetchTasks();
         } else {
@@ -188,128 +247,196 @@ const FacultyTasks: React.FC = () => {
             <div key={i} className="h-64 bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] animate-pulse border border-[#7C3AED]/10 dark:border-violet-500/15" />
           ))}
         </div>
-      ) : tasks.length === 0 ? (
-        <div className="bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] border border-[#7C3AED]/10 dark:border-violet-500/15 p-20 text-center">
-          <div className="w-20 h-20 bg-[#7C3AED]/5 dark:bg-[#7C3AED]/15 rounded-3xl flex items-center justify-center mx-auto mb-6">
-            <CheckSquare className="w-10 h-10 text-[#7C3AED]/20 dark:text-[#7C3AED]/35" />
-          </div>
-          <h2 className="text-2xl font-black text-[#1E184B]/30 dark:text-violet-400/40 uppercase tracking-widest">Feed Clear</h2>
-          <p className="text-[#1E184B]/40 dark:text-violet-400/50 font-bold mt-2">No broadcasted tasks available at the moment.</p>
-        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <AnimatePresence>
-            {tasks.map((task, idx) => (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ delay: idx * 0.05 }}
-                key={task.id}
-                onClick={() => setSelectedTaskFiles(task)}
-                className="bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] border border-[#7C3AED]/10 dark:border-violet-500/15 p-7 flex flex-col shadow-sm hover:shadow-2xl hover:shadow-[#7C3AED]/10 dark:hover:shadow-violet-500/[0.03] transition-all group relative overflow-hidden cursor-pointer"
-              >
-                <div className="absolute -top-12 -right-12 w-24 h-24 bg-[#7C3AED]/5 rounded-full blur-2xl group-hover:bg-[#7C3AED]/10 transition-colors" />
-
-                <div className="flex items-start justify-between mb-4 relative">
-                  <span className={cn(
-                    "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
-                    getPriorityColor(task.priority)
-                  )}>
-                    {task.priority} Priority
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <div className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/20 text-[#7C3AED] dark:text-indigo-400 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 border border-indigo-100 dark:border-indigo-900/35">
-                      <HandMetal className="w-3 h-3" />
-                      Group Mission
-                    </div>
-                  </div>
-                </div>
-
-                <h3 className="text-xl font-black text-[#1E184B] dark:text-indigo-100 mb-2 group-hover:text-[#7C3AED] dark:group-hover:text-violet-400 transition-colors line-clamp-1">{task.title}</h3>
-                <p className="text-[#1E184B]/60 dark:text-violet-400/50 text-sm font-medium mb-8 line-clamp-3 leading-relaxed">
-                  {task.description || "No description provided."}
-                </p>
-
-                <div className="mt-auto space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-[#110A24] border border-slate-100 dark:border-violet-500/10">
-                      <Clock className="w-4 h-4 text-amber-500" />
-                      <div className="flex flex-col">
-                        <span className="text-[8px] font-black text-slate-400 dark:text-violet-400/50 uppercase tracking-[0.1em]">Deadline</span>
-                        <span className="text-[10px] font-black text-slate-700 dark:text-indigo-100">
-                          {formatDate(task.deadline)}
+        <div className="space-y-12">
+          {/* Pending Acceptance Tasks */}
+          {pendingTasks.length > 0 && (
+            <section className="space-y-6">
+              <h2 className="text-xs font-black text-amber-500 dark:text-amber-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                <span className="w-8 h-[2px] bg-amber-500/20" />
+                Pending Acceptance ({pendingTasks.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {pendingTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    onClick={() => setSelectedTaskFiles(task)}
+                    className="bg-amber-500/[0.02] dark:bg-amber-500/[0.01] rounded-[2.5rem] border border-amber-500/20 p-7 shadow-sm hover:shadow-2xl hover:shadow-amber-500/5 transition-all relative overflow-hidden cursor-pointer flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between mb-4 relative">
+                        <span className={cn(
+                          "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
+                          getPriorityColor(task.priority)
+                        )}>
+                          {task.priority} Priority
                         </span>
+                        <div className="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 border border-amber-500/20">
+                          Assigned
+                        </div>
                       </div>
+
+                      <h3 className="text-xl font-black text-[#1E184B] dark:text-indigo-100 mb-2 truncate">{task.title}</h3>
+                      <p className="text-[#1E184B]/60 dark:text-violet-400/50 text-sm font-medium mb-6 line-clamp-2 leading-relaxed">
+                        {task.description || "No description provided."}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-3 p-4 rounded-2xl bg-indigo-50/30 dark:bg-indigo-950/10 border border-indigo-100/50 dark:border-indigo-900/35">
-                      <HandMetal className="w-4 h-4 text-[#7C3AED] dark:text-[#7C3AED]" />
-                      <div className="flex flex-col">
-                        <span className="text-[8px] font-black text-slate-400 dark:text-violet-400/50 uppercase tracking-[0.1em]">Joined</span>
-                        <span className="text-[10px] font-black text-[#7C3AED] dark:text-[#7C3AED]">
-                          {task.participant_count} Members
-                        </span>
-                      </div>
-                    </div>
-                  </div>
 
-                  {task.task_link && (
-                    <a 
-                      href={task.task_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-full flex items-center justify-between p-3.5 bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-100/50 dark:border-emerald-900/35 rounded-2xl hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all group/link shadow-sm"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span className="text-[10px] font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-widest truncate">Mission Link</span>
-                      </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-emerald-600 group-hover/link:translate-x-1 transition-transform" />
-                    </a>
-                  )}
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleAccept(task.id); }}
-                      className="flex-1 py-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#7C3AED]/20 transition-all flex items-center justify-center gap-2 active:scale-95"
-                    >
-                      Accept
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleReject(task.id); }}
-                      className="p-4 bg-rose-50 dark:bg-rose-950/20 text-rose-500 dark:text-rose-400 hover:bg-rose-500 hover:text-white rounded-2xl border border-transparent dark:border-rose-900/35 transition-all shadow-sm active:scale-95"
-                    >
-                      <ThumbsDown className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 dark:text-violet-400/50">
-                      <div className="w-5 h-5 bg-slate-50 dark:bg-[#110A24] rounded-full flex items-center justify-center overflow-hidden border border-slate-100 dark:border-violet-500/10">
-                        {task.assigned_by_pic ? (
-                          <img 
-                            src={`${import.meta.env.VITE_API_URL}/${task.assigned_by_pic}`} 
-                            alt={task.assigned_by_name} 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <User className="w-3 h-3 text-slate-300" />
+                    <div className="space-y-4">
+                      <div className={cn("grid gap-3 pt-5 border-t border-slate-100 dark:border-violet-500/10", allowDecline ? "grid-cols-2" : "grid-cols-1")}>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleAccept(task.id, true); }}
+                          className="py-3 bg-[#7C3AED] text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-[#6D28D9] transition-all shadow-md shadow-[#7C3AED]/15 cursor-pointer"
+                        >
+                          Accept
+                        </button>
+                        {allowDecline && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDeclineAssigned(task.id); }}
+                            className="py-3 bg-white dark:bg-[#110A24] text-rose-500 dark:text-rose-400 border border-rose-100 dark:border-rose-900/35 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-rose-50 transition-all cursor-pointer"
+                          >
+                            Decline
+                          </button>
                         )}
                       </div>
-                      {task.assigned_by_name}
                     </div>
-                    {task.attachment_count > 0 && (
-                      <span className="text-[10px] font-black text-[#7C3AED] bg-[#7C3AED]/5 dark:bg-[#7C3AED]/15 px-2 py-1 rounded-lg">
-                        {task.attachment_count} Resources
-                      </span>
-                    )}
                   </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Broadcasted Tasks Feed */}
+          <section className="space-y-6">
+            <h2 className="text-xs font-black text-[#1E184B]/40 dark:text-violet-400/50 uppercase tracking-[0.2em] flex items-center gap-3">
+              <span className="w-8 h-[2px] bg-[#7C3AED]/20" />
+              Available Broadcasts ({tasks.length})
+            </h2>
+            {tasks.length === 0 ? (
+              <div className="bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] border border-[#7C3AED]/10 dark:border-violet-500/15 p-20 text-center">
+                <div className="w-20 h-20 bg-[#7C3AED]/5 dark:bg-[#7C3AED]/15 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                  <CheckSquare className="w-10 h-10 text-[#7C3AED]/20 dark:text-[#7C3AED]/35" />
                 </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+                <h2 className="text-2xl font-black text-[#1E184B]/30 dark:text-violet-400/40 uppercase tracking-widest">Feed Clear</h2>
+                <p className="text-[#1E184B]/40 dark:text-violet-400/50 font-bold mt-2">No broadcasted tasks available at the moment.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <AnimatePresence>
+                  {tasks.map((task, idx) => (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ delay: idx * 0.05 }}
+                      key={task.id}
+                      onClick={() => setSelectedTaskFiles(task)}
+                      className="bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] border border-[#7C3AED]/10 dark:border-violet-500/15 p-7 flex flex-col shadow-sm hover:shadow-2xl hover:shadow-[#7C3AED]/10 dark:hover:shadow-violet-500/[0.03] transition-all group relative overflow-hidden cursor-pointer"
+                    >
+                      <div className="absolute -top-12 -right-12 w-24 h-24 bg-[#7C3AED]/5 rounded-full blur-2xl group-hover:bg-[#7C3AED]/10 transition-colors" />
+
+                      <div className="flex items-start justify-between mb-4 relative">
+                        <span className={cn(
+                          "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
+                          getPriorityColor(task.priority)
+                        )}>
+                          {task.priority} Priority
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <div className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/20 text-[#7C3AED] dark:text-indigo-400 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 border border-indigo-100 dark:border-indigo-900/35">
+                            <HandMetal className="w-3 h-3" />
+                            Group Mission
+                          </div>
+                        </div>
+                      </div>
+
+                      <h3 className="text-xl font-black text-[#1E184B] dark:text-indigo-100 mb-2 group-hover:text-[#7C3AED] dark:group-hover:text-violet-400 transition-colors line-clamp-1">{task.title}</h3>
+                      <p className="text-[#1E184B]/60 dark:text-violet-400/50 text-sm font-medium mb-8 line-clamp-3 leading-relaxed">
+                        {task.description || "No description provided."}
+                      </p>
+
+                      <div className="mt-auto space-y-4">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-[#110A24] border border-slate-100 dark:border-violet-500/10">
+                            <Clock className="w-4 h-4 text-amber-500" />
+                            <div className="flex flex-col">
+                              <span className="text-[8px] font-black text-slate-400 dark:text-violet-400/50 uppercase tracking-[0.1em]">Deadline</span>
+                              <span className="text-[10px] font-black text-slate-700 dark:text-indigo-100">
+                                {formatDate(task.deadline)}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 p-4 rounded-2xl bg-indigo-50/30 dark:bg-indigo-950/10 border border-indigo-100/50 dark:border-indigo-900/35">
+                            <HandMetal className="w-4 h-4 text-[#7C3AED] dark:text-[#7C3AED]" />
+                            <div className="flex flex-col">
+                              <span className="text-[8px] font-black text-slate-400 dark:text-violet-400/50 uppercase tracking-[0.1em]">Joined</span>
+                              <span className="text-[10px] font-black text-[#7C3AED] dark:text-[#7C3AED]">
+                                {task.participant_count} Members
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {task.task_link && (
+                          <a 
+                            href={task.task_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full flex items-center justify-between p-3.5 bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-100/50 dark:border-emerald-900/35 rounded-2xl hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all group/link shadow-sm"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <span className="text-[10px] font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-widest truncate">Mission Link</span>
+                            </div>
+                            <ArrowRight className="w-3.5 h-3.5 text-emerald-600 group-hover/link:translate-x-1 transition-transform" />
+                          </a>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleAccept(task.id); }}
+                            className="flex-1 py-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#7C3AED]/20 transition-all flex items-center justify-center gap-2 active:scale-95"
+                          >
+                            Accept
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleReject(task.id); }}
+                            className="p-4 bg-rose-50 dark:bg-rose-950/20 text-rose-500 dark:text-rose-400 hover:bg-rose-500 hover:text-white rounded-2xl border border-transparent dark:border-rose-900/35 transition-all shadow-sm active:scale-95"
+                          >
+                            <ThumbsDown className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 dark:text-violet-400/50">
+                            <div className="w-5 h-5 bg-slate-50 dark:bg-[#110A24] rounded-full flex items-center justify-center overflow-hidden border border-slate-100 dark:border-violet-500/10">
+                              {task.assigned_by_pic ? (
+                                <img 
+                                  src={`${import.meta.env.VITE_API_URL}/${task.assigned_by_pic}`} 
+                                  alt={task.assigned_by_name} 
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <User className="w-3 h-3 text-slate-300" />
+                              )}
+                            </div>
+                            {task.assigned_by_name}
+                          </div>
+                          {task.attachment_count > 0 && (
+                            <span className="text-[10px] font-black text-[#7C3AED] bg-[#7C3AED]/5 dark:bg-[#7C3AED]/15 px-2 py-1 rounded-lg">
+                              {task.attachment_count} Resources
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </section>
         </div>
       )}
 
@@ -477,19 +604,28 @@ const FacultyTasks: React.FC = () => {
               {/* Action buttons footer */}
               <div className="flex flex-wrap items-center gap-4 mt-10 pt-6 border-t border-slate-100 dark:border-violet-500/10">
                 <button
-                  onClick={() => { setSelectedTaskFiles(null); handleAccept(selectedTaskFiles.id); }}
+                  onClick={() => { setSelectedTaskFiles(null); handleAccept(selectedTaskFiles.id, !!selectedTaskFiles.my_status); }}
                   className="flex-1 min-w-[200px] py-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#7C3AED]/20 transition-all flex items-center justify-center gap-2 active:scale-95"
                 >
                   Accept Mission Briefing
                   <ArrowRight className="w-4 h-4" />
                 </button>
-                <button
-                  onClick={() => { setSelectedTaskFiles(null); handleReject(selectedTaskFiles.id); }}
-                  className="px-6 py-4 bg-rose-50 dark:bg-rose-950/15 text-rose-500 dark:text-rose-400 hover:bg-rose-500 hover:text-white rounded-2xl font-black text-xs uppercase tracking-widest border border-transparent dark:border-rose-900/35 transition-all shadow-sm active:scale-95"
-                  title="Decline Mission"
-                >
-                  <ThumbsDown className="w-4.5 h-4.5" />
-                </button>
+                {(!selectedTaskFiles.my_status || allowDecline) && (
+                  <button
+                    onClick={() => { 
+                      setSelectedTaskFiles(null); 
+                      if (selectedTaskFiles.my_status) {
+                        handleDeclineAssigned(selectedTaskFiles.id);
+                      } else {
+                        handleReject(selectedTaskFiles.id); 
+                      }
+                    }}
+                    className="px-6 py-4 bg-rose-50 dark:bg-rose-950/15 text-rose-500 dark:text-rose-400 hover:bg-rose-500 hover:text-white rounded-2xl font-black text-xs uppercase tracking-widest border border-transparent dark:border-rose-900/35 transition-all shadow-sm active:scale-95"
+                    title={selectedTaskFiles.my_status ? "Decline Mission" : "Ignore Mission"}
+                  >
+                    <ThumbsDown className="w-4.5 h-4.5" />
+                  </button>
+                )}
                 <button
                   onClick={() => setSelectedTaskFiles(null)}
                   className="py-4 px-6 bg-slate-100 dark:bg-[#110A24] hover:bg-slate-200 dark:hover:bg-[#1A0F35] text-[#1E184B] dark:text-indigo-100 rounded-2xl font-black uppercase tracking-widest text-xs border border-transparent dark:border-violet-500/10 transition-all"

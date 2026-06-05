@@ -101,6 +101,7 @@ interface Task {
 const FacultyMyTasks: React.FC = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const userId = user.id;
+  const allowDecline = user.features ? (user.features.allow_task_decline !== false) : true;
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -288,7 +289,12 @@ const FacultyMyTasks: React.FC = () => {
         window.dispatchEvent(new CustomEvent('refresh-notifications'));
         fetchTasks();
         if (selectedTask?.id === taskId) {
-          setSelectedTask(prev => prev ? ({ ...prev, status, progress: progress ?? prev.progress }) : null);
+          if (status === 'Declined') {
+            setIsDetailModalOpen(false);
+            setSelectedTask(null);
+          } else {
+            setSelectedTask(prev => prev ? ({ ...prev, status, progress: progress ?? prev.progress }) : null);
+          }
         }
       }
     } catch (error) {
@@ -421,10 +427,12 @@ const FacultyMyTasks: React.FC = () => {
   };
 
   const filteredTasks = tasks.filter(t => 
-    t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    (t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.description?.toLowerCase().includes(searchQuery.toLowerCase())) &&
+    t.status !== 'Assigned'
   );
 
+  const pendingTasks: Task[] = [];
   const activeTasks = filteredTasks.filter(t => !['Completed', 'Approved', 'Declined', 'Rejected'].includes(t.status));
   const completedTasks = filteredTasks.filter(t => ['Completed', 'Approved'].includes(t.status));
 
@@ -474,6 +482,73 @@ const FacultyMyTasks: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-12">
+          {/* Pending Acceptance Tasks */}
+          {pendingTasks.length > 0 && (
+            <section className="space-y-6">
+              <h2 className="text-xs font-black text-amber-500 dark:text-amber-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                <span className="w-8 h-[2px] bg-amber-500/20" />
+                Pending Acceptance ({pendingTasks.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {pendingTasks.map((task) => {
+                  const flag = getFlagConfig(task.flag_color);
+                  return (
+                    <div
+                      key={task.id}
+                      onClick={() => { setSelectedTask(task); setIsDetailModalOpen(true); }}
+                      className="bg-amber-500/[0.02] dark:bg-amber-500/[0.01] rounded-[2.5rem] border border-amber-500/20 p-7 shadow-sm hover:shadow-2xl hover:shadow-amber-500/5 transition-all relative overflow-hidden cursor-pointer"
+                    >
+                      {flag && (
+                        <div className={cn("absolute top-4 right-4 w-3 h-3 rounded-full animate-pulse shadow-lg", flag.bg)} />
+                      )}
+
+                      <div className="flex items-start justify-between mb-5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                            Action Required
+                          </div>
+                          <div className={cn(
+                            "px-2.5 py-1 rounded-xl text-[8px] font-black uppercase tracking-wider border flex items-center gap-1 shadow-sm bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800/30"
+                          )}>
+                            {task.assignment_mode || 'individual'}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-amber-600">
+                            <Clock className="w-3 h-3" />
+                            {getDeadlineStatus(task.deadline).text}
+                          </div>
+                        </div>
+                      </div>
+
+                      <h3 className="text-xl font-black text-[#1E184B] dark:text-indigo-100 mb-2 truncate">{task.title}</h3>
+                      <p className="text-slate-400 dark:text-violet-400/50 text-sm font-medium mb-6 line-clamp-2 leading-relaxed">
+                        {task.description || "Instructional overview pending..."}
+                      </p>
+
+                      <div className={cn("grid gap-3 pt-5 border-t border-slate-100 dark:border-violet-500/10", allowDecline ? "grid-cols-2" : "grid-cols-1")}>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleUpdateStatus(task.id, 'In Progress'); }}
+                          className="py-3 bg-[#7C3AED] text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-[#6D28D9] transition-all shadow-md shadow-[#7C3AED]/15 cursor-pointer"
+                        >
+                          Accept
+                        </button>
+                        {allowDecline && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleUpdateStatus(task.id, 'Declined'); }}
+                            className="py-3 bg-white dark:bg-[#110A24] text-rose-500 dark:text-rose-400 border border-rose-100 dark:border-rose-900/35 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-rose-50 transition-all cursor-pointer"
+                          >
+                            Decline
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {/* Active Tasks */}
           <section>
             <h2 className="text-xs font-black text-[#1E184B]/40 dark:text-violet-400/50 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
@@ -990,19 +1065,21 @@ const FacultyMyTasks: React.FC = () => {
 
                         <div className="space-y-4">
                           {selectedTask.status === 'Assigned' && (
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className={cn("grid gap-3", allowDecline ? "grid-cols-2" : "grid-cols-1")}>
                               <button 
                                 onClick={() => handleUpdateStatus(selectedTask.id, 'In Progress')}
                                 className="py-4 bg-[#7C3AED] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#7C3AED]/20 hover:bg-[#6D28D9] transition-all"
                               >
                                 Accept Task
                               </button>
-                              <button 
-                                onClick={() => handleUpdateStatus(selectedTask.id, 'Declined')}
-                                className="py-4 bg-white dark:bg-[#110A24] text-rose-500 dark:text-rose-400 border border-rose-100 dark:border-rose-900/35 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all"
-                              >
-                                Decline
-                              </button>
+                              {allowDecline && (
+                                <button 
+                                  onClick={() => handleUpdateStatus(selectedTask.id, 'Declined')}
+                                  className="py-4 bg-white dark:bg-[#110A24] text-rose-500 dark:text-rose-400 border border-rose-100 dark:border-rose-900/35 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all"
+                                >
+                                  Decline
+                                </button>
+                              )}
                             </div>
                           )}
 

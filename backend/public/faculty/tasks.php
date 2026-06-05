@@ -26,7 +26,7 @@ try {
 
     switch ($method) {
         case 'GET':
-            // Fetch BROADCASTED tasks for this department
+
             // Fetch BROADCASTED tasks for this department that the user hasn't accepted yet
             $stmt = $db->prepare("
                 SELECT t.*, u.name as assigned_by_name, u.profile_pic as assigned_by_pic,
@@ -41,7 +41,7 @@ try {
             $stmt->execute(['dept_id' => $deptId, 'user_id' => $session['user_id']]);
             $tasks = $stmt->fetchAll();
 
-            // Fetch attachments for these tasks
+            // Fetch attachments for broadcasted tasks
             foreach ($tasks as &$task) {
                 $attStmt = $db->prepare("SELECT id, file_name, file_path FROM attachments WHERE entity_type = 'Task' AND entity_id = :task_id");
                 $attStmt->execute(['task_id' => $task['id']]);
@@ -49,7 +49,35 @@ try {
                 $task['attachment_count'] = count($task['attachments']);
             }
 
-            echo json_encode(['status' => 'success', 'data' => $tasks]);
+            // Fetch assigned tasks that are pending acceptance (status = 'Assigned')
+            $stmtPending = $db->prepare("
+                SELECT t.*, u.name as assigned_by_name, u.profile_pic as assigned_by_pic,
+                       ta.status as my_status,
+                       (SELECT COUNT(*) FROM task_assignments WHERE task_id = t.id) as participant_count
+                FROM tasks t
+                JOIN users u ON t.assigned_by_id = u.id
+                JOIN task_assignments ta ON t.id = ta.task_id
+                WHERE ta.user_id = :user_id 
+                AND ta.status = 'Assigned'
+                AND t.season_id = :season_id
+                ORDER BY t.created_at DESC
+            ");
+            $stmtPending->execute(['user_id' => $session['user_id'], 'season_id' => $currentSeasonId]);
+            $pending = $stmtPending->fetchAll();
+
+            // Fetch attachments for pending tasks
+            foreach ($pending as &$task) {
+                $attStmt = $db->prepare("SELECT id, file_name, file_path FROM attachments WHERE entity_type = 'Task' AND entity_id = :task_id");
+                $attStmt->execute(['task_id' => $task['id']]);
+                $task['attachments'] = $attStmt->fetchAll();
+                $task['attachment_count'] = count($task['attachments']);
+            }
+
+            echo json_encode([
+                'status' => 'success', 
+                'data' => $tasks,
+                'pending' => $pending
+            ]);
             break;
 
         case 'POST':

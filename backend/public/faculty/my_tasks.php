@@ -235,6 +235,8 @@ try {
             $facultyName = $session['name'] ?? 'Faculty';
             if ($newStatus === 'Accepted') {
                 $notifier->notifyHOD($deptId, 'TASK_ACCEPTED', "$facultyName has accepted the task: " . $assignment['title'], $taskId, $session['user_id']);
+            } elseif ($newStatus === 'Declined') {
+                $notifier->notifyHOD($deptId, 'TASK_DECLINED', "$facultyName has declined the task: " . $assignment['title'], $taskId, $session['user_id']);
             }
 
             echo json_encode(['status' => 'success', 'message' => "Task status updated to $newStatus"]);

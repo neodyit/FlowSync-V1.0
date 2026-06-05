@@ -21,8 +21,9 @@ try {
 try {
     // Get HOD's department context
     $stmt = $db->prepare("
-        SELECT d.id as department_id
+        SELECT d.id as department_id, u.college_id
         FROM departments d
+        JOIN users u ON d.hod_id = u.id
         WHERE d.hod_id = :user_id
         LIMIT 1
     ");
@@ -33,6 +34,14 @@ try {
         throw new Exception("You are not assigned as an HOD to any department.");
     }
     $deptId = $hodDept['department_id'];
+    $collegeId = $hodDept['college_id'];
+
+    require_once __DIR__ . '/../../src/Utils/FeatureService.php';
+    if (!\FlowSync\Utils\FeatureService::isEnabled($collegeId, 'reporting_department')) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Reporting features are disabled for your department/institution.']);
+        exit;
+    }
 
     // 1. Task Stats Summary
     $statsStmt = $db->prepare("

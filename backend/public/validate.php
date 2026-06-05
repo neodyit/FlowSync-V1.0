@@ -42,7 +42,46 @@ if ($session) {
         exit;
     }
 
-    echo json_encode(['status' => 'success', 'session' => $session]);
+    // Query enabled features for the user's college
+    $db = \FlowSync\Config\Database::getInstance()->getConnection();
+    // Fetch user details including college_id
+    $stmt = $db->prepare("SELECT college_id FROM users WHERE id = :uid LIMIT 1");
+    $stmt->execute(['uid' => $session['user_id']]);
+    $userRow = $stmt->fetch();
+    
+    $features = [];
+    $collegeEnabled = 1;
+    if ($userRow) {
+        // Fetch college enabled and auto_accept_tasks
+        $stmtCol = $db->prepare("SELECT is_enabled, auto_accept_tasks, allow_task_decline FROM colleges WHERE id = :cid LIMIT 1");
+        $stmtCol->execute(['cid' => $userRow['college_id']]);
+        $col = $stmtCol->fetch();
+        if ($col) {
+            $collegeEnabled = (int)$col['is_enabled'];
+            $features['task_auto_accept'] = ($col['auto_accept_tasks'] == 1);
+            $features['allow_task_decline'] = ($col['allow_task_decline'] == 1);
+        }
+
+        // Fetch features
+        $stmtF = $db->prepare("SELECT feature_key, is_enabled FROM college_features WHERE college_id = :cid");
+        $stmtF->execute(['cid' => $userRow['college_id']]);
+        $rows = $stmtF->fetchAll();
+        foreach ($rows as $r) {
+            $features[$r['feature_key']] = ($r['is_enabled'] == 1);
+        }
+    }
+
+    if ($collegeEnabled == 0) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Your institution has been deactivated.']);
+        exit;
+    }
+
+    echo json_encode([
+        'status' => 'success', 
+        'session' => $session,
+        'features' => $features
+    ]);
 } else {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);

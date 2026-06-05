@@ -42,6 +42,13 @@ if (!$collegeId) {
     exit;
 }
 
+require_once __DIR__ . '/../src/Utils/FeatureService.php';
+if ($roleId !== 1 && !\FlowSync\Utils\FeatureService::isEnabled($collegeId, 'season_management')) {
+    http_response_code(403);
+    echo json_encode(['status' => 'error', 'message' => 'Season Management feature is disabled for your institution.']);
+    exit;
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {

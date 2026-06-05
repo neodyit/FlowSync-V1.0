@@ -14,9 +14,22 @@ if (!$session) {
     exit;
 }
 
+require_once __DIR__ . '/../src/Utils/FeatureService.php';
+
 $currentUserId = $session['user_id'];
 
 try {
+    // Fetch user's college_id
+    $stmtCol = $db->prepare("SELECT college_id FROM users WHERE id = :uid LIMIT 1");
+    $stmtCol->execute(['uid' => $currentUserId]);
+    $collegeId = $stmtCol->fetchColumn();
+
+    if (!\FlowSync\Utils\FeatureService::isEnabled($collegeId, 'leaderboard_faculty')) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Leaderboard feature is disabled for your institution.']);
+        exit;
+    }
+
     // Get current user's department ID first
     $stmt = $db->prepare("
         SELECT department_id 

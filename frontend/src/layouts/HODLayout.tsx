@@ -85,10 +85,9 @@ export default function HODLayout() {
     }
   }, [location.pathname]);
   
-  // Get user from localStorage
   const [user, setUser] = useState(() => {
     const raw = localStorage.getItem('user');
-    return raw ? JSON.parse(raw) : { name: 'HOD User', role: 'Head of Department', role_id: 2 };
+    return raw ? JSON.parse(raw) : { name: 'HOD User', role: 'Head of Department', role_id: 2, features: {} };
   });
 
   const fetchUserData = async () => {
@@ -130,7 +129,21 @@ export default function HODLayout() {
     { name: 'Reports', icon: BarChart3, path: '/hod/reports' },
     { name: 'Settings', icon: Settings, path: '/hod/settings' },
     { name: 'Feedback', icon: MessageSquare, path: '/hod/feedback' },
-  ];
+  ].filter(item => {
+    if (item.name === 'Leaderboard') {
+      return user.features ? (user.features.leaderboard_faculty !== false || user.features.leaderboard_department !== false) : true;
+    }
+    if (item.name === 'Reports') {
+      return user.features ? (
+        user.features.reporting_personalized_faculty !== false ||
+        user.features.reporting_department !== false ||
+        user.features.reporting_institution !== false ||
+        user.features.reporting_historical !== false ||
+        user.features.reporting_performance_analytics !== false
+      ) : true;
+    }
+    return true;
+  });
 
   const initials = (user.name || 'User')
     .split(' ')
@@ -145,6 +158,15 @@ export default function HODLayout() {
       const sessionData = await checkSession();
       if (sessionData?.session?.maintenance) {
         navigate('/maintenance', { replace: true });
+      }
+      if (sessionData && sessionData.features) {
+        const raw = localStorage.getItem('user');
+        if (raw) {
+          const userObj = JSON.parse(raw);
+          userObj.features = sessionData.features;
+          localStorage.setItem('user', JSON.stringify(userObj));
+          setUser(userObj);
+        }
       }
     };
     validate();
@@ -172,6 +194,27 @@ export default function HODLayout() {
       const result = await response.json();
       if (result.status === 'success') {
         setNotifications(result.data.notifications);
+        
+        // Handle popup notifications broadcasted from administrators
+        const popups = (result.data.notifications || []).filter((n: any) => n.type === 'POPUP' && n.is_read == 0);
+        if (popups.length > 0) {
+          popups.forEach((popup: any) => {
+            Swal.fire({
+              title: popup.title || 'Broadcast Alert',
+              text: popup.message,
+              icon: 'info',
+              confirmButtonText: 'Acknowledge',
+              confirmButtonColor: '#7C3AED',
+              customClass: {
+                popup: 'rounded-3xl border border-[#7C3AED]/10 dark:border-violet-500/20 bg-white dark:bg-[#110A24] text-[#1E184B] dark:text-indigo-100 shadow-2xl',
+                title: 'font-black text-xl text-[#1E184B] dark:text-indigo-100',
+                confirmButton: 'rounded-xl px-10 py-3 font-black uppercase tracking-widest text-xs'
+              }
+            }).then(() => {
+              toggleReadStatus(popup.id, false);
+            });
+          });
+        }
         
         // Check notification settings and quiet hours
         let playSound = true;
