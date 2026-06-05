@@ -33,7 +33,9 @@ try {
                 FROM tasks t
                 JOIN users u ON t.assigned_by_id = u.id
                 JOIN task_assignments ta ON t.id = ta.task_id
+                JOIN users target_u ON ta.user_id = target_u.id
                 WHERE ta.user_id = :user_id AND t.season_id = :season_id
+                  AND (t.created_at >= target_u.created_at OR ta.is_manually_included = 1)
                 ORDER BY t.created_at DESC
             ");
             $stmt->execute(['user_id' => $session['user_id'], 'season_id' => $currentSeasonId]);

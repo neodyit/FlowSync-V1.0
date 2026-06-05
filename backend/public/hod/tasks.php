@@ -194,9 +194,38 @@ try {
                 $autoAccept = $col ? ($col['auto_accept_tasks'] == 1) : true;
                 $assignmentStatus = $autoAccept ? 'Accepted' : 'Assigned';
 
-                $stmt = $db->prepare("INSERT INTO task_assignments (task_id, user_id, status) VALUES (:tid, :uid, :status) ON DUPLICATE KEY UPDATE status = VALUES(status)");
+                // Fetch task created_at
+                $taskCreatedAtVal = date('Y-m-d H:i:s');
+                if ($taskId) {
+                    $stmtTaskTime = $db->prepare("SELECT created_at FROM tasks WHERE id = :id LIMIT 1");
+                    $stmtTaskTime->execute(['id' => $taskId]);
+                    $dbTaskTime = $stmtTaskTime->fetchColumn();
+                    if ($dbTaskTime) {
+                        $taskCreatedAtVal = $dbTaskTime;
+                    }
+                }
+
+                $stmtUser = $db->prepare("SELECT created_at FROM users WHERE id = :uid LIMIT 1");
+                $stmt = $db->prepare("
+                    INSERT INTO task_assignments (task_id, user_id, status, is_manually_included) 
+                    VALUES (:tid, :uid, :status, :is_manually) 
+                    ON DUPLICATE KEY UPDATE status = VALUES(status), is_manually_included = VALUES(is_manually_included)
+                ");
                 foreach ($assignedToIds as $uid) {
-                    $stmt->execute(['tid' => $taskId, 'uid' => $uid, 'status' => $assignmentStatus]);
+                    $stmtUser->execute(['uid' => $uid]);
+                    $userCreatedAtVal = $stmtUser->fetchColumn();
+                    
+                    $isManuallyIncludedVal = 0;
+                    if ($userCreatedAtVal && strtotime($userCreatedAtVal) > strtotime($taskCreatedAtVal)) {
+                        $isManuallyIncludedVal = 1;
+                    }
+                    
+                    $stmt->execute([
+                        'tid' => $taskId, 
+                        'uid' => $uid, 
+                        'status' => $assignmentStatus,
+                        'is_manually' => $isManuallyIncludedVal
+                    ]);
                 }
             }
 

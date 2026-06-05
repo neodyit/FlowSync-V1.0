@@ -17,7 +17,11 @@ try {
 
     $userId = $session['user_id'];
 
-    // 1. Merit Points (Total and Current Month)
+    // Fetch user creation date
+    $userStmt = $db->prepare("SELECT created_at FROM users WHERE id = :uid LIMIT 1");
+    $userStmt->execute(['uid' => $userId]);
+    $userCreatedAt = $userStmt->fetchColumn();
+
     // 1. Merit Points (Total and Current Month)
     $stmt = $db->prepare("SELECT total_points FROM leaderboard_points WHERE user_id = :user_id AND season_id = :season_id");
     $stmt->execute(['user_id' => $userId, 'season_id' => $currentSeasonId]);
@@ -31,8 +35,9 @@ try {
         AND CAST(COALESCE(ta.status, t.status) AS CHAR) IN ('Completed', 'Approved')
         AND COALESCE(ta.completed_at, t.completed_at, t.updated_at) >= DATE_FORMAT(NOW() ,'%Y-%m-01')
         AND t.season_id = :season_id
+        AND (t.created_at >= :user_created_at OR COALESCE(ta.is_manually_included, 0) = 1)
     ");
-    $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId, 'season_id' => $currentSeasonId]);
+    $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId, 'season_id' => $currentSeasonId, 'user_created_at' => $userCreatedAt]);
     $monthPoints = $stmt->fetchColumn() ?: 0;
 
     // 2. Active Missions
@@ -43,8 +48,9 @@ try {
         WHERE (t.assigned_to_id = :uid2 OR ta.user_id = :uid3)
         AND CAST(COALESCE(ta.status, t.status) AS CHAR) IN ('Assigned', 'Accepted', 'In Progress', 'Submitted', 'Under Review', 'Rework Required')
         AND t.season_id = :season_id
+        AND (t.created_at >= :user_created_at OR COALESCE(ta.is_manually_included, 0) = 1)
     ");
-    $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId, 'season_id' => $currentSeasonId]);
+    $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId, 'season_id' => $currentSeasonId, 'user_created_at' => $userCreatedAt]);
     $activeTasks = $stmt->fetchColumn();
     
     // 3. Completed Missions
@@ -55,8 +61,9 @@ try {
         WHERE (t.assigned_to_id = :uid2 OR ta.user_id = :uid3)
         AND CAST(COALESCE(ta.status, t.status) AS CHAR) IN ('Completed', 'Approved')
         AND t.season_id = :season_id
+        AND (t.created_at >= :user_created_at OR COALESCE(ta.is_manually_included, 0) = 1)
     ");
-    $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId, 'season_id' => $currentSeasonId]);
+    $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId, 'season_id' => $currentSeasonId, 'user_created_at' => $userCreatedAt]);
     $completedTasks = $stmt->fetchColumn();
 
     // 4. Pending Reviews
@@ -67,8 +74,9 @@ try {
         WHERE (t.assigned_to_id = :uid2 OR ta.user_id = :uid3)
         AND CAST(COALESCE(ta.status, t.status) AS CHAR) IN ('Submitted', 'Under Review')
         AND t.season_id = :season_id
+        AND (t.created_at >= :user_created_at OR COALESCE(ta.is_manually_included, 0) = 1)
     ");
-    $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId, 'season_id' => $currentSeasonId]);
+    $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId, 'season_id' => $currentSeasonId, 'user_created_at' => $userCreatedAt]);
     $pendingReviews = $stmt->fetchColumn();
 
     // 5. Merit Goal Progress
@@ -91,10 +99,11 @@ try {
         FROM tasks t
         LEFT JOIN task_assignments ta ON t.id = ta.task_id AND ta.user_id = :uid1
         WHERE (t.assigned_to_id = :uid2 OR ta.user_id = :uid3) AND t.season_id = :season_id
+        AND (t.created_at >= :user_created_at OR COALESCE(ta.is_manually_included, 0) = 1)
         ORDER BY updated_at DESC
         LIMIT 5
     ");
-    $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId, 'season_id' => $currentSeasonId]);
+    $stmt->execute(['uid1' => $userId, 'uid2' => $userId, 'uid3' => $userId, 'season_id' => $currentSeasonId, 'user_created_at' => $userCreatedAt]);
     $recentActivity = $stmt->fetchAll();
 
     echo json_encode([

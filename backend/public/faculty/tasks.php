@@ -27,6 +27,11 @@ try {
     switch ($method) {
         case 'GET':
 
+            // Fetch user creation date
+            $userStmt = $db->prepare("SELECT created_at FROM users WHERE id = :uid LIMIT 1");
+            $userStmt->execute(['uid' => $session['user_id']]);
+            $userCreatedAt = $userStmt->fetchColumn();
+
             // Fetch BROADCASTED tasks for this department that the user hasn't accepted yet
             $stmt = $db->prepare("
                 SELECT t.*, u.name as assigned_by_name, u.profile_pic as assigned_by_pic,
@@ -36,9 +41,10 @@ try {
                 WHERE t.department_id = :dept_id 
                 AND t.status = 'Broadcasted'
                 AND t.id NOT IN (SELECT task_id FROM task_assignments WHERE user_id = :user_id)
+                AND t.created_at >= :user_created_at
                 ORDER BY t.created_at DESC
             ");
-            $stmt->execute(['dept_id' => $deptId, 'user_id' => $session['user_id']]);
+            $stmt->execute(['dept_id' => $deptId, 'user_id' => $session['user_id'], 'user_created_at' => $userCreatedAt]);
             $tasks = $stmt->fetchAll();
 
             // Fetch attachments for broadcasted tasks
@@ -60,9 +66,10 @@ try {
                 WHERE ta.user_id = :user_id 
                 AND ta.status = 'Assigned'
                 AND t.season_id = :season_id
+                AND (t.created_at >= :user_created_at OR ta.is_manually_included = 1)
                 ORDER BY t.created_at DESC
             ");
-            $stmtPending->execute(['user_id' => $session['user_id'], 'season_id' => $currentSeasonId]);
+            $stmtPending->execute(['user_id' => $session['user_id'], 'season_id' => $currentSeasonId, 'user_created_at' => $userCreatedAt]);
             $pending = $stmtPending->fetchAll();
 
             // Fetch attachments for pending tasks

@@ -27,6 +27,7 @@ if ($method === 'GET') {
     
     $stmt = $db->prepare("
         SELECT u.id, u.name, u.email, u.role_id, u.phone, u.bio, u.achievements, u.profile_pic, u.is_public, u.designation,
+               u.created_at, u.is_active,
                r.name as role_name, d.name as department_name, c.name as college_name, u.college_id
         FROM users u
         JOIN roles r ON u.role_id = r.id
@@ -109,7 +110,9 @@ if ($method === 'GET') {
                 SUM(CASE WHEN t.deadline >= COALESCE(ta.submitted_at, NOW()) OR ta.status = 'approved' THEN 1 ELSE 0 END) as timely_tasks
             FROM task_assignments ta
             JOIN tasks t ON ta.task_id = t.id
+            JOIN users u ON ta.user_id = u.id
             WHERE ta.user_id = :uid AND t.season_id = :sid
+            AND (t.created_at >= u.created_at OR ta.is_manually_included = 1)
         ");
         $adherenceStmt->execute(['uid' => $targetId, 'sid' => $activeSeasonId]);
         $adherenceData = $adherenceStmt->fetch(PDO::FETCH_ASSOC);

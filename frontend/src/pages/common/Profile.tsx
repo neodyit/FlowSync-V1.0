@@ -15,7 +15,9 @@ import {
   CheckCircle2,
   Sparkles,
   ShieldCheck,
-  Building2
+  Building2,
+  Calendar,
+  Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Swal from 'sweetalert2';
@@ -45,6 +47,8 @@ interface UserProfile {
   tasks_completed?: number;
   leaderboard_rank?: number | string;
   adherence_rate?: number;
+  created_at?: string;
+  is_active?: number | boolean;
 }
 
 const Profile = () => {
@@ -349,7 +353,7 @@ const Profile = () => {
         <div className="lg:col-span-4 space-y-8">
           <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm">
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4" /> Contact Protocol
+              <ShieldCheck className="w-4 h-4 text-[#7C3AED]" /> Contact & System Details
             </h3>
             <div className="space-y-6">
               <div className="flex items-center gap-4 group">
@@ -368,6 +372,29 @@ const Profile = () => {
                 <div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Comm Line</p>
                   <p className="text-sm font-bold text-[#1E1B4B]">{profile.phone || 'No active line'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 group">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[#7C3AED]/10 group-hover:text-[#7C3AED] transition-all">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Joining Date</p>
+                  <p className="text-sm font-bold text-[#1E1B4B]">{profile.created_at ? new Date(profile.created_at).toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 group">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[#7C3AED]/10 group-hover:text-[#7C3AED] transition-all">
+                  <Activity className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Active Status</p>
+                  <span className={cn(
+                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-widest",
+                    profile.is_active ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                  )}>
+                    {profile.is_active ? "Active" : "Inactive"}
+                  </span>
                 </div>
               </div>
             </div>
