@@ -130,6 +130,9 @@ export default function HODLayout() {
     { name: 'Settings', icon: Settings, path: '/hod/settings' },
     { name: 'Feedback', icon: MessageSquare, path: '/hod/feedback' },
   ].filter(item => {
+    if (item.name === 'Faculty Groups') {
+      return user.features ? (user.features.task_group !== false) : true;
+    }
     if (item.name === 'Leaderboard') {
       return user.features ? (user.features.leaderboard_faculty !== false || user.features.leaderboard_department !== false) : true;
     }

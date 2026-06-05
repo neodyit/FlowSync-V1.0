@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   History, 
   Search, 
@@ -41,9 +42,10 @@ interface AuditLog {
 }
 
 const AuditLogs: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filterAction, setFilterAction] = useState('all');
   const [timeFrame, setTimeFrame] = useState('all');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
@@ -69,6 +71,13 @@ const AuditLogs: React.FC = () => {
   useEffect(() => {
     fetchLogs();
   }, []);
+
+  useEffect(() => {
+    const searchVal = searchParams.get('search');
+    if (searchVal !== null) {
+      setSearchQuery(searchVal);
+    }
+  }, [searchParams]);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);

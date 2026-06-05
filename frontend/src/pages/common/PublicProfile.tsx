@@ -29,12 +29,17 @@ interface UserProfile {
   email: string;
   role_name: string;
   department_name?: string;
+  college_name?: string;
   phone: string;
   bio: string;
   achievements: Achievement[];
   profile_pic: string | null;
   is_public: number;
   designation: string;
+  total_points?: number;
+  tasks_completed?: number;
+  leaderboard_rank?: number | string;
+  adherence_rate?: number;
 }
 
 const PublicProfile = () => {
@@ -144,11 +149,57 @@ const PublicProfile = () => {
               {profile.designation || 'Academic Professional'}
             </p>
             {profile.department_name && (
-              <p className="text-sm font-bold text-slate-400 mt-2 flex items-center justify-center md:justify-start gap-2">
-                <Building2 className="w-4 h-4" />
-                {profile.department_name}
-              </p>
+              <div className="text-sm font-bold text-slate-400 mt-2 flex flex-col gap-1 items-center md:items-start">
+                <p className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-[#7C3AED]" />
+                  {profile.department_name}
+                </p>
+                {profile.college_name && (
+                  <p className="text-xs text-[#7C3AED]/70 pl-6 uppercase tracking-wider font-extrabold">
+                    {profile.college_name}
+                  </p>
+                )}
+              </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics Dashboard Stats Card */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        {/* Total Points */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Points (Season)</span>
+          <div className="flex items-baseline gap-2 mt-4">
+            <span className="text-3xl font-black text-[#7C3AED]">{profile.total_points ?? 0}</span>
+            <span className="text-xs text-slate-400 font-bold">PTS</span>
+          </div>
+        </div>
+
+        {/* Leaderboard Standing */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Leaderboard Stand</span>
+          <div className="flex items-baseline gap-2 mt-4">
+            <span className="text-3xl font-black text-[#1E184B]">#{profile.leaderboard_rank ?? 'N/A'}</span>
+            <span className="text-xs text-slate-400 font-bold">RANK</span>
+          </div>
+        </div>
+
+        {/* Tasks Completed */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tasks Completed</span>
+          <div className="flex items-baseline gap-2 mt-4">
+            <span className="text-3xl font-black text-emerald-500">{profile.tasks_completed ?? 0}</span>
+            <span className="text-xs text-slate-400 font-bold">TASKS</span>
+          </div>
+        </div>
+
+        {/* Adherence Rate */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Task Adherence</span>
+          <div className="flex items-baseline gap-2 mt-4">
+            <span className="text-3xl font-black text-blue-500">{profile.adherence_rate ?? 100}%</span>
+            <span className="text-xs text-slate-400 font-bold">ON-TIME</span>
           </div>
         </div>
       </div>

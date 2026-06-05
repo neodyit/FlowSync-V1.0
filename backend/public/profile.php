@@ -27,15 +27,15 @@ if ($method === 'GET') {
     
     $stmt = $db->prepare("
         SELECT u.id, u.name, u.email, u.role_id, u.phone, u.bio, u.achievements, u.profile_pic, u.is_public, u.designation,
-               r.name as role_name, d.name as department_name
+               r.name as role_name, d.name as department_name, c.name as college_name, u.college_id
         FROM users u
         JOIN roles r ON u.role_id = r.id
+        LEFT JOIN colleges c ON u.college_id = c.id
         LEFT JOIN departments d ON (u.role_id = 2 AND d.hod_id = u.id) 
                             OR (u.role_id = 3 AND EXISTS(SELECT 1 FROM faculty_departments fd WHERE fd.user_id = u.id AND fd.department_id = d.id))
         WHERE u.id = :id
         LIMIT 1
     ");
-    // Note: The department join for faculty is a bit complex, might need refinement
     
     $stmt->execute(['id' => $targetId]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -45,6 +45,83 @@ if ($method === 'GET') {
         echo json_encode(['status' => 'error', 'message' => 'User not found.']);
         exit;
     }
+
+    // Get active season ID
+    $activeSeasonId = $GLOBALS['currentSeasonId'] ?? null;
+    if (!$activeSeasonId) {
+        require_once __DIR__ . '/../src/Utils/AcademicSeasonManager.php';
+        $activeSeasonId = \FlowSync\Utils\AcademicSeasonManager::getCurrentSeasonId($targetId);
+    }
+
+    $totalPoints = 0;
+    $tasksCompleted = 0;
+    $leaderboardRank = 'N/A';
+    $adherenceRate = 0; // Default
+
+    if ($activeSeasonId) {
+        // Fetch points and completed tasks
+        $lpStmt = $db->prepare("
+            SELECT total_points, tasks_completed 
+            FROM leaderboard_points 
+            WHERE user_id = :uid AND season_id = :sid
+            LIMIT 1
+        ");
+        $lpStmt->execute(['uid' => $targetId, 'sid' => $activeSeasonId]);
+        $lpData = $lpStmt->fetch(PDO::FETCH_ASSOC);
+        if ($lpData) {
+            $totalPoints = (int)$lpData['total_points'];
+            $tasksCompleted = (int)$lpData['tasks_completed'];
+        }
+
+        // Calculate rank in department if role is Faculty (3)
+        if ((int)$user['role_id'] === 3) {
+            // Get department first
+            $deptStmt = $db->prepare("SELECT department_id FROM faculty_departments WHERE user_id = :uid LIMIT 1");
+            $deptStmt->execute(['uid' => $targetId]);
+            $deptId = $deptStmt->fetchColumn();
+
+            if ($deptId) {
+                $rankStmt = $db->prepare("
+                    SELECT lp.user_id
+                    FROM leaderboard_points lp
+                    JOIN users u ON lp.user_id = u.id
+                    JOIN faculty_departments fd ON u.id = fd.user_id
+                    WHERE u.role_id = 3
+                      AND fd.department_id = :dept_id
+                      AND lp.season_id = :season_id
+                    ORDER BY lp.total_points DESC, lp.tasks_completed DESC, lp.bonus_points DESC, lp.updated_at ASC
+                ");
+                $rankStmt->execute(['dept_id' => $deptId, 'season_id' => $activeSeasonId]);
+                $rankings = $rankStmt->fetchAll(PDO::FETCH_COLUMN);
+                
+                $foundRank = array_search($targetId, $rankings);
+                if ($foundRank !== false) {
+                    $leaderboardRank = $foundRank + 1;
+                }
+            }
+        }
+
+        // Calculate adherence rate based on task reviews (approved vs rejected or submitted within deadline)
+        // simple adherence = (completed within deadline / total assigned tasks) * 100
+        $adherenceStmt = $db->prepare("
+            SELECT 
+                COUNT(*) as total_tasks,
+                SUM(CASE WHEN t.deadline >= COALESCE(ta.submitted_at, NOW()) OR ta.status = 'approved' THEN 1 ELSE 0 END) as timely_tasks
+            FROM task_assignments ta
+            JOIN tasks t ON ta.task_id = t.id
+            WHERE ta.user_id = :uid AND t.season_id = :sid
+        ");
+        $adherenceStmt->execute(['uid' => $targetId, 'sid' => $activeSeasonId]);
+        $adherenceData = $adherenceStmt->fetch(PDO::FETCH_ASSOC);
+        if ($adherenceData && (int)$adherenceData['total_tasks'] > 0) {
+            $adherenceRate = round(((int)$adherenceData['timely_tasks'] / (int)$adherenceData['total_tasks']) * 100);
+        }
+    }
+
+    $user['total_points'] = $totalPoints;
+    $user['tasks_completed'] = $tasksCompleted;
+    $user['leaderboard_rank'] = $leaderboardRank;
+    $user['adherence_rate'] = $adherenceRate;
 
     // Privacy check
     if ($targetId != $userId && $user['is_public'] == 0) {

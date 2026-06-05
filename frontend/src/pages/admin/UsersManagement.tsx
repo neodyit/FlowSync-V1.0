@@ -21,6 +21,7 @@ import {
   Wifi
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { ProfileCard } from '@/components/ui/info-card';
@@ -146,6 +147,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 };
 
 const UsersManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [colleges, setColleges] = useState<College[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -549,15 +551,8 @@ const UsersManagement: React.FC = () => {
                   onEdit={user.id === 1 ? undefined : () => handleOpenModal(user)}
                   onToggleStatus={user.id === 1 ? undefined : () => handleToggleStatus(user)}
                   onDelete={user.id === 1 ? undefined : () => handleDeleteUser(user.id)}
-                  onLogs={() => MySwal.fire({
-                    title: 'Activity Logs',
-                    text: `Viewing activity protocol for ${user.name}...`,
-                    icon: 'info',
-                    timer: 2000,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
-                  })}
+                  onClickName={() => navigate(`/admin/profile?id=${user.id}`)}
+                  onLogs={() => navigate(`/admin/audit?search=${encodeURIComponent(user.name)}`)}
                 />
               </motion.div>
             ))}

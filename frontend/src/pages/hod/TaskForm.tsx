@@ -126,6 +126,8 @@ const HODTaskForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const showGroup = user.features ? (user.features.task_group !== false) : true;
+  const showBroadcast = user.features ? (user.features.task_broadcast !== false) : true;
   
   const [facultyList, setFacultyList] = useState<Faculty[]>([]);
   const [groups, setGroups] = useState<{id: number, name: string, members: {id: number}[]}[]>([]);
@@ -643,126 +645,130 @@ const HODTaskForm: React.FC = () => {
                         </div>
 
                         {/* Group Option */}
-                        <div className="space-y-3">
-                          <button 
-                            type="button"
-                            onClick={() => { setFormData({...formData, assignment_mode: 'group', assigned_to_ids: []}); setOpenSelect(null); }}
-                            className={cn(
-                              "w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
-                              formData.assignment_mode === 'group' 
-                                ? "bg-white border-[#7C3AED] shadow-xl shadow-[#7C3AED]/10 ring-4 ring-[#7C3AED]/5" 
-                                : "bg-white border-transparent hover:border-slate-200"
-                            )}
-                          >
-                            <div className={cn(
-                              "p-2.5 rounded-xl transition-colors",
-                              formData.assignment_mode === 'group' ? "bg-[#7C3AED]/10 text-[#7C3AED]" : "bg-slate-100 text-slate-400"
-                            )}>
-                              <Users className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <p className={cn("text-xs font-black uppercase tracking-widest", formData.assignment_mode === 'group' ? "text-[#1E184B]" : "text-slate-400")}>Group</p>
-                              <p className="text-[9px] font-bold text-slate-400 mt-0.5">Pre-defined group</p>
-                            </div>
-                          </button>
+                        {(showGroup || formData.assignment_mode === 'group') && (
+                          <div className="space-y-3">
+                            <button 
+                              type="button"
+                              onClick={() => { setFormData({...formData, assignment_mode: 'group', assigned_to_ids: []}); setOpenSelect(null); }}
+                              className={cn(
+                                "w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
+                                formData.assignment_mode === 'group' 
+                                  ? "bg-white border-[#7C3AED] shadow-xl shadow-[#7C3AED]/10 ring-4 ring-[#7C3AED]/5" 
+                                  : "bg-white border-transparent hover:border-slate-200"
+                              )}
+                            >
+                              <div className={cn(
+                                "p-2.5 rounded-xl transition-colors",
+                                formData.assignment_mode === 'group' ? "bg-[#7C3AED]/10 text-[#7C3AED]" : "bg-slate-100 text-slate-400"
+                              )}>
+                                <Users className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <p className={cn("text-xs font-black uppercase tracking-widest", formData.assignment_mode === 'group' ? "text-[#1E184B]" : "text-slate-400")}>Group</p>
+                                <p className="text-[9px] font-bold text-slate-400 mt-0.5">Pre-defined group</p>
+                              </div>
+                            </button>
 
-                          <AnimatePresence mode="wait">
-                            {formData.assignment_mode === 'group' && (
-                              <motion.div 
-                                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                                className="space-y-2 relative pl-2 border-l-2 border-slate-100"
-                              >
-                                <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Target Group</label>
-                                <div className="relative group dropdown-container">
-                                  <button
-                                    type="button"
-                                    onClick={() => setOpenSelect(openSelect === 'group' ? null : 'group')}
-                                    className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-[1.25rem] text-xs font-bold text-[#1E184B] flex items-center justify-between hover:border-[#7C3AED]/30 transition-all outline-none"
-                                  >
-                                    <span className={formData.assigned_to_ids.length > 0 ? "text-[#1E184B]" : "text-slate-400"}>
-                                      {formData.assigned_to_ids.length > 0 
-                                        ? `${formData.assigned_to_ids.length} Faculty${formData.assigned_to_ids.length > 1 ? 's' : ''} enlisted` 
-                                        : "Select Group..."}
-                                    </span>
-                                    <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", openSelect === 'group' && "rotate-180")} />
-                                  </button>
-                                  
-                                  <AnimatePresence>
-                                    {openSelect === 'group' && (
-                                      <>
-                                        <motion.div
-                                          initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                          className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-[1.5rem] shadow-2xl z-[320] overflow-hidden flex flex-col max-h-[350px]"
-                                        >
-                                          <div className="p-2 overflow-y-auto custom-scrollbar">
-                                            {groups.length === 0 ? (
-                                              <div className="py-8 text-center text-[10px] font-black text-slate-300 uppercase tracking-widest">No Groups available</div>
-                                            ) : (
-                                              groups.map((g) => {
-                                                const isSelected = g.members.length > 0 && g.members.every(m => formData.assigned_to_ids.includes(m.id.toString())) && g.members.length === formData.assigned_to_ids.length;
-                                                return (
-                                                  <button
-                                                    key={g.id} type="button"
-                                                    onClick={() => { 
-                                                      setFormData(prev => ({ ...prev, assigned_to_ids: g.members.map(m => m.id.toString()) })); 
-                                                      setOpenSelect(null);
-                                                    }}
-                                                    className={cn(
-                                                      "w-full px-4 py-3 rounded-xl text-left transition-all mb-1",
-                                                      isSelected ? "bg-[#7C3AED] text-white shadow-md shadow-[#7C3AED]/20" : "text-slate-500 hover:bg-slate-50 hover:text-[#7C3AED]"
-                                                    )}
-                                                  >
-                                                    <div className="flex items-center justify-between">
-                                                      <span className="text-xs font-black">{g.name}</span>
-                                                      <span className={cn(
-                                                        "text-[9px] font-bold px-2 py-0.5 rounded-lg",
-                                                        isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400"
-                                                      )}>{g.members.length} Units</span>
-                                                    </div>
-                                                  </button>
-                                                );
-                                              })
-                                            )}
-                                            <div className="px-2 pt-2 pb-1 border-t border-slate-50 mt-1">
-                                              <a href="/hod/groups" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                                                <Plus className="w-3.5 h-3.5" /> Manage Group
-                                              </a>
+                            <AnimatePresence mode="wait">
+                              {formData.assignment_mode === 'group' && (
+                                <motion.div 
+                                  initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                                  className="space-y-2 relative pl-2 border-l-2 border-slate-100"
+                                >
+                                  <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Target Group</label>
+                                  <div className="relative group dropdown-container">
+                                    <button
+                                      type="button"
+                                      onClick={() => setOpenSelect(openSelect === 'group' ? null : 'group')}
+                                      className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-[1.25rem] text-xs font-bold text-[#1E184B] flex items-center justify-between hover:border-[#7C3AED]/30 transition-all outline-none"
+                                    >
+                                      <span className={formData.assigned_to_ids.length > 0 ? "text-[#1E184B]" : "text-slate-400"}>
+                                        {formData.assigned_to_ids.length > 0 
+                                          ? `${formData.assigned_to_ids.length} Faculty${formData.assigned_to_ids.length > 1 ? 's' : ''} enlisted` 
+                                          : "Select Group..."}
+                                      </span>
+                                      <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", openSelect === 'group' && "rotate-180")} />
+                                    </button>
+                                    
+                                    <AnimatePresence>
+                                      {openSelect === 'group' && (
+                                        <>
+                                          <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-[1.5rem] shadow-2xl z-[320] overflow-hidden flex flex-col max-h-[350px]"
+                                          >
+                                            <div className="p-2 overflow-y-auto custom-scrollbar">
+                                              {groups.length === 0 ? (
+                                                <div className="py-8 text-center text-[10px] font-black text-slate-300 uppercase tracking-widest">No Groups available</div>
+                                              ) : (
+                                                groups.map((g) => {
+                                                  const isSelected = g.members.length > 0 && g.members.every(m => formData.assigned_to_ids.includes(m.id.toString())) && g.members.length === formData.assigned_to_ids.length;
+                                                  return (
+                                                    <button
+                                                      key={g.id} type="button"
+                                                      onClick={() => { 
+                                                        setFormData(prev => ({ ...prev, assigned_to_ids: g.members.map(m => m.id.toString()) })); 
+                                                        setOpenSelect(null);
+                                                      }}
+                                                      className={cn(
+                                                        "w-full px-4 py-3 rounded-xl text-left transition-all mb-1",
+                                                        isSelected ? "bg-[#7C3AED] text-white shadow-md shadow-[#7C3AED]/20" : "text-slate-500 hover:bg-slate-50 hover:text-[#7C3AED]"
+                                                      )}
+                                                    >
+                                                      <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-black">{g.name}</span>
+                                                        <span className={cn(
+                                                          "text-[9px] font-bold px-2 py-0.5 rounded-lg",
+                                                          isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400"
+                                                        )}>{g.members.length} Units</span>
+                                                      </div>
+                                                    </button>
+                                                  );
+                                                })
+                                              )}
+                                              <div className="px-2 pt-2 pb-1 border-t border-slate-50 mt-1">
+                                                <a href="/hod/groups" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                                                  <Plus className="w-3.5 h-3.5" /> Manage Group
+                                                </a>
+                                              </div>
                                             </div>
-                                          </div>
-                                        </motion.div>
-                                      </>
-                                    )}
-                                  </AnimatePresence>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
+                                          </motion.div>
+                                        </>
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
 
                         {/* Broadcast Option */}
-                        <div className="space-y-3">
-                          <button 
-                            type="button"
-                            onClick={() => { setFormData({...formData, assignment_mode: 'broadcast', assigned_to_ids: []}); setOpenSelect(null); }}
-                            className={cn(
-                              "w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
-                              formData.assignment_mode === 'broadcast' 
-                                ? "bg-white border-[#7C3AED] shadow-xl shadow-[#7C3AED]/10 ring-4 ring-[#7C3AED]/5" 
-                                : "bg-white border-transparent hover:border-slate-200"
-                            )}
-                          >
-                            <div className={cn(
-                              "p-2.5 rounded-xl transition-colors",
-                              formData.assignment_mode === 'broadcast' ? "bg-[#7C3AED]/10 text-[#7C3AED]" : "bg-slate-100 text-slate-400"
-                            )}>
-                              <Send className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <p className={cn("text-xs font-black uppercase tracking-widest", formData.assignment_mode === 'broadcast' ? "text-[#1E184B]" : "text-slate-400")}>Broadcast</p>
-                              <p className="text-[9px] font-bold text-slate-400 mt-0.5">All active personnel</p>
-                            </div>
-                          </button>
-                        </div>
+                        {(showBroadcast || formData.assignment_mode === 'broadcast') && (
+                          <div className="space-y-3">
+                            <button 
+                              type="button"
+                              onClick={() => { setFormData({...formData, assignment_mode: 'broadcast', assigned_to_ids: []}); setOpenSelect(null); }}
+                              className={cn(
+                                "w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
+                                formData.assignment_mode === 'broadcast' 
+                                  ? "bg-white border-[#7C3AED] shadow-xl shadow-[#7C3AED]/10 ring-4 ring-[#7C3AED]/5" 
+                                  : "bg-white border-transparent hover:border-slate-200"
+                              )}
+                            >
+                              <div className={cn(
+                                "p-2.5 rounded-xl transition-colors",
+                                formData.assignment_mode === 'broadcast' ? "bg-[#7C3AED]/10 text-[#7C3AED]" : "bg-slate-100 text-slate-400"
+                              )}>
+                                <Send className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <p className={cn("text-xs font-black uppercase tracking-widest", formData.assignment_mode === 'broadcast' ? "text-[#1E184B]" : "text-slate-400")}>Broadcast</p>
+                                <p className="text-[9px] font-bold text-slate-400 mt-0.5">All active personnel</p>
+                              </div>
+                            </button>
+                          </div>
+                        )}
 
                       </div>
                     </div>
@@ -780,7 +786,7 @@ const HODTaskForm: React.FC = () => {
                           const newFiles = Array.from(e.target.files || []);
                           setFormData(prev => ({...prev, attachments: [...prev.attachments, ...newFiles]}));
                         }}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30"
                       />
                       <div className="px-6 py-10 bg-slate-50 dark:bg-[#1A0F35]/60 border-2 border-dashed border-slate-200 dark:border-violet-500/20 rounded-[2rem] flex flex-col items-center justify-center gap-4 group-hover:border-[#7C3AED]/40 dark:group-hover:border-violet-500/50 transition-all group-hover:bg-[#7C3AED]/5 dark:group-hover:bg-violet-500/10 relative overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-100/50 dark:to-violet-900/10" />
@@ -834,19 +840,19 @@ const HODTaskForm: React.FC = () => {
                 <p className="text-[10px] font-bold text-slate-400 dark:text-violet-400/60 uppercase tracking-widest flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400" /> All systems ready for deployment
                 </p>
-                <div className="flex w-full sm:w-auto gap-3">
+                <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
                   <button 
                     type="button"
                     onClick={(e) => handleCreateOrUpdate(e as any, true)}
                     disabled={isSubmitting}
-                    className="flex-1 sm:flex-none px-8 py-4 bg-white dark:bg-[#130C24] text-slate-600 dark:text-indigo-300 hover:text-[#7C3AED] dark:hover:text-violet-300 rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 active:scale-95 border-2 border-slate-200 dark:border-violet-500/20 hover:border-[#7C3AED]/30 dark:hover:border-violet-500/40 shadow-sm hover:shadow-md"
+                    className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-[#130C24] text-slate-600 dark:text-indigo-300 hover:text-[#7C3AED] dark:hover:text-violet-300 rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 active:scale-95 border-2 border-slate-200 dark:border-violet-500/20 hover:border-[#7C3AED]/30 dark:hover:border-violet-500/40 shadow-sm hover:shadow-md"
                   >
                     {isSubmitting ? 'Processing...' : formData.id ? 'Save Draft' : 'Save as Draft'}
                   </button>
                   <button 
                     type="submit"
                     disabled={isSubmitting || (systemSettings.pause_new_tasks === 'true' && (!formData.id || tasks.find(t=>t.id===formData.id)?.status === 'Draft'))}
-                    className="flex-[2] sm:flex-none px-10 py-4 bg-gradient-to-r from-[#7C3AED] to-[#6D28D9] text-white rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#7C3AED]/25 dark:shadow-violet-900/50 hover:shadow-2xl hover:shadow-[#7C3AED]/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none active:scale-95 flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-[#7C3AED] to-[#6D28D9] text-white rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#7C3AED]/25 dark:shadow-violet-900/50 hover:shadow-2xl hover:shadow-[#7C3AED]/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none active:scale-95 flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
                       <>
