@@ -686,40 +686,40 @@ const Reports: React.FC = () => {
               const totalAssigned = tasks.length;
               
               // Acceptance
-              const acceptedTasks = tasks.filter(t => t.accepted_at !== null || ['Accepted', 'In Progress', 'Submitted', 'Under Review', 'Approved', 'Completed', 'Rework Required'].includes(t.status));
+              const acceptedTasks = tasks.filter((t: any) => t.accepted_at !== null || ['Accepted', 'In Progress', 'Submitted', 'Under Review', 'Approved', 'Completed', 'Rework Required'].includes(t.status));
               const totalAccepted = acceptedTasks.length;
-              const unacceptedTasks = tasks.filter(t => t.accepted_at === null && t.status === 'Assigned');
+              const unacceptedTasks = tasks.filter((t: any) => t.accepted_at === null && t.status === 'Assigned');
               const totalUnaccepted = unacceptedTasks.length;
 
               // Completion
-              const completedTasks = tasks.filter(t => t.status === 'Completed' || t.status === 'Approved');
+              const completedTasks = tasks.filter((t: any) => t.status === 'Completed' || t.status === 'Approved');
               const totalCompleted = completedTasks.length;
-              const incompleteTasks = tasks.filter(t => t.status !== 'Completed' && t.status !== 'Approved');
+              const incompleteTasks = tasks.filter((t: any) => t.status !== 'Completed' && t.status !== 'Approved');
               const totalIncomplete = incompleteTasks.length;
 
               // Review Status
-              const awaitingReviewTasks = tasks.filter(t => t.status === 'Submitted' || t.status === 'Under Review');
+              const awaitingReviewTasks = tasks.filter((t: any) => t.status === 'Submitted' || t.status === 'Under Review');
               const totalAwaitingReview = awaitingReviewTasks.length;
 
               // Deadlines
-              const completedOnTime = completedTasks.filter(t => t.completed_at && new Date(t.completed_at) <= new Date(t.deadline));
+              const completedOnTime = completedTasks.filter((t: any) => t.completed_at && new Date(t.completed_at) <= new Date(t.deadline));
               const totalOnTime = completedOnTime.length;
               
-              const completedLate = completedTasks.filter(t => t.completed_at && new Date(t.completed_at) > new Date(t.deadline));
+              const completedLate = completedTasks.filter((t: any) => t.completed_at && new Date(t.completed_at) > new Date(t.deadline));
               const totalLate = completedLate.length;
               
-              const overdueIncomplete = incompleteTasks.filter(t => new Date() > new Date(t.deadline));
+              const overdueIncomplete = incompleteTasks.filter((t: any) => new Date() > new Date(t.deadline));
               const totalOverdueIncomplete = overdueIncomplete.length;
               
               const totalDeadlineViolations = totalLate + totalOverdueIncomplete;
 
               // Reminders
-              const totalReminders = tasks.reduce((sum, t) => sum + (Number(t.reminder_count) || 0), 0);
-              const multipleRemindersTasks = tasks.filter(t => (Number(t.reminder_count) || 0) > 1);
+              const totalReminders = tasks.reduce((sum: number, t: any) => sum + (Number(t.reminder_count) || 0), 0);
+              const multipleRemindersTasks = tasks.filter((t: any) => (Number(t.reminder_count) || 0) > 1);
 
               // Points
-              const totalPointsEarned = tasks.reduce((sum, t) => sum + (Number(t.points) || 0), 0);
-              const totalBonusPointsEarned = tasks.reduce((sum, t) => sum + (Number(t.bonus_points) || 0), 0);
+              const totalPointsEarned = tasks.reduce((sum: number, t: any) => sum + (Number(t.points) || 0), 0);
+              const totalBonusPointsEarned = tasks.reduce((sum: number, t: any) => sum + (Number(t.bonus_points) || 0), 0);
 
               const completionRate = totalAssigned > 0 ? Math.round((totalCompleted / totalAssigned) * 100) : 0;
               const acceptanceRate = totalAssigned > 0 ? Math.round((totalAccepted / totalAssigned) * 100) : 0;
