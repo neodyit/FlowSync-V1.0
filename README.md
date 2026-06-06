@@ -38,12 +38,13 @@ stateDiagram-v2
     
     Broadcasted --> Accepted : Faculty Accepts (Simultaneous Allowed)
     
-    Accepted --> InProgress : Faculty Works
-    InProgress --> Submitted : Submission Uploaded
+    Accepted --> InProgress : Faculty Works (10% Progress)
+    InProgress --> Submitted : Submission Uploaded (98% Progress)
     
     Submitted --> UnderReview : HOD Notified
-    UnderReview --> Approved : HOD Accepts & Awards Points
-    UnderReview --> ReworkRequired : HOD Demands Revision
+    UnderReview --> Graded : HOD Awards Points (99% Progress)
+    Graded --> Approved : HOD Finalizes (100% Progress)
+    UnderReview --> ReworkRequired : HOD Demands Revision (40% Progress)
     
     ReworkRequired --> Resubmitted : Faculty Re-uploads
     Resubmitted --> UnderReview
@@ -70,17 +71,29 @@ Admins have absolute control over the system's operational state:
 - **Maintenance Mode**: Easily pause non-essential activities across the board.
 - **Global Multipliers**: Admins can configure global point multipliers for incentive campaigns.
 
-### 4. Advanced Gamification (Leaderboard & Point System)
+### 4. Academic Seasons & Data Freezes
+- **Terms Management**: Admin can create and configure academic semesters/years.
+- **Default Season**: Easily assign which season is currently active across the system.
+- **Season Locking**: Locks a season to freeze data. Once locked, tasks, submissions, points, and evaluations are set to read-only to prevent tampering.
+
+### 5. Onboarding Verification checkpoint
+- Prevents unconfigured accounts from accessing the dashboard.
+- Forces default credential updates (password update from `flowsync`).
+- Mandates setting a Profile Picture, Designation, and Contact Phone number.
+- **WhatsApp Support Link**: Integrated directly into the onboarding modal for instant developer support.
+
+### 6. Advanced Gamification (Leaderboard & Point System)
 Tracks performance dynamically:
 - Points are awarded on successful, timely completions.
 - HODs can assign custom bonus points for extraordinary contributions.
 - Generates rolling leaderboards showing performance consistency and efficiency.
 
-### 5. Progressive Web App (PWA) & Offline Cache
+### 7. Progressive Web App (PWA) & Offline Cache
 Provides seamless mobile compatibility and network resilience:
 - Built-in dynamic service worker caching standard assets (`/logo.png`, layout stylesheets, manifest protocols).
+- Fallback **Offline Mode** page indicating connection disruptions.
 
-### 6. Dynamic Auditing & Exporting
+### 8. Dynamic Auditing & Exporting
 Comprehensive tracking for compliance:
 - Every action (Login, Acceptance, Review, Override) is permanently logged in the Audit Trail.
 - Admins can instantly export Task and User records to CSV/Excel for external reporting.
@@ -92,6 +105,8 @@ Comprehensive tracking for compliance:
 ### 🛡️ Admin Features
 - **Dashboard & Analytics**: High-level statistics of colleges, users, and tasks.
 - **Global Settings Control**: Toggle Maintenance Mode, Pause New Tasks, set Max Bonus Points, and configure Global Point Multipliers.
+- **Academic Seasons**: Add/Edit academic terms, designate system default seasons, and lock/unlock historic seasons.
+- **Engagement Tracker**: Live monitoring of faculty and HOD interactions, login histories, system usage intensity, and task load averages.
 - **Entity Management**: Full CRUD for Colleges, Departments, and User Accounts (HOD/Faculty).
 - **Audit Logs**: View immutable logs of all system operations.
 - **Feedback Center**: View and respond to system feedback submitted by users.
@@ -99,19 +114,28 @@ Comprehensive tracking for compliance:
 
 ### 🎓 HOD Features
 - **Mission Control**: Assign individual tasks or broadcast missions to the entire department.
+- **Attachment Management**: Upload reference files (up to 35MB per file, zip and video formats blocked). Edit and delete task attachments at any time.
 - **Drafts System**: Save incomplete tasks as drafts; useful when task-posting rules are paused.
-- **Submissions & Bulk Review**: Review faculty submissions individually or approve multiple submissions in bulk. Award base points and bonus points.
-- **Advanced Tracking**: Monitor which faculties have not yet accepted or completed their tasks.
+- **Submissions & Bulk Review**: Review faculty submissions individually or approve multiple submissions in bulk. Award base points (multiplier-scaled) and bonus points.
+- **Advanced Tracking**: Monitor which faculties have not yet accepted or completed their tasks, showing active workloads and delay intervals.
 - **Extension Requests**: Review, approve, or reject deadline extensions requested by faculties.
 - **Push Reminders**: Send immediate alert notifications to faculties lagging behind.
-- **Department Reports**: Generate specific statistics on department task turnaround times and point distributions.
+- **Department Groups**: Create custom faculty sub-groups for bulk task assignments. Can be toggled on/off in department configuration.
+- **Turnaround Reports**: Turnaround charts and performance tables of department members.
 
 ### 👨‍🏫 Faculty Features
-- **Task Execution**: Accept tasks, upload reference documents, and submit completed work.
+- **Task Workspace**: Accept/decline tasks, view detailed instructions, download attachments, and verify points.
+- **Task Progress Milestones**:
+  - **10%** - When a task is accepted/set to In Progress.
+  - **98%** - When the deliverables are uploaded and task is submitted.
+  - **99%** - When the HOD assigns points/marks.
+  - **100%** - When finalized and approved by the HOD.
 - **Extensions**: Request deadline extensions with formal reasoning directly from the task interface.
 - **Comments & Communication**: Threaded task comments to discuss requirements with the HOD.
 - **Leaderboard**: Track personal rank, total points, and completed tasks relative to peers.
+- **Department Directory**: View department roster, workload metrics, and task distributions.
 - **Feedback**: Submit system and workflow feedback directly to the Admin.
+- **Public Profile**: Shareable user profiles showcasing bio, verified designation, contact details, and performance stats.
 
 ---
 
@@ -120,7 +144,7 @@ Comprehensive tracking for compliance:
 | Layer | Technology | Primary Role |
 | :--- | :--- | :--- |
 | **Frontend** | React 19 (TypeScript, Vite) | Reactive interfaces, rich glassmorphism UI, client state. |
-| **Styling** | TailwindCSS v4 | Sleek modern aesthetics, utility-first responsiveness, typography. |
+| **Styling** | Vanilla CSS / TailwindCSS v4 | Sleek modern aesthetics, utility-first responsiveness, typography. |
 | **Backend** | Native PHP 8+ | High-performance RESTful APIs, strict JWT authentication. |
 | **Database** | MySQL 8+ | Transaction-safe schema with optimized index tables. |
 | **Security** | JWT, Prepared SQL, Sanitization | Robust protection against SQLi, XSS, and authorization leaks. |
@@ -171,7 +195,7 @@ FlowSync/
 
 ### 2. Backend Installation & Configurations
 1. Navigate to the `backend` folder.
-2. Create a `.env` file (based on `backend/.env.example` if available, or populate it as follows):
+2. Create a `.env` file and populate it as follows:
    ```env
    DB_HOST=localhost
    DB_NAME=flowsync
@@ -206,8 +230,11 @@ FlowSync/
 ## 🔒 Security Compliance Checklist
 
 - [x] **Preparations**: Database connections strictly utilize prepared statements and parameterized bindings.
-- [x] **Authentication**: Stateless validation using secure JWT bearers on every HTTP header.
-- [x] **File Security**: Strict MIME-type checks and custom sanitized storage keys on files uploaded.
+- [x] **Authentication**: Stateless validation using secure JWT cookies/headers on every HTTP query.
+- [x] **File Upload Security & Size Constraints**:
+  - **Profile Photos**: Max **10MB**, restricted to image formats (`jpg`, `jpeg`, `png`, `gif`, `webp`).
+  - **Task Attachments**: Max **35MB** per file. Blocked formats include zip files (`.zip`) and video files (`.mp4`, `.mkv`, etc.).
+  - **Push Notification Files**: Max **35MB** per file.
 - [x] **Immutability**: Write-only ledger logging for logins, tasks, points, and status overrides inside the Audit log.
 
 ---

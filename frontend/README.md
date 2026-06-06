@@ -1,73 +1,101 @@
-# React + TypeScript + Vite
+# ⚡ FlowSync - Frontend Client Single Page Application (SPA)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> The frontend client for **FlowSync** is a highly interactive, responsive, and beautifully themed React SPA. Built with React 19, TypeScript, and Vite, it leverages dynamic animations, glassmorphism UI structures, and offline support.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🎨 Design System & UI Aesthetics
+- **Glassmorphic Layouts**: Utilizes semi-transparent backdrops, blurred elements (`backdrop-blur`), and fine gradient borders to deliver a premium user interface.
+- **Micro-Animations**: Uses `framer-motion` for transitions, spring-loaded modals, slide-in toasts, and bounce animations on alert icons.
+- **Dual Theme Engine**: Native Light and Dark themes synced dynamically using standard HSL palettes and custom CSS variables.
+- **Lucide Icons**: Integrates clean, lightweight vector icons representing actions, files, roles, and status levels.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 📂 Architecture & Directory Map
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+frontend/src/
+├── components/          # Reusable components
+│   ├── ui/              # Layout building blocks (info-cards, panels)
+│   ├── SEO.tsx          # Dynamic head tag injection (SEO best practices)
+│   └── ThemeProvider.tsx# Context manager for Light/Dark themes
+│
+├── layouts/             # Dashboard Layout Wrappers
+│   ├── AdminLayout.tsx  # Admin navigation, audit controls, feedback center
+│   ├── HODLayout.tsx    # HOD sidebar, notification listeners, onboarding checklist
+│   └── FacultyLayout.tsx# Faculty taskboards, comments, inbox center
+│
+├── pages/               # Routing Endpoints
+│   ├── Login.tsx        # JWT credential gateway with visual validations
+│   ├── Maintenance.tsx  # Fullscreen locking screen for maintenance modes
+│   ├── admin/           # Admin modules (Colleges, Departments, Seasons, Controls)
+│   ├── hod/             # HOD modules (Mission Control, TaskDetails, Reports, Groups)
+│   ├── faculty/         # Faculty modules (Workspace board, Leaderboard, MyTasks)
+│   └── common/          # Shared views (Profile settings, Feedbacks, Public Profile, Offline fallback)
+│
+├── lib/                 # Utility libraries
+│   └── utils.ts         # cn builders, date formatters, calculateProgress helpers
+│
+├── App.tsx              # Router configuration, route guards, and layout mappings
+└── main.tsx             # Entry point
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🛡️ Frontend Security & Constraints
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 1. Dynamic File Upload Validation
+To minimize server-side rejection overhead and improve user experience, the frontend enforces strict file parameter checks prior to upload:
+- **Profile Pictures**: Restricts uploads to **10MB** maximum size. Strictly accepts image MIME-types (`jpg`, `jpeg`, `png`, `gif`, `webp`).
+- **Task Deliverables**: Restricts uploads to **35MB** per file. Filters out zip archives (`.zip`) and video files (`.mp4`, `.mkv`, `.avi`, etc.) to prevent storage bloat.
+- **Push Notification Broadcasts**: Restricts attachments to **35MB** maximum and applies the same video/zip blacklist filters.
+
+### 2. Task Progression Tracker
+Task cards utilize a custom, multi-step progress bar calculated in `utils.ts`:
+- **10%** - When a faculty accepts the task and sets status to *In Progress*.
+- **98%** - When the deliverables are compiled and task is *Submitted*.
+- **99%** - When the HOD logs marks/points for the contribution.
+- **100%** - When finalized and marked *Approved*.
+
+### 3. Route Guarding & RBAC
+- Authenticates session tokens via secure, HttpOnly cookies and validation checks.
+- Dynamically blocks routes based on user role IDs:
+  - **Admin** (Role ID `1`)
+  - **HOD** (Role ID `2`)
+  - **Faculty** (Role ID `3`)
+
+---
+
+## ⚡ Operational Scripts
+
+Navigate to the `frontend` directory:
+```bash
+cd frontend
 ```
+
+### Install Dependencies
+```bash
+npm install
+```
+
+### Development Server
+Starts the local development server with Hot Module Replacement (HMR):
+```bash
+npm run dev
+```
+
+### Production Build
+Compiles, optimizes, and bundles application assets into `/dist` for hosting:
+```bash
+npm run build
+```
+
+### Preview Production Build
+Locally preview the output generated by the build script:
+```bash
+npm run preview
+```
+
+---
+*Developed under design guidelines by Neody IT.*
