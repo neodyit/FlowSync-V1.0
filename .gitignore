@@ -31,6 +31,7 @@ backend/public/uploads/
 backend/sql/data.xlsx
 backend/sql/seed_faculties.sql
 backend/sql/flowsync.sql
+backend/storage/
 
 # ------------------------------------------
 # Build & Distribution Outputs
