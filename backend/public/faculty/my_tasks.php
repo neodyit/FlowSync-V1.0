@@ -131,7 +131,7 @@ try {
                 UPDATE task_assignments 
                 SET status = 'Submitted', 
                     submitted_at = NOW(), 
-                    progress = 100,
+                    progress = 98,
                     public_remarks = :pub,
                     private_remarks = :priv,
                     submission_link = :sub_link

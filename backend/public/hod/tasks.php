@@ -371,6 +371,21 @@ try {
                     
                     $newRemarks = $data['remarks'] ?? $assignment['remarks'] ?? '';
 
+                    $progressVal = 0;
+                    if ($newStatus === 'Approved') {
+                        $progressVal = 100;
+                    } elseif ($newPoints > 0) {
+                        $progressVal = 99;
+                    } elseif ($newStatus === 'Submitted') {
+                        $progressVal = 98;
+                    } elseif ($newStatus === 'Accepted' || $newStatus === 'In Progress') {
+                        $progressVal = 10;
+                    } elseif ($newStatus === 'Rework Required') {
+                        $progressVal = 40;
+                    } else {
+                        $progressVal = (int)($assignment['progress'] ?? 0);
+                    }
+
                     // Update Assignment
                     $stmt = $db->prepare("
                         UPDATE task_assignments 
@@ -378,6 +393,7 @@ try {
                             points = :pts, 
                             bonus_points = :bn, 
                             remarks = :rem,
+                            progress = :prog,
                             reviewed_at = NOW(),
                             completed_at = CASE 
                                 WHEN :status_val_2 IN ('Approved') THEN NOW() 
@@ -391,6 +407,7 @@ try {
                         'pts' => $newPoints, 
                         'bn' => $newBonus, 
                         'rem' => $newRemarks,
+                        'prog' => $progressVal,
                         'id' => $assignment['id']
                     ]);
 

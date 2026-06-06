@@ -44,9 +44,9 @@ export function getDownloadUrl(filePath: string): string {
 export function calculateProgress(status: string, currentProgress: number = 0): number {
   switch (status) {
     case 'Assigned': return 0;
-    case 'Accepted': return Math.max(currentProgress, 25);
-    case 'In Progress': return Math.max(currentProgress, 50);
-    case 'Submitted': return 100;
+    case 'Accepted':
+    case 'In Progress': return 10;
+    case 'Submitted': return 98;
     case 'Approved':
     case 'Completed': return 100;
     case 'Rework Required': return 40;
