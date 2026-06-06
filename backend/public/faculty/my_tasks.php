@@ -167,8 +167,19 @@ try {
                 $files = $_FILES['attachments'];
                 foreach ($files['name'] as $key => $name) {
                     if ($files['error'][$key] === UPLOAD_ERR_OK) {
+                        if ($files['size'][$key] > 35 * 1024 * 1024) {
+                            throw new Exception("File '{$name}' exceeds the maximum allowed size of 35 MB.");
+                        }
+                        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                        $blockedExtensions = ['zip', 'mp4', 'mkv', 'avi', 'mov', 'flv', 'webm', 'wmv', '3gp', 'mpeg', 'mpg', 'ogg'];
+                        if (in_array($ext, $blockedExtensions)) {
+                            throw new Exception("File '{$name}' has an invalid format. Zip and video files are not allowed.");
+                        }
+                        $mime = $files['type'][$key];
+                        if (strpos($mime, 'video/') === 0 || strpos($mime, 'zip') !== false) {
+                            throw new Exception("File '{$name}' has a blocked format (video or zip).");
+                        }
                         $tmpName = $files['tmp_name'][$key];
-                        $ext = pathinfo($name, PATHINFO_EXTENSION);
                         $storedName = 'faculty_task_' . $taskId . '_' . uniqid() . '.' . $ext;
                         if (move_uploaded_file($tmpName, $taskDir . $storedName)) {
                             $attStmt = $db->prepare("

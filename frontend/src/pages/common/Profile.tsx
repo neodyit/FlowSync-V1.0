@@ -163,6 +163,18 @@ const Profile = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 10 * 1024 * 1024) {
+      Swal.fire('Error', 'Profile picture must not exceed 10 MB.', 'error');
+      return;
+    }
+
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    if (!allowedExtensions.includes(ext) || !file.type.startsWith('image/')) {
+      Swal.fire('Error', 'Invalid file format. Profile picture must be an image (jpg, jpeg, png, gif, webp).', 'error');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('profile_pic', file);
 

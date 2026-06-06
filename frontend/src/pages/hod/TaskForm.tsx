@@ -819,7 +819,25 @@ const HODTaskForm: React.FC = () => {
                         type="file" multiple
                         onChange={(e) => {
                           const newFiles = Array.from(e.target.files || []);
-                          setFormData(prev => ({...prev, attachments: [...prev.attachments, ...newFiles]}));
+                          const validFiles: File[] = [];
+                          const blockedExtensions = ['zip', 'mp4', 'mkv', 'avi', 'mov', 'flv', 'webm', 'wmv', '3gp', 'mpeg', 'mpg', 'ogg'];
+                          
+                          for (const file of newFiles) {
+                            if (file.size > 35 * 1024 * 1024) {
+                              Swal.fire('Error', `File "${file.name}" exceeds the maximum allowed size of 35 MB.`, 'error');
+                              continue;
+                            }
+                            const ext = file.name.split('.').pop()?.toLowerCase() || '';
+                            if (blockedExtensions.includes(ext) || file.type.startsWith('video/') || file.type.includes('zip')) {
+                              Swal.fire('Error', `File "${file.name}" has an invalid format. Videos and zip files are not allowed.`, 'error');
+                              continue;
+                            }
+                            validFiles.push(file);
+                          }
+                          
+                          if (validFiles.length > 0) {
+                            setFormData(prev => ({...prev, attachments: [...prev.attachments, ...validFiles]}));
+                          }
                         }}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30"
                       />

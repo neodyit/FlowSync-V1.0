@@ -43,11 +43,23 @@ try {
     // Handle file upload
     $attachmentUrl = null;
     if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['attachment'];
+        if ($file['size'] > 35 * 1024 * 1024) {
+            throw new Exception("Attachment exceeds the maximum allowed size of 35 MB.");
+        }
+        $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $blockedExtensions = ['zip', 'mp4', 'mkv', 'avi', 'mov', 'flv', 'webm', 'wmv', '3gp', 'mpeg', 'mpg', 'ogg'];
+        if (in_array($fileExtension, $blockedExtensions)) {
+            throw new Exception("Attachment has an invalid format. Zip and video files are not allowed.");
+        }
+        $mime = $file['type'];
+        if (strpos($mime, 'video/') === 0 || strpos($mime, 'zip') !== false) {
+            throw new Exception("Attachment has a blocked format (video or zip).");
+        }
         $uploadDir = __DIR__ . '/../storage/push_notices/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
-        $fileExtension = pathinfo($_FILES['attachment']['name'], PATHINFO_EXTENSION);
         $fileName = uniqid('push_') . '.' . $fileExtension;
         
         if (move_uploaded_file($_FILES['attachment']['tmp_name'], $uploadDir . $fileName)) {

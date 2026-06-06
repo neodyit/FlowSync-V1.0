@@ -237,7 +237,24 @@ if ($method === 'GET') {
     // Handle multipart if it's a file upload (POST)
     if (isset($_FILES['profile_pic'])) {
         $file = $_FILES['profile_pic'];
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        if ($file['size'] > 10 * 1024 * 1024) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Profile picture must not exceed 10 MB.']);
+            exit;
+        }
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, $allowedExtensions)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Profile picture must be an image (jpg, jpeg, png, gif, webp).']);
+            exit;
+        }
+        $mime = $file['type'];
+        if (strpos($mime, 'image/') !== 0) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid file type. Profile picture must be an image.']);
+            exit;
+        }
         $fileName = 'profile_' . $userId . '_' . time() . '.' . $ext;
         $uploadDir = __DIR__ . '/../storage/profiles/';
         

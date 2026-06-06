@@ -633,7 +633,26 @@ const HODNotifications: React.FC = () => {
                   <div className="relative">
                     <input
                       type="file"
-                      onChange={(e) => setPushAttachment(e.target.files ? e.target.files[0] : null)}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        if (file) {
+                          if (file.size > 35 * 1024 * 1024) {
+                            Swal.fire('Error', 'Attachment must not exceed 35 MB.', 'error');
+                            e.target.value = '';
+                            setPushAttachment(null);
+                            return;
+                          }
+                          const ext = file.name.split('.').pop()?.toLowerCase() || '';
+                          const blockedExtensions = ['zip', 'mp4', 'mkv', 'avi', 'mov', 'flv', 'webm', 'wmv', '3gp', 'mpeg', 'mpg', 'ogg'];
+                          if (blockedExtensions.includes(ext) || file.type.startsWith('video/') || file.type.includes('zip')) {
+                            Swal.fire('Error', 'Attachment has an invalid format. Videos and zip files are not allowed.', 'error');
+                            e.target.value = '';
+                            setPushAttachment(null);
+                            return;
+                          }
+                        }
+                        setPushAttachment(file);
+                      }}
                       className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-[#7C3AED]/10 file:text-[#7C3AED] hover:file:bg-[#7C3AED]/20 transition-all text-sm font-bold text-[#1E184B] cursor-pointer"
                     />
                   </div>

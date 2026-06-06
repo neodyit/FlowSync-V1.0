@@ -17,7 +17,13 @@ import {
   Trash2,
   MessageSquare,
   Sun,
-  Moon
+  Moon,
+  AlertCircle,
+  Camera,
+  Briefcase,
+  Phone,
+  Lock,
+  ChevronRight
 } from 'lucide-react';
 import { checkSession } from '../utils/auth';
 import { cn, formatDate } from "@/lib/utils";
@@ -949,42 +955,103 @@ export default function FacultyLayout() {
       {/* Onboarding Full-Screen Modal */}
       <AnimatePresence>
         {showOnboarding && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-[#0B061A]/85 backdrop-blur-md">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-[#0B061A]/85 backdrop-blur-md overflow-y-auto">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 30 }}
-              className="relative bg-white dark:bg-[#110A24] w-full max-w-lg rounded-[3rem] p-8 md:p-10 shadow-2xl border border-[#7C3AED]/15 dark:border-violet-500/20 text-center overflow-hidden flex flex-col items-center gap-6"
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white dark:bg-[#110A24] w-full max-w-2xl rounded-[2.5rem] p-6 md:p-8 shadow-2xl border border-[#7C3AED]/15 dark:border-violet-500/20 overflow-hidden flex flex-col gap-6 my-8"
             >
-              <div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600" />
-
-              {/* Premium Icon Badge */}
-              <div className="w-20 h-20 bg-[#7C3AED]/10 dark:bg-violet-950/40 rounded-[2rem] flex items-center justify-center text-[#7C3AED] dark:text-violet-400 border border-[#7C3AED]/20 animate-bounce">
-                <User className="w-10 h-10" />
-              </div>
-
-              <div className="space-y-3">
-                <h2 className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight">
-                  Authenticity & Professionalization
-                </h2>
-                <p className="text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest text-[9px] font-black leading-none">
-                  Institutional Profile Protocol
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600" />
+              
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="w-16 h-16 bg-[#7C3AED]/10 dark:bg-violet-950/40 rounded-2xl flex items-center justify-center text-[#7C3AED] dark:text-violet-400 border border-[#7C3AED]/20">
+                  <User className="w-8 h-8" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-extrabold text-[#1E1B4B] dark:text-indigo-100 tracking-tight">
+                    Onboarding Protocol Required
+                  </h2>
+                  <p className="text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest text-[10px] font-black mt-1">
+                    Authenticity & Professionalization
+                  </p>
+                </div>
+                <p className="text-slate-500 dark:text-indigo-200/70 text-xs sm:text-sm font-semibold max-w-lg mt-1">
+                  Welcome to FlowSync! To maintain security, transparency, and the highest standards of professional collaboration on our platform, you are required to complete your onboarding profile setup before accessing the dashboard.
                 </p>
               </div>
 
-              <p className="text-slate-500 dark:text-indigo-200/70 text-sm font-semibold leading-relaxed">
-                To maintain transparency, security, and the highest standards of professional collaboration on FlowSync, you are required to complete your onboarding protocol. Please update your profile picture, designation, and contact phone line. Also pdate your password from  <b> flowsync </b> to something more secure to prevent unauthorized access to your account
-              </p>
+              {/* Requirement Checklist Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-2 text-left">
+                <div className="p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-2xl flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                    <Camera className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Profile Picture</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Upload a clear photo for identification across all departments.</p>
+                  </div>
+                </div>
 
-              <button
-                onClick={() => {
-                  setShowOnboarding(false);
-                  navigate('/faculty/profile');
-                }}
-                className="w-full py-4.5 bg-gradient-to-r from-[#7C3AED] to-purple-600 hover:from-purple-600 hover:to-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-purple-500/20 active:scale-95 cursor-pointer mt-4"
-              >
-                Complete Profile Setup
-              </button>
+                <div className="p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-2xl flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                    <Briefcase className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Designation</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Specify your academic or administrative role for workflow delegation.</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-2xl flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                    <Phone className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Phone Line</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Provide a contact number for urgent push alerts and system announcements.</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-[#7C3AED]/5 dark:bg-[#8B5CF6]/5 border border-[#7C3AED]/15 dark:border-[#8B5CF6]/20 rounded-2xl flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-[#7C3AED]/10 dark:bg-[#8B5CF6]/10 text-[#7C3AED] dark:text-[#A78BFA] flex items-center justify-center shrink-0">
+                    <Lock className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-[#7C3AED] dark:text-[#A78BFA] uppercase tracking-wider">Update Password</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Change the default <span className="font-mono bg-violet-100 dark:bg-violet-950 px-1 py-0.5 rounded text-rose-500 dark:text-rose-400">flowsync</span> password to secure your account.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Platform value info */}
+              <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/15 text-left flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                <div className="text-xs font-semibold text-amber-800 dark:text-amber-300 leading-relaxed">
+                  <span className="font-extrabold uppercase tracking-wide block mb-0.5">Platform Requirement Details:</span>
+                  FlowSync manages department workflows, tasks, timelines, performance rankings, and compliance reports. A verified and secure profile ensures proper authorization, audit trails, and uninterrupted notification delivery.
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 w-full mt-2">
+                <button
+                  onClick={() => {
+                    setShowOnboarding(false);
+                    navigate('/faculty/profile');
+                  }}
+                  className="flex-1 py-4 bg-gradient-to-r from-[#7C3AED] to-purple-600 hover:from-purple-600 hover:to-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-purple-500/20 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  Go to Profile Settings <ChevronRight className="w-4 h-4" />
+                </button>
+                <a
+                  href="https://wa.me/916205045881"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-4 px-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-emerald-500/20 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <MessageSquare className="w-4 h-4" /> Contact Developer
+                </a>
+              </div>
             </motion.div>
           </div>
         )}
