@@ -60,3 +60,66 @@ $currentSeasonId = null;
 if ($session) {
     $currentSeasonId = \FlowSync\Utils\AcademicSeasonManager::getCurrentSeasonId($session['user_id']);
 }
+
+// Register a global fallback logger for mutating requests (POST, PUT, DELETE, PATCH)
+register_shutdown_function(function() use (&$session) {
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'])) {
+        // If not already logged explicitly
+        if (empty($GLOBALS['audit_log_explicit_logged'])) {
+            $userId = $session['user_id'] ?? null;
+            
+            // Extract resource name from URI
+            $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+            $basename = basename($path, '.php');
+            if ($basename === 'track_engagement') {
+                return;
+            }
+            $resource = strtoupper($basename ?: 'API');
+            $action = 'API_' . $method;
+
+            // Capture request details
+            $details = [];
+            $details['response_code'] = http_response_code();
+            
+            // Handle JSON body
+            $input = file_get_contents('php://input');
+            if ($input) {
+                $json = json_decode($input, true);
+                if (is_array($json)) {
+                    foreach (['password', 'old_password', 'new_password', 'token', 'jwt'] as $sensitive) {
+                        if (isset($json[$sensitive])) {
+                            $json[$sensitive] = '[REDACTED]';
+                        }
+                    }
+                    $details['payload'] = $json;
+                } else {
+                    $details['raw_input'] = substr($input, 0, 500);
+                }
+            }
+
+            // Capture POST fields
+            if (!empty($_POST)) {
+                $postData = $_POST;
+                foreach (['password', 'old_password', 'new_password', 'token', 'jwt'] as $sensitive) {
+                    if (isset($postData[$sensitive])) {
+                        $postData[$sensitive] = '[REDACTED]';
+                    }
+                }
+                $details['post'] = $postData;
+            }
+
+            // Capture GET fields
+            if (!empty($_GET)) {
+                $details['query'] = $_GET;
+            }
+
+            try {
+                $logger = new \FlowSync\Utils\AuditLogger();
+                $logger->log($userId, $action, $resource, null, $details);
+            } catch (\Throwable $e) {
+                error_log("Global audit logging failed: " . $e->getMessage());
+            }
+        }
+    }
+});

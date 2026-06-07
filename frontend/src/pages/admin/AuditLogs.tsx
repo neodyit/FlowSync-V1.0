@@ -44,6 +44,7 @@ interface AuditLog {
 const AuditLogs: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [stats, setStats] = useState({ total: 0, deletes: 0, logins: 0, hits: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filterAction, setFilterAction] = useState('all');
@@ -60,6 +61,9 @@ const AuditLogs: React.FC = () => {
       const data = await response.json();
       if (data.status === 'success') {
         setLogs(data.data);
+        if (data.stats) {
+          setStats(data.stats);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);
@@ -152,7 +156,7 @@ const AuditLogs: React.FC = () => {
           </div>
           <div>
             <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">Total Logs</p>
-            <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">{logs.length}</p>
+            <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">{stats.total}</p>
           </div>
         </div>
 
@@ -164,7 +168,7 @@ const AuditLogs: React.FC = () => {
           <div>
             <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">Purges / Deletions</p>
             <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">
-              {logs.filter(l => l.action.includes('DELETE')).length}
+              {stats.deletes}
             </p>
           </div>
         </div>
@@ -177,7 +181,7 @@ const AuditLogs: React.FC = () => {
           <div>
             <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">User Logins</p>
             <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">
-              {logs.filter(l => l.action === 'LOGIN').length}
+              {stats.logins}
             </p>
           </div>
         </div>
@@ -190,7 +194,7 @@ const AuditLogs: React.FC = () => {
           <div>
             <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">System API Hits</p>
             <p className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">
-              {logs.filter(l => l.action === 'API_HIT' || l.action.includes('SYNC')).length}
+              {stats.hits}
             </p>
           </div>
         </div>
