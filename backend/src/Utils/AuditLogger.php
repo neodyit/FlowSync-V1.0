@@ -22,6 +22,7 @@ class AuditLogger {
      * @param array|null $details Additional metadata
      */
     public function log($userId, $action, $resource = null, $resourceId = null, $details = null) {
+        $GLOBALS['audit_log_explicit_logged'] = true;
         try {
             $stmt = $this->db->prepare("
                 INSERT INTO audit_logs (
