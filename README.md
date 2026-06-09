@@ -52,6 +52,23 @@ stateDiagram-v2
     Approved --> Completed : Workflow Finalized
 ```
 
+
+### 3. GIT Graph for FlowSync
+    gitGraph
+       commit
+       commit
+       branch develop
+       commit
+       commit
+       commit
+       checkout main
+       commit
+       commit
+       merge develop
+       commit
+       commit
+
+
 ---
 
 ## 🌟 Core Pillars & Capabilities
