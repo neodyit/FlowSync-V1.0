@@ -250,7 +250,7 @@ FlowSync features a curated dark-and-light blended modern color palette, premium
 ## 💎 Development & Credits
 FlowSync is designed, developed, and maintained under rigorous engineering and design quality guidelines.
 
-**Created and Managed by [Neody IT](https://neodyit.in).**
+**Created and Managed by [Neody IT](https://neodyit.com).**
 
 ---
 *For systems support, technical questions, or integration procedures, please contact the Neody IT Operations team.*
