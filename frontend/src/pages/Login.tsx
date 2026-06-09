@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mail, 
@@ -22,7 +22,19 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [version, setVersion] = useState('v1.0.0');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch('/version.json?t=' + Date.now())
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.version) {
+          setVersion(`v${data.version}`);
+        }
+      })
+      .catch(err => console.error('Failed to load version:', err));
+  }, []);
 
   const getDeviceFingerprint = (): string => {
     const parts = [
@@ -115,7 +127,7 @@ const Login: React.FC = () => {
               </div>
               <span className="text-lg font-black tracking-tight text-white flex items-center gap-1.5">
                 FlowSync
-                <span className="text-[9px] bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">v1.1.1</span>
+                <span className="text-[9px] bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">{version}</span>
               </span>
             </div>
 
@@ -170,7 +182,7 @@ const Login: React.FC = () => {
             </div>
             <span className="text-xl font-black tracking-tight text-white flex items-center gap-1.5">
               FlowSync
-              <span className="text-[9px] bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">v1.1.1</span>
+              <span className="text-[9px] bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">{version}</span>
             </span>
           </div>
 

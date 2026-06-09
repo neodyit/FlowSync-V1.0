@@ -80,6 +80,42 @@ function App() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   useEffect(() => {
+    const checkVersion = async () => {
+      try {
+        const response = await fetch(`/version.json?t=${Date.now()}`, {
+          cache: 'no-store'
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const serverVersion = data.version;
+        const localVersion = localStorage.getItem('flowsync_version');
+
+        if (localVersion && localVersion !== serverVersion) {
+          console.log(`Version mismatch detected! Local: ${localVersion}, Server: ${serverVersion}. Clearing cache and reloading...`);
+          
+          // Clear all caches in Cache Storage API
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(key => caches.delete(key)));
+          }
+
+          // Update local version reference
+          localStorage.setItem('flowsync_version', serverVersion);
+
+          // Force reload
+          window.location.reload();
+        } else if (!localVersion) {
+          localStorage.setItem('flowsync_version', serverVersion);
+        }
+      } catch (err) {
+        console.error('Failed to verify version:', err);
+      }
+    };
+
+    checkVersion();
+  }, []);
+
+  useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
 
@@ -91,6 +127,7 @@ function App() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
 
   return (
     <ThemeProvider>
