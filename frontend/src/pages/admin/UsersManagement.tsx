@@ -25,7 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { ProfileCard } from '@/components/ui/info-card';
-import { cn } from '@/lib/utils';
+import { cn, getImageUrl } from '@/lib/utils';
 import SEO from '@/components/SEO';
 
 const MySwal = withReactContent(Swal);
@@ -545,7 +545,7 @@ const UsersManagement: React.FC = () => {
                   email={user.email}
                   role={user.role_name}
                   status={!user.is_active ? "offline" : (user.is_online ? "online" : "away")}
-                  avatar={user.profile_pic ? `${import.meta.env.VITE_API_URL}/${user.profile_pic}` : ""}
+                  avatar={getImageUrl(user.profile_pic)}
                   college={user.college_name}
                   department={user.department_name}
                   onEdit={user.id === 1 ? undefined : () => handleOpenModal(user)}
