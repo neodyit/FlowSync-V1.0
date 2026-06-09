@@ -53,20 +53,6 @@ stateDiagram-v2
 ```
 
 
-### 3. GIT Graph for FlowSync
-    gitGraph
-       commit
-       commit
-       branch develop
-       commit
-       commit
-       commit
-       checkout main
-       commit
-       commit
-       merge develop
-       commit
-       commit
 
 
 ---
