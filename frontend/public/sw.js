@@ -1,4 +1,5 @@
 const CACHE_NAME = 'flowsync-v1';
+const DYNAMIC_CACHE_NAME = 'flowsync-dynamic-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -11,7 +12,23 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
-    })
+    }).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  const cacheWhitelist = [CACHE_NAME, DYNAMIC_CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (!cacheWhitelist.includes(cacheName)) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
   );
 });
 
@@ -19,6 +36,41 @@ self.addEventListener('fetch', (event) => {
   // Skip non-http requests (e.g., chrome-extension://)
   if (!event.request.url.startsWith('http')) return;
 
+  const url = new URL(event.request.url);
+
+  // Exclude non-GET requests from caching
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Check if it is an API request to cache dynamically
+  const isApiRequest = url.pathname.endsWith('.php') || url.href.includes('/api/');
+  const isExcluded = url.pathname.includes('login.php') || 
+                     url.pathname.includes('logout.php') ||
+                     url.pathname.includes('download.php') ||
+                     url.pathname.includes('export_') ||
+                     url.pathname.includes('version.json'); // version.json must never be cached
+
+  if (isApiRequest && !isExcluded) {
+    event.respondWith(
+      caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((cachedResponse) => {
+          const fetchPromise = fetch(event.request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch((err) => {
+            console.error('Dynamic fetch failed:', err);
+          });
+          return cachedResponse || fetchPromise;
+        });
+      })
+    );
+    return;
+  }
+
+  // Cache-first for standard static assets
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request).catch((err) => {
@@ -34,3 +86,4 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
