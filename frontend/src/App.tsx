@@ -63,6 +63,7 @@ import IADepartments from './pages/ia/Departments';
 import IATasks from './pages/ia/Tasks';
 import IANotices from './pages/ia/Notices';
 import IAReports from './pages/ia/Reports';
+import IAActivity from './pages/ia/Activity';
 
 // Root Redirect Helper
 const RootRedirect = () => {
@@ -226,6 +227,7 @@ function App() {
                 <Route path="tasks" element={<IATasks />} />
                 <Route path="notices" element={<IANotices />} />
                 <Route path="reports" element={<IAReports />} />
+                <Route path="activity" element={<IAActivity />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="profile/:id" element={<PublicProfile />} />
               </Route>

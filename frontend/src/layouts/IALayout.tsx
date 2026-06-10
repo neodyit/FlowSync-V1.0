@@ -163,6 +163,7 @@ export default function IALayout() {
     { name: 'Tasks', icon: CheckSquare, path: '/ia/tasks' },
     { name: 'Notices', icon: Bell, path: '/ia/notices' },
     { name: 'Reports', icon: FileText, path: '/ia/reports' },
+    { name: 'Activity Center', icon: History, path: '/ia/activity' },
   ];
 
   const initials = (user.name || 'User')
