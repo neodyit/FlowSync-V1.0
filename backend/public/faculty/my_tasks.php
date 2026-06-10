@@ -25,10 +25,13 @@ try {
         case 'GET':
             // Fetch tasks assigned to this faculty member (including broadcasted ones they accepted)
             $stmt = $db->prepare("
-                SELECT t.*, u.name as assigned_by_name, u.profile_pic as assigned_by_pic,
-                       ta.status as my_status, ta.progress, 
+                 SELECT t.*, t.status AS overall_status, t.completed_at AS overall_completed_at,
+                       (SELECT tr.remarks FROM task_reviews tr WHERE tr.task_id = t.id AND tr.status = 'Approved' ORDER BY tr.created_at DESC LIMIT 1) AS completion_reason,
+                       CASE WHEN (SELECT COUNT(*) FROM task_reviews tr WHERE tr.task_id = t.id AND tr.status = 'Rework Required') > 0 OR ta.status = 'Rework Required' THEN 'Rework' ELSE 'Regular' END AS flow_type,
+                       u.name as assigned_by_name, u.profile_pic as assigned_by_pic,
+                        ta.status as my_status, ta.progress, 
                        ta.points as my_points, ta.bonus_points as my_bonus, 
-                       ta.remarks as my_remarks, ta.public_remarks, ta.private_remarks, ta.submission_link,
+                       ta.remarks as my_remarks, ta.public_remarks, ta.private_remarks, ta.submission_link, ta.submitted_at as my_submitted_at,
                        CASE WHEN ta.submitted_at IS NOT NULL AND DATE(ta.submitted_at) > t.deadline THEN 1 ELSE 0 END as is_delayed
                 FROM tasks t
                 JOIN users u ON t.assigned_by_id = u.id
@@ -45,6 +48,7 @@ try {
             foreach ($tasks as &$task) {
                 // Use assignment status for UI
                 $task['status'] = $task['my_status'];
+                $task['submitted_at'] = $task['my_submitted_at'];
                 $task['points'] = $task['my_points'];
                 $task['bonus_points'] = $task['my_bonus'];
                 $task['remarks'] = $task['my_remarks'];
