@@ -41,6 +41,24 @@ export function getDownloadUrl(filePath: string): string {
   return `${apiUrl}/download.php?file=${encodeURIComponent(filePath)}`;
 }
 
+/**
+ * Converts a profile_pic or image path to use the lightweight serve_image.php endpoint.
+ */
+export function getImageUrl(profilePic: string | null | undefined): string {
+  if (!profilePic) return '';
+  const apiUrl = import.meta.env.VITE_API_URL;
+  // If it's already a download.php URL, rewrite to serve_image.php
+  if (profilePic.includes('download.php?file=')) {
+    return `${apiUrl}/${profilePic.replace('download.php?file=', 'serve_image.php?file=')}`;
+  }
+  // If it's a raw path like "profiles/xxx.jpg"
+  if (profilePic.startsWith('profiles/') || profilePic.startsWith('push_notices/')) {
+    return `${apiUrl}/serve_image.php?file=${encodeURIComponent(profilePic)}`;
+  }
+  // Fallback: use as-is with API URL
+  return `${apiUrl}/${profilePic}`;
+}
+
 export function calculateProgress(status: string, currentProgress: number = 0): number {
   switch (status) {
     case 'Assigned': return 0;

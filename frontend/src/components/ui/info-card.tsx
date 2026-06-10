@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Star, MessageCircle, UserPlus, Shield, Building2, Briefcase, History, Edit2, Power, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -66,6 +67,8 @@ export function ProfileCard({
   name, role, status, avatar, tags = [], isVerified, followers, 
   college, department, email, id, onEdit, onToggleStatus, onDelete, onLogs, onClickName
 }: ProfileCardProps) {
+  const [imgError, setImgError] = useState(false);
+  const showAvatar = avatar && !imgError;
   return (
     <div className={cn(
       "group relative overflow-hidden rounded-[2.5rem] bg-[#EDE9FE]/70 dark:bg-[#1A0F35]/20 backdrop-blur-md p-8 w-full transition-all duration-500 hover:-translate-y-1 border border-[#7C3AED]/10 dark:border-violet-500/20",
@@ -108,10 +111,12 @@ export function ProfileCard({
           )}
             onClick={onClickName}
           >
-            {avatar ? (
+            {showAvatar ? (
               <img
                 src={avatar}
                 alt={name}
+                loading="lazy"
+                onError={() => setImgError(true)}
                 className="h-full w-full rounded-[1.8rem] object-cover transition-transform duration-500 group-hover:scale-110"
               />
             ) : (
