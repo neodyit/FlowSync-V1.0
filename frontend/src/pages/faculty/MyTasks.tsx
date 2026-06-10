@@ -90,6 +90,10 @@ interface Task {
     status: string;
     progress: number;
   }[];
+  overall_status: string;
+  overall_completed_at: string | null;
+  completion_reason: string | null;
+  flow_type: 'Regular' | 'Rework';
   created_at: string;
   submitted_at: string | null;
   completed_at: string | null;
@@ -109,6 +113,7 @@ const FacultyMyTasks: React.FC = () => {
   const allowDecline = user.features ? (user.features.allow_task_decline !== false) : true;
 
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [activeTab, setActiveTab] = useState<'active' | 'pending_submission' | 'completed'>('active');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -436,14 +441,27 @@ const FacultyMyTasks: React.FC = () => {
   };
 
   const filteredTasks = tasks.filter(t => 
-    (t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.description?.toLowerCase().includes(searchQuery.toLowerCase())) &&
-    t.status !== 'Assigned'
+    t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const pendingTasks: Task[] = [];
-  const activeTasks = filteredTasks.filter(t => !['Completed', 'Approved', 'Declined', 'Rejected'].includes(t.status));
-  const completedTasks = filteredTasks.filter(t => ['Completed', 'Approved'].includes(t.status));
+  const pendingTasks = filteredTasks.filter(t => t.status === 'Assigned');
+  
+  const activeTasks = filteredTasks.filter(t => 
+    t.status !== 'Assigned' && 
+    !['Approved', 'Declined', 'Rejected'].includes(t.status) &&
+    !['Completed', 'Approved', 'Declined', 'Expired'].includes(t.overall_status)
+  );
+
+  const pendingSubmissions = filteredTasks.filter(t => 
+    !['Approved', 'Submitted'].includes(t.status) && 
+    ['Completed', 'Approved', 'Declined', 'Expired'].includes(t.overall_status)
+  );
+
+  const completedTasks = filteredTasks.filter(t => 
+    t.status === 'Approved' || 
+    (t.status === 'Submitted' && ['Completed', 'Approved'].includes(t.overall_status))
+  );
 
   return (
     <div className="space-y-8 pb-20">
@@ -471,8 +489,8 @@ const FacultyMyTasks: React.FC = () => {
       </div>
 
       {/* Task Tabs & Search */}
-      <div className="flex flex-col md:flex-row gap-6">
-        <div className="flex-1 relative group">
+      <div className="flex flex-col gap-6">
+        <div className="relative group">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-violet-400/40 group-focus-within:text-[#7C3AED] dark:group-focus-within:text-violet-400 transition-colors" />
           <input 
             type="text" 
@@ -481,6 +499,43 @@ const FacultyMyTasks: React.FC = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-14 pr-6 py-4 bg-white dark:bg-[#110A24] border border-slate-100 dark:border-violet-500/10 rounded-3xl text-sm font-bold text-[#1E184B] dark:text-indigo-100 focus:outline-none focus:ring-4 focus:ring-[#7C3AED]/10 focus:border-[#7C3AED] dark:focus:border-violet-400/70 transition-all placeholder:text-slate-300 dark:placeholder:text-violet-500/30"
           />
+        </div>
+
+        {/* Tab Controls */}
+        <div className="flex border-b border-slate-100 dark:border-violet-500/10 gap-8 overflow-x-auto pb-1 shrink-0">
+          {[
+            { id: 'active', label: 'Active Missions', count: activeTasks.length, icon: Briefcase },
+            { id: 'pending_submission', label: 'Pending My Submissions', count: pendingSubmissions.length, icon: AlertCircle },
+            { id: 'completed', label: 'Accomplished Tasks', count: completedTasks.length, icon: CheckCircle2 }
+          ].map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={cn(
+                  "pb-4 font-black text-sm uppercase tracking-wider relative transition-all flex items-center gap-2 border-b-2 border-transparent whitespace-nowrap cursor-pointer",
+                  isActive 
+                    ? "text-[#7C3AED] dark:text-violet-400 border-[#7C3AED]" 
+                    : "text-slate-400 dark:text-violet-400/45 hover:text-[#1E184B] dark:hover:text-indigo-200"
+                )}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className={cn(isActive ? "inline" : "hidden md:inline")}>
+                  {tab.label}
+                </span>
+                <span className={cn(
+                  "px-2.5 py-0.5 rounded-full text-[10px] font-black transition-colors",
+                  isActive
+                    ? "bg-[#7C3AED]/10 text-[#7C3AED] dark:bg-violet-500/20 dark:text-violet-300"
+                    : "bg-slate-100 text-slate-500 dark:bg-[#1A0F35]/80 dark:text-violet-400/50"
+                )}>
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -559,142 +614,236 @@ const FacultyMyTasks: React.FC = () => {
           )}
 
           {/* Active Tasks */}
-          <section>
-            <h2 className="text-xs font-black text-[#1E184B]/40 dark:text-violet-400/50 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
-              <span className="w-8 h-[2px] bg-[#7C3AED]/20" />
-              Active Missions ({activeTasks.length})
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {activeTasks.map((task) => {
-                const config = getStatusConfig(task.status);
-                const flag = getFlagConfig(task.flag_color);
-                return (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    key={task.id}
-                    onClick={() => { setSelectedTask(task); setIsDetailModalOpen(true); }}
-                    className="bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] border border-slate-100 dark:border-violet-500/15 p-7 shadow-sm hover:shadow-2xl hover:shadow-[#7C3AED]/10 dark:hover:shadow-violet-500/[0.03] transition-all cursor-pointer group relative overflow-hidden"
-                  >
-                    {flag && (
-                      <div className={cn("absolute top-4 right-4 w-3 h-3 rounded-full animate-pulse shadow-lg", flag.bg)} />
-                    )}
+          {activeTab === 'active' && (
+            <section>
+              <h2 className="text-xs font-black text-[#1E184B]/40 dark:text-violet-400/50 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                <span className="w-8 h-[2px] bg-[#7C3AED]/20" />
+                Active Missions ({activeTasks.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {activeTasks.map((task) => {
+                  const config = getStatusConfig(task.status);
+                  const flag = getFlagConfig(task.flag_color);
+                  return (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      key={task.id}
+                      onClick={() => { setSelectedTask(task); setIsDetailModalOpen(true); }}
+                      className="bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] border border-slate-100 dark:border-violet-500/15 p-7 shadow-sm hover:shadow-2xl hover:shadow-[#7C3AED]/10 dark:hover:shadow-violet-500/[0.03] transition-all cursor-pointer group relative overflow-hidden"
+                    >
+                      {flag && (
+                        <div className={cn("absolute top-4 right-4 w-3 h-3 rounded-full animate-pulse shadow-lg", flag.bg)} />
+                      )}
 
-                    <div className="flex items-start justify-between mb-5">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <div className={cn("px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest", config.bg, config.color)}>
-                          {config.label}
+                      <div className="flex items-start justify-between mb-5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className={cn("px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest", config.bg, config.color)}>
+                            {config.label}
+                          </div>
+                          <div className={cn(
+                            "px-2.5 py-1 rounded-xl text-[8px] font-black uppercase tracking-wider border flex items-center gap-1 shadow-sm",
+                            task.assignment_mode === 'group' ? 'bg-indigo-50 text-indigo-500 border-indigo-100 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30' :
+                            task.assignment_mode === 'broadcast' ? 'bg-amber-50 text-amber-500 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30' :
+                            'bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800/30'
+                          )}>
+                            {task.assignment_mode === 'group' && <Users className="w-2.5 h-2.5" />}
+                            {task.assignment_mode === 'broadcast' && <Sparkles className="w-2.5 h-2.5 animate-pulse" />}
+                            {task.assignment_mode || 'individual'}
+                          </div>
                         </div>
+                        {task.is_delayed === 1 && (
+                          <div className="bg-rose-100 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest animate-pulse">Delayed</div>
+                        )}
+                        <div className="flex flex-col items-end gap-1">
+                          <div className={cn(
+                            "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest", 
+                            getDeadlineStatus(task.deadline).isPassed ? "text-rose-500 dark:text-rose-400" : "text-slate-400 dark:text-violet-400/50"
+                          )}>
+                            <Clock className="w-3 h-3" />
+                            {getDeadlineStatus(task.deadline).text}
+                          </div>
+                          <div className="flex items-center gap-1 text-[8px] font-bold text-slate-300 dark:text-violet-500/30">
+                            <Calendar className="w-2.5 h-2.5" />
+                            {formatDate(task.deadline)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <h3 className="text-xl font-black text-[#1E184B] dark:text-indigo-100 mb-2 group-hover:text-[#7C3AED] dark:group-hover:text-violet-400 transition-colors truncate">{task.title}</h3>
+                      <p className="text-slate-400 dark:text-violet-400/50 text-sm font-medium mb-6 line-clamp-2 leading-relaxed">
+                        {task.description || "Instructional overview pending..."}
+                      </p>
+
+                      <div className="flex items-center justify-between pt-5 border-t border-slate-50 dark:border-violet-500/10">
+                        <div className="flex flex-col gap-2 flex-1">
+                          <div className="flex items-center justify-between pr-4">
+                            <span className="text-[9px] font-black text-slate-400 dark:text-violet-400/50 uppercase tracking-widest">Progress</span>
+                            <span className="text-[10px] font-black text-[#1E184B] dark:text-indigo-100">{task.progress}%</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-100 dark:bg-[#110A24] rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-[#7C3AED] to-[#5B21B6] transition-all duration-500" 
+                              style={{ width: `${task.progress}%` }} 
+                            />
+                          </div>
+                        </div>
+                        {task.attachment_count > 0 && (
+                          <div className="flex items-center gap-3 shrink-0 ml-4">
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-violet-50 dark:bg-violet-950/20 text-[#7C3AED] dark:text-violet-400 rounded-lg text-[9px] font-black border border-violet-100 dark:border-violet-900/50" title="Attachments Available">
+                              <Paperclip className="w-3.5 h-3.5" />
+                              <span>{task.attachment_count}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+                {activeTasks.length === 0 && (
+                  <div className="col-span-full py-16 bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] border border-dashed border-slate-100 dark:border-violet-500/15 text-center">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-500/20 mx-auto mb-3" />
+                    <p className="text-slate-400 dark:text-violet-400/50 font-bold uppercase text-[10px] tracking-widest">Workspace cleared</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Pending Submissions */}
+          {activeTab === 'pending_submission' && (
+            <section className="space-y-6 animate-in fade-in duration-300">
+              <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-[2rem] text-amber-700 dark:text-amber-300 flex items-start gap-4 shadow-sm">
+                <AlertCircle className="w-6 h-6 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-black text-sm uppercase tracking-wide">Attention Required</h4>
+                  <p className="text-xs font-bold mt-1 opacity-90">
+                    These tasks have been completed or approved, but you have not submitted your assigned work.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {pendingSubmissions.map((task) => {
+                  const flag = getFlagConfig(task.flag_color);
+                  return (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      key={task.id}
+                      onClick={() => { setSelectedTask(task); setIsDetailModalOpen(true); }}
+                      className="bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] border border-slate-100 dark:border-violet-500/15 p-7 shadow-sm hover:shadow-2xl hover:shadow-amber-500/10 transition-all cursor-pointer group relative overflow-hidden"
+                    >
+                      {flag && (
+                        <div className={cn("absolute top-4 right-4 w-3 h-3 rounded-full animate-pulse shadow-lg", flag.bg)} />
+                      )}
+
+                      <div className="flex items-start justify-between mb-5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className={cn(
+                            "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
+                            task.flow_type === 'Rework' 
+                              ? 'bg-rose-50 text-rose-500 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30'
+                              : 'bg-[#7C3AED]/10 text-[#7C3AED] border-[#7C3AED]/20 dark:bg-violet-950/20 dark:text-violet-400 dark:border-violet-900/30'
+                          )}>
+                            {task.flow_type} Task
+                          </div>
+                          <div className="px-2.5 py-1 rounded-xl text-[8px] font-black uppercase tracking-wider border bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800/30">
+                            {task.assignment_mode || 'individual'}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border border-rose-100 dark:border-rose-900/30">
+                            Unsubmitted
+                          </span>
+                        </div>
+                      </div>
+
+                      <h3 className="text-xl font-black text-[#1E184B] dark:text-indigo-100 mb-4 group-hover:text-amber-500 transition-colors truncate">{task.title}</h3>
+                      
+                      <div className="space-y-3 pt-4 border-t border-slate-50 dark:border-violet-500/10 text-xs font-bold text-slate-500 dark:text-violet-400/70">
+                        <div className="flex justify-between">
+                          <span>Assigned Date</span>
+                          <span className="text-[#1E184B] dark:text-indigo-100 font-black">{formatDate(task.created_at)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Due Date</span>
+                          <span className="text-[#1E184B] dark:text-indigo-100 font-black">{formatDate(task.deadline)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Task Status</span>
+                          <span className="text-amber-600 dark:text-amber-400 font-black uppercase tracking-wider text-[10px]">{task.overall_status}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Completion Date</span>
+                          <span className="text-[#1E184B] dark:text-indigo-100 font-black">{task.overall_completed_at ? formatDate(task.overall_completed_at) : 'N/A'}</span>
+                        </div>
+                        {task.completion_reason && (
+                          <div className="pt-2 border-t border-dashed border-slate-100 dark:border-violet-500/10">
+                            <span className="block text-[10px] uppercase tracking-wider text-slate-400 mb-1">Reason for Completion</span>
+                            <p className="text-xs italic font-medium text-slate-600 dark:text-violet-400/90 line-clamp-2">
+                              "{task.completion_reason}"
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+                {pendingSubmissions.length === 0 && (
+                  <div className="col-span-full py-16 bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] border border-dashed border-slate-100 dark:border-violet-500/15 text-center">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-500/20 mx-auto mb-3" />
+                    <p className="text-slate-400 dark:text-violet-400/50 font-bold uppercase text-[10px] tracking-widest">No unsubmitted completed tasks</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Completed History */}
+          {activeTab === 'completed' && (
+            <section>
+              <h2 className="text-xs font-black text-[#1E184B]/40 dark:text-violet-400/50 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                <span className="w-8 h-[2px] bg-emerald-500/20" />
+                Accomplished Tasks ({completedTasks.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60 hover:opacity-100 transition-opacity">
+                {completedTasks.map((task) => (
+                  <div 
+                    key={task.id}
+                    onClick={() => { setSelectedTask(task); setIsDetailModalOpen(true); }} 
+                    className="bg-slate-50/50 dark:bg-[#110A24]/40 rounded-[2rem] border border-slate-100 dark:border-violet-500/10 p-6 cursor-pointer hover:bg-white dark:hover:bg-[#1A0F35]/80 transition-all hover:shadow-xl group"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                         <div className={cn(
-                          "px-2.5 py-1 rounded-xl text-[8px] font-black uppercase tracking-wider border flex items-center gap-1 shadow-sm",
+                          "px-2 py-0.5 rounded-lg text-[7px] font-black uppercase tracking-widest border flex items-center gap-1",
                           task.assignment_mode === 'group' ? 'bg-indigo-50 text-indigo-500 border-indigo-100 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30' :
                           task.assignment_mode === 'broadcast' ? 'bg-amber-50 text-amber-500 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30' :
                           'bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800/30'
                         )}>
-                          {task.assignment_mode === 'group' && <Users className="w-2.5 h-2.5" />}
-                          {task.assignment_mode === 'broadcast' && <Sparkles className="w-2.5 h-2.5 animate-pulse" />}
+                          {task.assignment_mode === 'group' && <Users className="w-2 h-2" />}
+                          {task.assignment_mode === 'broadcast' && <Sparkles className="w-2 h-2 animate-pulse" />}
                           {task.assignment_mode || 'individual'}
                         </div>
                       </div>
-                      {task.is_delayed === 1 && (
-                        <div className="bg-rose-100 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest animate-pulse">Delayed</div>
-                      )}
-                      <div className="flex flex-col items-end gap-1">
-                        <div className={cn(
-                          "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest", 
-                          getDeadlineStatus(task.deadline).isPassed ? "text-rose-500 dark:text-rose-400" : "text-slate-400 dark:text-violet-400/50"
-                        )}>
-                          <Clock className="w-3 h-3" />
-                          {getDeadlineStatus(task.deadline).text}
-                        </div>
-                        <div className="flex items-center gap-1 text-[8px] font-bold text-slate-300 dark:text-violet-500/30">
-                          <Calendar className="w-2.5 h-2.5" />
-                          {formatDate(task.deadline)}
-                        </div>
+                       <div className="flex flex-col items-end gap-1">
+                        <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-lg">+{task.points + task.bonus_points} pts</span>
+                        {task.is_delayed === 1 && (
+                          <span className="bg-rose-50 dark:bg-rose-950/20 text-rose-500 dark:text-rose-400 px-2 py-0.5 rounded-lg text-[7px] font-black uppercase tracking-widest border border-rose-100/50 dark:border-rose-900/30">Delayed</span>
+                        )}
                       </div>
                     </div>
-
-                    <h3 className="text-xl font-black text-[#1E184B] dark:text-indigo-100 mb-2 group-hover:text-[#7C3AED] dark:group-hover:text-violet-400 transition-colors truncate">{task.title}</h3>
-                    <p className="text-slate-400 dark:text-violet-400/50 text-sm font-medium mb-6 line-clamp-2 leading-relaxed">
-                      {task.description || "Instructional overview pending..."}
+                    <h3 className="font-black text-[#1E184B] dark:text-indigo-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{task.title}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-violet-400/50 mt-1 uppercase tracking-widest">
+                      Completed on {formatDate(task.completed_at || task.created_at)}
                     </p>
-
-                    <div className="flex items-center justify-between pt-5 border-t border-slate-50 dark:border-violet-500/10">
-                      <div className="flex flex-col gap-2 flex-1">
-                        <div className="flex items-center justify-between pr-4">
-                          <span className="text-[9px] font-black text-slate-400 dark:text-violet-400/50 uppercase tracking-widest">Progress</span>
-                          <span className="text-[10px] font-black text-[#1E184B] dark:text-indigo-100">{task.progress}%</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-slate-100 dark:bg-[#110A24] rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-[#7C3AED] to-[#5B21B6] transition-all duration-500" 
-                            style={{ width: `${task.progress}%` }} 
-                          />
-                        </div>
-                      </div>
-                      {task.attachment_count > 0 && (
-                        <div className="flex items-center gap-3 shrink-0 ml-4">
-                          <div className="flex items-center gap-1 px-2 py-0.5 bg-violet-50 dark:bg-violet-950/20 text-[#7C3AED] dark:text-violet-400 rounded-lg text-[9px] font-black border border-violet-100 dark:border-violet-900/50" title="Attachments Available">
-                            <Paperclip className="w-3.5 h-3.5" />
-                            <span>{task.attachment_count}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
-              {activeTasks.length === 0 && (
-                <div className="col-span-full py-16 bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] border border-dashed border-slate-100 dark:border-violet-500/15 text-center">
-                  <CheckCircle2 className="w-10 h-10 text-emerald-500/20 mx-auto mb-3" />
-                  <p className="text-slate-400 dark:text-violet-400/50 font-bold uppercase text-[10px] tracking-widest">Workspace cleared</p>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* Completed History */}
-          <section>
-            <h2 className="text-xs font-black text-[#1E184B]/40 dark:text-violet-400/50 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
-              <span className="w-8 h-[2px] bg-emerald-500/20" />
-              Accomplished Tasks ({completedTasks.length})
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60 hover:opacity-100 transition-opacity">
-              {completedTasks.map((task) => (
-                <div 
-                  key={task.id}
-                  onClick={() => { setSelectedTask(task); setIsDetailModalOpen(true); }} 
-                  className="bg-slate-50/50 dark:bg-[#110A24]/40 rounded-[2rem] border border-slate-100 dark:border-violet-500/10 p-6 cursor-pointer hover:bg-white dark:hover:bg-[#1A0F35]/80 transition-all hover:shadow-xl group"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                      <div className={cn(
-                        "px-2 py-0.5 rounded-lg text-[7px] font-black uppercase tracking-widest border flex items-center gap-1",
-                        task.assignment_mode === 'group' ? 'bg-indigo-50 text-indigo-500 border-indigo-100 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30' :
-                        task.assignment_mode === 'broadcast' ? 'bg-amber-50 text-amber-500 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30' :
-                        'bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800/30'
-                      )}>
-                        {task.assignment_mode === 'group' && <Users className="w-2 h-2" />}
-                        {task.assignment_mode === 'broadcast' && <Sparkles className="w-2 h-2 animate-pulse" />}
-                        {task.assignment_mode || 'individual'}
-                      </div>
-                    </div>
-                     <div className="flex flex-col items-end gap-1">
-                      <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-lg">+{task.points + task.bonus_points} pts</span>
-                      {task.is_delayed === 1 && (
-                        <span className="bg-rose-50 dark:bg-rose-950/20 text-rose-500 dark:text-rose-400 px-2 py-0.5 rounded-lg text-[7px] font-black uppercase tracking-widest border border-rose-100/50 dark:border-rose-900/30">Delayed</span>
-                      )}
-                    </div>
                   </div>
-                  <h3 className="font-black text-[#1E184B] dark:text-indigo-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{task.title}</h3>
-                  <p className="text-[10px] font-bold text-slate-400 dark:text-violet-400/50 mt-1 uppercase tracking-widest">
-                    Completed on {formatDate(task.completed_at || task.created_at)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       )}
 
