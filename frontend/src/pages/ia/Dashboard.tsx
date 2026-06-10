@@ -1,18 +1,109 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutGrid, Building2, Users, CheckSquare, Bell, FileText } from 'lucide-react';
+import { 
+  Building2, 
+  Users, 
+  CheckSquare, 
+  Calendar, 
+  Clock, 
+  Activity, 
+  UserCheck, 
+  TrendingUp, 
+  History,
+  AlertTriangle
+} from 'lucide-react';
 
-const stats = [
-  { name: 'Total Departments', value: '0', icon: Building2, color: 'text-blue-500 bg-blue-50 dark:bg-blue-950/20' },
-  { name: 'Total HODs', value: '0', icon: Users, color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950/20' },
-  { name: 'Total Faculty', value: '0', icon: Users, color: 'text-purple-500 bg-purple-50 dark:bg-purple-950/20' },
-  { name: 'Active Tasks', value: '0', icon: CheckSquare, color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20' },
-];
+interface StatsData {
+  overview: {
+    total_departments: number;
+    total_hods: number;
+    total_faculty: number;
+    active_tasks: number;
+    completed_tasks: number;
+    pending_tasks: number;
+  };
+  insights: {
+    due_today: number;
+    due_tomorrow: number;
+    overdue: number;
+  };
+  engagement: {
+    most_active_dept: string;
+    least_active_dept: string;
+    top_faculty: string;
+    top_hod: string;
+  };
+  recent_activity: Array<{
+    action: string;
+    resource: string;
+    created_at: string;
+    user_name: string;
+  }>;
+}
 
 export default function IADashboard() {
+  const [data, setData] = useState<StatsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const response = await fetch(`${apiUrl}/ia/stats.php`, {
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch dashboard stats');
+        }
+        const result = await response.json();
+        if (result.status === 'success') {
+          setData(result.data);
+        } else {
+          setError(result.message || 'An error occurred while fetching stats');
+        }
+      } catch (err: any) {
+        setError(err.message || 'Connection to the stats API failed.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="h-[70vh] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#7C3AED]/20 border-t-[#7C3AED] dark:border-violet-500/20 dark:border-t-violet-400 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-950/30 rounded-3xl flex items-center gap-4 text-rose-600 dark:text-rose-400 max-w-xl mx-auto mt-12">
+        <AlertTriangle className="w-6 h-6 flex-shrink-0" />
+        <div>
+          <h3 className="font-black text-sm uppercase tracking-wider">Dashboard Error</h3>
+          <p className="text-xs mt-1 font-bold">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const cards = [
+    { name: 'Departments', value: data.overview.total_departments, icon: Building2, color: 'from-[#6366F1]/10 to-[#818CF8]/5 dark:from-[#6366F1]/20 dark:to-transparent text-[#6366F1]' },
+    { name: 'Active HODs', value: data.overview.total_hods, icon: UserCheck, color: 'from-[#8B5CF6]/10 to-[#A78BFA]/5 dark:from-[#8B5CF6]/20 dark:to-transparent text-[#8B5CF6]' },
+    { name: 'Active Faculty', value: data.overview.total_faculty, icon: Users, color: 'from-[#EC4899]/10 to-[#F472B6]/5 dark:from-[#EC4899]/20 dark:to-transparent text-[#EC4899]' },
+    { name: 'Active Tasks', value: data.overview.active_tasks, icon: CheckSquare, color: 'from-[#10B981]/10 to-[#34D399]/5 dark:from-[#10B981]/20 dark:to-transparent text-[#10B981]' },
+  ];
+
   return (
     <div className="space-y-8">
-      {/* Welcome Header */}
+      {/* Header */}
       <div>
         <h1 className="text-3xl font-black text-[#1E1B4B] dark:text-indigo-50 tracking-tight">Institution Dashboard</h1>
         <p className="text-sm text-[#4C1D95]/60 dark:text-indigo-200/60 mt-1">
@@ -20,65 +111,139 @@ export default function IADashboard() {
         </p>
       </div>
 
-      {/* Quick Stats Grid */}
+      {/* Grid Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
+        {cards.map((card, index) => {
+          const Icon = card.icon;
           return (
             <motion.div
-              key={stat.name}
-              initial={{ opacity: 0, y: 20 }}
+              key={card.name}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="p-6 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-2xl shadow-sm flex items-center gap-5"
+              transition={{ delay: index * 0.05 }}
+              className="p-6 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-2xl shadow-sm flex items-center justify-between hover:shadow-md transition-all group"
             >
-              <div className={`p-4 rounded-xl ${stat.color}`}>
-                <Icon className="w-6 h-6" />
+              <div className="space-y-1">
+                <p className="text-xs font-black text-[#4C1D95]/40 dark:text-indigo-200/40 uppercase tracking-widest">{card.name}</p>
+                <h3 className="text-3xl font-black text-[#1E1B4B] dark:text-indigo-50">{card.value}</h3>
               </div>
-              <div>
-                <p className="text-xs font-bold text-[#4C1D95]/50 dark:text-indigo-200/50 uppercase tracking-wider">{stat.name}</p>
-                <h3 className="text-2xl font-black text-[#1E1B4B] dark:text-indigo-50 mt-0.5">{stat.value}</h3>
+              <div className={`p-4 rounded-2xl bg-gradient-to-br ${card.color} group-hover:scale-110 transition-transform duration-300`}>
+                <Icon className="w-6 h-6" />
               </div>
             </motion.div>
           );
         })}
       </div>
 
-      {/* Main Content Area */}
+      {/* Insights & Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left 2 Cols: Activity/Tasks */}
+        
+        {/* Left Column (2 parts): Task Insights & Engagement */}
         <div className="lg:col-span-2 space-y-8">
+          
+          {/* Task Insights */}
           <div className="p-8 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-3xl shadow-sm">
-            <h3 className="text-lg font-black text-[#1E1B4B] dark:text-indigo-50 mb-4">Task Overview</h3>
-            <div className="flex flex-col items-center justify-center py-12 text-[#4C1D95]/30 dark:text-indigo-200/30">
-              <CheckSquare className="w-12 h-12 stroke-[1.5]" />
-              <p className="text-sm font-bold mt-4">No tasks found. Create tasks to assign to HODs or departments.</p>
+            <h3 className="text-sm font-black text-[#1E1B4B] dark:text-indigo-50 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#7C3AED]" /> Task Insights
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              
+              <div className="p-5 rounded-2xl bg-rose-50/50 dark:bg-rose-950/10 border border-rose-100/30 dark:border-rose-950/20 text-center">
+                <span className="text-3xl font-black text-rose-500">{data.insights.overdue}</span>
+                <p className="text-xs font-bold text-rose-500/60 dark:text-rose-400/60 mt-1 uppercase tracking-wider">Overdue Tasks</p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/10 border border-amber-100/30 dark:border-amber-950/20 text-center">
+                <span className="text-3xl font-black text-amber-500">{data.insights.due_today}</span>
+                <p className="text-xs font-bold text-amber-500/60 dark:text-amber-400/60 mt-1 uppercase tracking-wider">Due Today</p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-blue-50/50 dark:bg-blue-950/10 border border-blue-100/30 dark:border-blue-950/20 text-center">
+                <span className="text-3xl font-black text-blue-500">{data.insights.due_tomorrow}</span>
+                <p className="text-xs font-bold text-blue-500/60 dark:text-blue-400/60 mt-1 uppercase tracking-wider">Due Tomorrow</p>
+              </div>
+
             </div>
           </div>
+
+          {/* Engagement Metrics */}
+          <div className="p-8 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-3xl shadow-sm">
+            <h3 className="text-sm font-black text-[#1E1B4B] dark:text-indigo-50 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[#7C3AED]" /> Engagement Insights
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              
+              <div className="p-5 rounded-2xl border border-[#7C3AED]/10 dark:border-violet-500/10 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-[#4C1D95]/40 dark:text-indigo-200/40 uppercase tracking-wider">Most Active Dept</p>
+                  <p className="text-sm font-black text-[#1E1B4B] dark:text-indigo-50 mt-1">{data.engagement.most_active_dept}</p>
+                </div>
+                <TrendingUp className="w-5 h-5 text-emerald-500" />
+              </div>
+
+              <div className="p-5 rounded-2xl border border-[#7C3AED]/10 dark:border-violet-500/10 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-[#4C1D95]/40 dark:text-indigo-200/40 uppercase tracking-wider">Least Active Dept</p>
+                  <p className="text-sm font-black text-[#1E1B4B] dark:text-indigo-50 mt-1">{data.engagement.least_active_dept}</p>
+                </div>
+                <TrendingUp className="w-5 h-5 text-rose-500 rotate-180" />
+              </div>
+
+              <div className="p-5 rounded-2xl border border-[#7C3AED]/10 dark:border-violet-500/10 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-950/20 text-[#7C3AED] dark:text-violet-400 flex items-center justify-center font-black">F</div>
+                <div>
+                  <p className="text-[10px] font-black text-[#4C1D95]/40 dark:text-indigo-200/40 uppercase tracking-wider">Top Faculty Performer</p>
+                  <p className="text-sm font-black text-[#1E1B4B] dark:text-indigo-50 mt-0.5">{data.engagement.top_faculty}</p>
+                </div>
+              </div>
+
+              <div className="p-5 rounded-2xl border border-[#7C3AED]/10 dark:border-violet-500/10 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950/20 text-indigo-500 flex items-center justify-center font-black">H</div>
+                <div>
+                  <p className="text-[10px] font-black text-[#4C1D95]/40 dark:text-indigo-200/40 uppercase tracking-wider">Top HOD Performer</p>
+                  <p className="text-sm font-black text-[#1E1B4B] dark:text-indigo-50 mt-0.5">{data.engagement.top_hod}</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
         </div>
 
-        {/* Right 1 Col: Quick Actions & Notices */}
+        {/* Right Column: Recent Activity Feed */}
         <div className="space-y-8">
-          <div className="p-8 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-3xl shadow-sm">
-            <h3 className="text-lg font-black text-[#1E1B4B] dark:text-indigo-50 mb-4">Quick Actions</h3>
-            <div className="space-y-3">
-              <button className="w-full py-3.5 px-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-black uppercase tracking-wider rounded-2xl shadow-lg shadow-[#7C3AED]/20 transition-all">
-                Publish Notice
-              </button>
-              <button className="w-full py-3.5 px-4 bg-white dark:bg-[#181131] border border-[#7C3AED]/20 dark:border-violet-500/30 text-[#7C3AED] dark:text-violet-400 text-xs font-black uppercase tracking-wider rounded-2xl hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/20 transition-all">
-                Create Department
-              </button>
-            </div>
-          </div>
-
-          <div className="p-8 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-3xl shadow-sm">
-            <h3 className="text-lg font-black text-[#1E1B4B] dark:text-indigo-50 mb-4">Recent Announcements</h3>
-            <div className="flex flex-col items-center justify-center py-8 text-[#4C1D95]/30 dark:text-indigo-200/30">
-              <Bell className="w-8 h-8 stroke-[1.5]" />
-              <p className="text-xs font-bold mt-3">No announcements published yet.</p>
-            </div>
+          <div className="p-8 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-3xl shadow-sm h-full flex flex-col">
+            <h3 className="text-sm font-black text-[#1E1B4B] dark:text-indigo-50 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <History className="w-4 h-4 text-[#7C3AED]" /> Recent Activity
+            </h3>
+            
+            {data.recent_activity.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-[#4C1D95]/30 dark:text-indigo-200/30 py-12">
+                <History className="w-10 h-10 stroke-[1.5]" />
+                <p className="text-xs font-bold mt-3">No activity logs recorded yet.</p>
+              </div>
+            ) : (
+              <div className="flex-1 space-y-4 overflow-y-auto max-h-[350px] pr-2">
+                {data.recent_activity.map((activity, i) => (
+                  <div key={i} className="flex gap-3 text-xs border-b border-[#7C3AED]/5 dark:border-violet-500/5 pb-3 last:border-0 last:pb-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#7C3AED] mt-1.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-bold text-[#1E1B4B] dark:text-indigo-50">
+                        {activity.user_name} performed <span className="text-[#7C3AED] dark:text-violet-400">{activity.action}</span> on {activity.resource}
+                      </p>
+                      <span className="text-[10px] text-[#4C1D95]/40 dark:text-indigo-200/40 font-bold block mt-0.5">
+                        {new Date(activity.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
+
       </div>
     </div>
   );
