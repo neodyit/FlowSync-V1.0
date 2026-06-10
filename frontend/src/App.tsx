@@ -15,6 +15,7 @@ import CollegeDetails from './pages/admin/CollegeDetails';
 import DepartmentDetails from './pages/admin/DepartmentDetails';
 import UsersManagement from './pages/admin/UsersManagement';
 import Tasks from './pages/admin/Tasks';
+import AdminTaskDetails from './pages/admin/TaskDetails';
 import Notifications from './pages/admin/Notifications';
 import Leaderboard from './pages/admin/Leaderboard';
 import AuditLogs from './pages/admin/AuditLogs';
@@ -153,6 +154,7 @@ function App() {
                 <Route path="colleges/:shortName" element={<CollegeDetails />} />
                 <Route path="colleges/:shortName/:deptId" element={<DepartmentDetails />} />
                 <Route path="tasks" element={<Tasks />} />
+                <Route path="tasks/:id" element={<AdminTaskDetails />} />
                 <Route path="notifications" element={<Notifications />} />
                 <Route path="leaderboard" element={<Leaderboard />} />
                 <Route path="audit" element={<AuditLogs />} />
