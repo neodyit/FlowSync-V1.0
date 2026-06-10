@@ -100,13 +100,14 @@ class AuthService {
                 ]);
 
                 $payload = [
-                    'jti'     => $sessionId,
-                    'user_id' => $user['id'],
-                    'email'   => $user['email'],
-                    'role'    => $user['role_name'],
-                    'role_id' => (int)$user['role_id'],
-                    'iat'     => time(),
-                    'exp'     => $expiryTime
+                    'jti'        => $sessionId,
+                    'user_id'    => $user['id'],
+                    'email'      => $user['email'],
+                    'role'       => $user['role_name'],
+                    'role_id'    => (int)$user['role_id'],
+                    'college_id' => (int)$user['college_id'],
+                    'iat'        => time(),
+                    'exp'        => $expiryTime
                 ];
 
                 JWT::setSecret(getenv('JWT_SECRET') ?: 'flowsync_neodyit_2026');
@@ -156,6 +157,7 @@ class AuthService {
                         'email' => $user['email'],
                         'role' => $user['role_name'],
                         'role_id' => (int)$user['role_id'],
+                        'college_id' => (int)$user['college_id'],
                         'profile_pic' => $user['profile_pic'],
                         'features' => $features
                     ]

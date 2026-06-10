@@ -55,6 +55,15 @@ import Feedback from './pages/common/Feedback';
 import Profile from './pages/common/Profile';
 import PublicProfile from './pages/common/PublicProfile';
 
+// IA Pages
+import IALayout from './layouts/IALayout';
+import IADashboard from './pages/ia/Dashboard';
+import IAUsers from './pages/ia/Users';
+import IADepartments from './pages/ia/Departments';
+import IATasks from './pages/ia/Tasks';
+import IANotices from './pages/ia/Notices';
+import IAReports from './pages/ia/Reports';
+
 // Root Redirect Helper
 const RootRedirect = () => {
   const rawUser = localStorage.getItem('user');
@@ -66,6 +75,7 @@ const RootRedirect = () => {
   if (roleId === 1) return <Navigate to="/admin/dashboard" replace />;
   if (roleId === 2) return <Navigate to="/hod/dashboard" replace />;
   if (roleId === 3) return <Navigate to="/faculty/dashboard" replace />;
+  if (roleId === 4) return <Navigate to="/ia/dashboard" replace />;
   
   return <Navigate to="/login" replace />;
 };
@@ -203,6 +213,21 @@ function App() {
                 <Route path="profile" element={<Profile />} />
                 <Route path="profile/:id" element={<PublicProfile />} />
                 <Route path="feedback" element={<Feedback />} />
+              </Route>
+            </Route>
+
+            {/* Protected Institution Admin Routes (Role 4) */}
+            <Route element={<ProtectedRoute allowedRoles={[4]} />}>
+              <Route path="/ia" element={<IALayout />}>
+                <Route index element={<Navigate to="/ia/dashboard" replace />} />
+                <Route path="dashboard" element={<IADashboard />} />
+                <Route path="users" element={<IAUsers />} />
+                <Route path="departments" element={<IADepartments />} />
+                <Route path="tasks" element={<IATasks />} />
+                <Route path="notices" element={<IANotices />} />
+                <Route path="reports" element={<IAReports />} />
+                <Route path="profile" element={<Profile />} />
+                <Route path="profile/:id" element={<PublicProfile />} />
               </Route>
             </Route>
 
