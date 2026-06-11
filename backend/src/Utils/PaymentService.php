@@ -233,4 +233,49 @@ class PaymentService
 
         return false;
     }
+
+    public function getAllTransactions()
+    {
+        $stmt = $this->db->query("
+            SELECT tx.*, c.name as college_name, sp.name as plan_name
+            FROM subscription_transactions tx
+            LEFT JOIN colleges c ON tx.institution_id = c.id
+            LEFT JOIN subscription_plans sp ON tx.plan_id = sp.id
+            ORDER BY tx.created_at DESC
+        ");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getInstitutionTransactions($collegeId)
+    {
+        $stmt = $this->db->prepare("
+            SELECT tx.*, sp.name as plan_name, inv.invoice_number
+            FROM subscription_transactions tx
+            LEFT JOIN subscription_plans sp ON tx.plan_id = sp.id
+            LEFT JOIN invoices inv ON tx.id = inv.transaction_id
+            WHERE tx.institution_id = :college_id
+            ORDER BY tx.created_at DESC
+        ");
+        $stmt->execute(['college_id' => $collegeId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getInvoiceDetails($invoiceIdOrNumber)
+    {
+        $stmt = $this->db->prepare("
+            SELECT inv.*, tx.gateway_charge, tx.payment_gateway, tx.paid_at, tx.transaction_id as pg_order_id,
+                   c.name as college_name, c.address as college_address, sp.name as plan_name, sp.duration_months
+            FROM invoices inv
+            JOIN subscription_transactions tx ON inv.transaction_id = tx.id
+            JOIN colleges c ON inv.institution_id = c.id
+            LEFT JOIN subscription_plans sp ON tx.plan_id = sp.id
+            WHERE inv.id = :id OR inv.invoice_number = :inv_num
+            LIMIT 1
+        ");
+        $stmt->execute([
+            'id' => is_numeric($invoiceIdOrNumber) ? $invoiceIdOrNumber : null,
+            'inv_num' => $invoiceIdOrNumber
+        ]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
 }
