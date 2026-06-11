@@ -524,5 +524,63 @@ class SubscriptionService
             ]
         ];
     }
+
+    public function sendExpiryReminders()
+    {
+        $metrics = $this->getDashboardMetrics();
+        $notifService = new NotificationService();
+        
+        $notificationsSent = 0;
+
+        // Group lists of colleges to inspect
+        $monitoringGroups = [
+            '30' => $metrics['expiry_monitoring']['expiring_30_days'],
+            '15' => $metrics['expiry_monitoring']['expiring_15_days'],
+            '7' => $metrics['expiry_monitoring']['expiring_7_days'],
+            '0' => $metrics['expiry_monitoring']['expired_list']
+        ];
+
+        foreach ($monitoringGroups as $dayKey => $list) {
+            foreach ($list as $college) {
+                $rem = (int)$college['remaining_days'];
+                
+                // Pinpoint matching days to avoid duplicate spamming
+                if ($dayKey === '30' && $rem !== 30) continue;
+                if ($dayKey === '15' && $rem !== 15) continue;
+                if ($dayKey === '7' && $rem !== 7) continue;
+                if ($dayKey === '0' && $rem !== 0 && $rem !== -7) continue;
+
+                // Message logic
+                if ($rem === 30) {
+                    $msg = "Subscription Alert: Your FlowSync subscription for {$college['name']} will expire in 30 days.";
+                } elseif ($rem === 15) {
+                    $msg = "Subscription Alert: Your FlowSync subscription for {$college['name']} will expire in 15 days. Renew now to avoid service interruption.";
+                } elseif ($rem === 7) {
+                    $msg = "Urgent: Your FlowSync subscription for {$college['name']} will expire in 7 days.";
+                } elseif ($rem === 0) {
+                    $msg = "Subscription Expired: Your FlowSync subscription for {$college['name']} has expired today.";
+                } elseif ($rem === -7) {
+                    $msg = "Subscription Blocked: Your grace period has ended. {$college['name']} is now locked in Read-Only Mode.";
+                } else {
+                    continue;
+                }
+
+                // Fetch Institution Admins (role_id = 4 or role_name is INSTITUTION_ADMIN)
+                $stmtIA = $this->db->prepare("
+                    SELECT id FROM users 
+                    WHERE college_id = :cid AND (role_id = 4 OR role_id IN (SELECT id FROM roles WHERE name IN ('INSTITUTION_ADMIN', 'Institution Admin')))
+                ");
+                $stmtIA->execute(['cid' => $college['id']]);
+                $admins = $stmtIA->fetchAll(PDO::FETCH_COLUMN);
+
+                foreach ($admins as $adminId) {
+                    $notifService->send($adminId, 'SUBSCRIPTION_ALERT', $msg);
+                    $notificationsSent++;
+                }
+            }
+        }
+        
+        return $notificationsSent;
+    }
 }
 
