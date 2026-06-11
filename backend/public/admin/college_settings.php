@@ -28,7 +28,13 @@ try {
             }
 
             // 2. Fetch departments
-            $stmt = $db->prepare("SELECT id, name, is_enabled FROM departments WHERE college_id = :id ORDER BY name ASC");
+            $stmt = $db->prepare("
+                SELECT d.id, d.name, d.is_enabled, d.hod_id, u.name as hod_name
+                FROM departments d
+                LEFT JOIN users u ON d.hod_id = u.id
+                WHERE d.college_id = :id
+                ORDER BY d.name ASC
+            ");
             $stmt->execute(['id' => $collegeId]);
             $departments = $stmt->fetchAll();
 
