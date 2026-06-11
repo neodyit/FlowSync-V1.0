@@ -29,7 +29,7 @@ try {
 
             // 2. Fetch departments
             $stmt = $db->prepare("
-                SELECT d.id, d.name, d.is_enabled, d.hod_id, u.name as hod_name
+                SELECT d.id, d.name, d.code, d.description, d.is_enabled, d.hod_id, u.name as hod_name
                 FROM departments d
                 LEFT JOIN users u ON d.hod_id = u.id
                 WHERE d.college_id = :id
@@ -43,11 +43,17 @@ try {
             $stmt->execute(['id' => $collegeId]);
             $features = $stmt->fetchAll();
 
+            // 4. Fetch HODs for this college
+            $stmtH = $db->prepare("SELECT id, name FROM users WHERE role_id = 2 AND college_id = :cid AND is_active = 1");
+            $stmtH->execute(['cid' => $collegeId]);
+            $hods = $stmtH->fetchAll();
+
             echo json_encode([
                 'status' => 'success',
                 'college' => $college,
                 'departments' => $departments,
-                'features' => $features
+                'features' => $features,
+                'hods' => $hods
             ]);
             break;
 

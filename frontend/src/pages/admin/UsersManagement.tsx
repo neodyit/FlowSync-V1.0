@@ -18,7 +18,10 @@ import {
   ChevronDown,
   Download,
   Plus,
-  Wifi
+  Wifi,
+  User,
+  Mail,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -649,7 +652,7 @@ const UsersManagement: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-[2.5rem] w-full max-w-xl p-6 sm:p-8 md:p-10 shadow-2xl z-10 max-h-[90vh] flex flex-col overflow-hidden"
+              className="relative bg-white/90 dark:bg-[#110A24]/95 backdrop-blur-xl border border-white/20 dark:border-violet-500/10 rounded-[2.5rem] w-full max-w-xl p-6 sm:p-8 md:p-10 shadow-2xl z-10 max-h-[90vh] flex flex-col overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-[#7C3AED] rounded-t-[2.5rem]" />
               
@@ -668,30 +671,36 @@ const UsersManagement: React.FC = () => {
 
               <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden space-y-6">
                 {/* Scrollable Fields Container */}
-                <div className="space-y-6 overflow-y-auto flex-1 pr-1.5 py-1 -mr-2 scrollbar-thin">
+                <div className="space-y-6 overflow-y-auto flex-1 pr-1.5 py-1 -mr-2 scrollbar-thin pb-36">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">Full Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
-                        placeholder="e.g. John Doe"
-                      />
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7C3AED] dark:text-violet-400 opacity-40" />
+                        <input
+                          type="text"
+                          required
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className="w-full pl-11 pr-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
+                          placeholder="e.g. John Doe"
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">Email Address</label>
-                      <input
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
-                        placeholder="john@example.com"
-                      />
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7C3AED] dark:text-violet-400 opacity-40" />
+                        <input
+                          type="email"
+                          required
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className="w-full pl-11 pr-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
+                          placeholder="john@example.com"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -714,14 +723,17 @@ const UsersManagement: React.FC = () => {
 
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">{editingUser ? 'New Password (Optional)' : 'Initial Password'}</label>
-                      <input
-                        type="password"
-                        required={!editingUser}
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
-                        placeholder="••••••••"
-                      />
+                      <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7C3AED] dark:text-violet-400 opacity-40" />
+                        <input
+                          type="password"
+                          required={!editingUser}
+                          value={formData.password}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          className="w-full pl-11 pr-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
+                          placeholder="••••••••"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -752,17 +764,22 @@ const UsersManagement: React.FC = () => {
                   </div>
 
                   {(!editingUser || editingUser.id !== 1) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <CustomSelect
-                        label="Account Operational Status"
-                        value={formData.is_active}
-                        onChange={(val) => setFormData({ ...formData, is_active: Number(val) })}
-                        options={[
-                          { value: 1, label: 'Active (Permit Access)' },
-                          { value: 0, label: 'Inactive (Revoke Access)' }
-                        ]}
-                        icon={Power}
-                      />
+                    <div className="flex items-center justify-between bg-slate-50 dark:bg-[#1A0F35]/30 px-5 py-4 rounded-2xl border border-slate-200 dark:border-violet-500/20">
+                      <div>
+                        <span className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest block">Account Operational Status</span>
+                        <span className={`text-xs font-bold mt-1 block ${formData.is_active === 1 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                          {formData.is_active === 1 ? 'Active (Permit Access)' : 'Inactive (Revoke Access)'}
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only peer"
+                          checked={formData.is_active === 1}
+                          onChange={(e) => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
+                        />
+                        <div className="w-11 h-6 bg-slate-200 dark:bg-violet-950/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+                      </label>
                     </div>
                   )}
                 </div>
