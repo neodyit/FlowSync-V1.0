@@ -415,7 +415,7 @@ export default function IADepartments() {
               </div>
 
               <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden space-y-6">
-                <div className="space-y-6 overflow-y-auto flex-1 pr-1.5 py-1 -mr-2 scrollbar-thin">
+                <div className="space-y-6 overflow-y-auto flex-1 pr-1.5 py-1 -mr-2 scrollbar-thin pb-32">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">Department Name</label>

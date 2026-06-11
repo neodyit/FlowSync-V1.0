@@ -153,8 +153,10 @@ export default function IALayout() {
     }
   }, [location.pathname]);
   
-  const rawUser = localStorage.getItem('user');
-  const user = rawUser ? JSON.parse(rawUser) : { name: 'Institution Admin', role: 'INSTITUTION_ADMIN', role_id: 4 };
+  const [currentUser, setCurrentUser] = useState(() => {
+    const raw = localStorage.getItem('user');
+    return raw ? JSON.parse(raw) : { name: 'Institution Admin', role: 'INSTITUTION_ADMIN', role_id: 4 };
+  });
   
   const navigation = [
     { name: 'Dashboard', icon: LayoutGrid, path: '/ia/dashboard' },
@@ -165,9 +167,9 @@ export default function IALayout() {
     { name: 'Reports', icon: FileText, path: '/ia/reports' },
     { name: 'Activity Center', icon: History, path: '/ia/activity', featureKey: 'ia_audit_log_visibility' },
     { name: 'Settings', icon: Settings, path: '/ia/settings' },
-  ].filter(item => !item.featureKey || user.features?.[item.featureKey] !== false);
+  ].filter(item => !item.featureKey || currentUser.features?.[item.featureKey] !== false);
 
-  const initials = (user.name || 'User')
+  const initials = (currentUser.name || 'User')
     .split(' ')
     .filter(Boolean)
     .map((n: string) => n[0])
@@ -177,7 +179,11 @@ export default function IALayout() {
 
   useEffect(() => {
     const validate = async () => {
-      await checkSession();
+      const data = await checkSession();
+      if (data && data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setCurrentUser(data.user);
+      }
     };
     validate();
     const interval = setInterval(validate, 60000);
@@ -322,7 +328,7 @@ export default function IALayout() {
                 className="flex items-center justify-center sm:justify-start gap-3 w-[52px] h-[52px] sm:w-auto sm:h-auto p-1.5 sm:pl-4 rounded-2xl bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 hover:border-[#7C3AED]/30 dark:hover:border-violet-500/40 transition-all shadow-sm cursor-pointer z-50"
               >
                 <div className="text-right hidden sm:block">
-                  <p className="text-xs font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight">{user.name}</p>
+                  <p className="text-xs font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight">{currentUser.name}</p>
                   <p className="text-[9px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest opacity-60">IA Admin</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-[#7C3AED]/20">
@@ -333,7 +339,7 @@ export default function IALayout() {
               {isProfileOpen && (
                 <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-64 bg-white/90 dark:bg-[#1A0F35]/90 backdrop-blur-3x1 rounded-2xl shadow-2xl border border-[#7C3AED]/10 dark:border-violet-500/20 overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="p-5 bg-slate-50 dark:bg-violet-950/30 border-b border-[#7C3AED]/5 dark:border-violet-500/20">
-                    <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">{user.name}</p>
+                    <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">{currentUser.name}</p>
                     <p className="text-[10px] text-[#4C1D95] dark:text-violet-400 mt-1 font-bold">Institution Administrator</p>
                   </div>
                   <div className="p-2">

@@ -84,10 +84,27 @@ if ($session) {
         exit;
     }
 
+    // Fetch user profile info
+    $stmtUser = $db->prepare("SELECT name, profile_pic FROM users WHERE id = :uid LIMIT 1");
+    $stmtUser->execute(['uid' => $session['user_id']]);
+    $uRow = $stmtUser->fetch();
+
+    $userObj = [
+        'id' => (int)$session['user_id'],
+        'name' => $uRow['name'] ?? '',
+        'email' => $session['email'] ?? '',
+        'role' => $session['role'] ?? '',
+        'role_id' => (int)$session['role_id'],
+        'college_id' => (int)$session['college_id'],
+        'profile_pic' => $uRow['profile_pic'] ?? null,
+        'features' => $features
+    ];
+
     echo json_encode([
         'status' => 'success', 
         'session' => $session,
-        'features' => $features
+        'features' => $features,
+        'user' => $userObj
     ]);
 } else {
     http_response_code(401);

@@ -36,12 +36,14 @@ try {
                 throw new Exception("College ID and Department name are required");
             }
             $stmt = $db->prepare("
-                INSERT INTO departments (college_id, name, hod_id) 
-                VALUES (:college_id, :name, :hod_id)
+                INSERT INTO departments (college_id, name, code, description, hod_id) 
+                VALUES (:college_id, :name, :code, :description, :hod_id)
             ");
             $stmt->execute([
                 'college_id' => $data['college_id'],
                 'name' => $data['name'],
+                'code' => $data['code'] ?? null,
+                'description' => $data['description'] ?? null,
                 'hod_id' => !empty($data['hod_id']) ? $data['hod_id'] : null
             ]);
             $deptId = $db->lastInsertId();
@@ -59,12 +61,14 @@ try {
             }
             $stmt = $db->prepare("
                 UPDATE departments 
-                SET name = :name, hod_id = :hod_id, updated_at = CURRENT_TIMESTAMP
+                SET name = :name, code = :code, description = :description, hod_id = :hod_id, updated_at = CURRENT_TIMESTAMP
                 WHERE id = :id
             ");
             $stmt->execute([
                 'id' => $data['id'],
                 'name' => $data['name'],
+                'code' => $data['code'] ?? null,
+                'description' => $data['description'] ?? null,
                 'hod_id' => !empty($data['hod_id']) ? $data['hod_id'] : null
             ]);
 

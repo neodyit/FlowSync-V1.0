@@ -170,6 +170,42 @@ try {
     $stmt->execute(['cid' => $collegeId]);
     $recentActivity = $stmt->fetchAll();
 
+    // 5. Storage and User Usage Metrics
+    $stmt = $db->prepare("SELECT IFNULL(SUM(file_size), 0) FROM attachments WHERE institution_id = :cid");
+    $stmt->execute(['cid' => $collegeId]);
+    $storageUsedBytes = (float)$stmt->fetchColumn();
+
+    $storageLimitBytes = 5 * 1024 * 1024 * 1024; // 5 GB
+    $storagePercentage = ($storageUsedBytes / $storageLimitBytes) * 100;
+    if ($storagePercentage > 100) $storagePercentage = 100;
+
+    $stmt = $db->prepare("SELECT COUNT(*) FROM users WHERE college_id = :cid");
+    $stmt->execute(['cid' => $collegeId]);
+    $totalUsers = (int)$stmt->fetchColumn();
+
+    $stmt = $db->prepare("SELECT COUNT(*) FROM users WHERE college_id = :cid AND is_active = 1");
+    $stmt->execute(['cid' => $collegeId]);
+    $activeUsers = (int)$stmt->fetchColumn();
+
+    // Database size
+    $stmtSize = $db->query("SELECT SUM(data_length + index_length) FROM information_schema.TABLES WHERE table_schema = DATABASE()");
+    $dbSizeBytes = (float)$stmtSize->fetchColumn();
+
+    // Database version
+    $stmtVer = $db->query("SELECT VERSION()");
+    $dbVersion = $stmtVer->fetchColumn() ?: 'Unknown';
+
+    // Active Sessions
+    $stmtSessions = $db->prepare("
+        SELECT COUNT(DISTINCT s.user_id) 
+        FROM sessions s
+        JOIN users u ON s.user_id = u.id
+        WHERE u.college_id = :cid 
+        AND s.expires_at > NOW()
+    ");
+    $stmtSessions->execute(['cid' => $collegeId]);
+    $activeSessions = (int)$stmtSessions->fetchColumn();
+
     echo json_encode([
         'status' => 'success',
         'data' => [
@@ -191,6 +227,20 @@ try {
                 'least_active_dept' => $leastActiveDept ?: 'N/A',
                 'top_faculty' => $topFaculty ?: 'N/A',
                 'top_hod' => $topHOD ?: 'N/A'
+            ],
+            'infrastructure' => [
+                'storage_used_bytes' => $storageUsedBytes,
+                'storage_limit_bytes' => $storageLimitBytes,
+                'storage_percentage' => round($storagePercentage, 2),
+                'total_users' => $totalUsers,
+                'active_users' => $activeUsers,
+                'database_size_bytes' => $dbSizeBytes,
+                'database_version' => $dbVersion,
+                'active_sessions' => $activeSessions,
+                'php_version' => PHP_VERSION,
+                'memory_usage_bytes' => memory_get_usage(true),
+                'memory_peak_bytes' => memory_get_peak_usage(true),
+                'memory_limit' => ini_get('memory_limit')
             ],
             'recent_activity' => $recentActivity
         ]

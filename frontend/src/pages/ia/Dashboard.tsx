@@ -10,7 +10,9 @@ import {
   UserCheck, 
   TrendingUp, 
   History,
-  AlertTriangle
+  AlertTriangle,
+  HardDrive,
+  Server
 } from 'lucide-react';
 
 interface StatsData {
@@ -33,6 +35,20 @@ interface StatsData {
     top_faculty: string;
     top_hod: string;
   };
+  infrastructure: {
+    storage_used_bytes: number;
+    storage_limit_bytes: number;
+    storage_percentage: number;
+    total_users: number;
+    active_users: number;
+    database_size_bytes: number;
+    database_version: string;
+    active_sessions: number;
+    php_version: string;
+    memory_usage_bytes: number;
+    memory_peak_bytes: number;
+    memory_limit: string;
+  };
   recent_activity: Array<{
     action: string;
     resource: string;
@@ -45,6 +61,15 @@ export default function IADashboard() {
   const [data, setData] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const formatBytes = (bytes: number, decimals = 2) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -207,6 +232,114 @@ export default function IADashboard() {
                 </div>
               </div>
 
+            </div>
+          </div>
+
+          {/* Resource & Storage Usage */}
+          <div className="p-8 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-3xl shadow-sm">
+            <h3 className="text-sm font-black text-[#1E1B4B] dark:text-indigo-50 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <Server className="w-4 h-4 text-[#7C3AED]" /> Resource & Storage Usage
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              
+              {/* Storage usage */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <HardDrive className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" />
+                    <span className="text-xs font-black text-[#4C1D95]/60 dark:text-indigo-200/60 uppercase tracking-wider">Storage Used</span>
+                  </div>
+                  <span className="text-xs font-black text-[#1E1B4B] dark:text-indigo-50">
+                    {formatBytes(data.infrastructure.storage_used_bytes)} / {formatBytes(data.infrastructure.storage_limit_bytes)}
+                  </span>
+                </div>
+                
+                {/* Progress bar */}
+                <div className="h-3 w-full bg-slate-100 dark:bg-violet-950/20 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${data.infrastructure.storage_percentage}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="h-full bg-gradient-to-r from-[#7C3AED] to-fuchsia-500 rounded-full"
+                  />
+                </div>
+                <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold">
+                  <span>{data.infrastructure.storage_percentage}% allocated</span>
+                  <span>{formatBytes(data.infrastructure.storage_limit_bytes - data.infrastructure.storage_used_bytes)} free</span>
+                </div>
+              </div>
+
+              {/* User licenses/usage */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-emerald-500" />
+                    <span className="text-xs font-black text-[#4C1D95]/60 dark:text-indigo-200/60 uppercase tracking-wider">User Licenses</span>
+                  </div>
+                  <span className="text-xs font-black text-[#1E1B4B] dark:text-indigo-50">
+                    {data.infrastructure.active_users} Active / {data.infrastructure.total_users} Total
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="h-3 w-full bg-slate-100 dark:bg-violet-950/20 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${data.infrastructure.total_users > 0 ? (data.infrastructure.active_users / data.infrastructure.total_users) * 100 : 0}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full"
+                  />
+                </div>
+                <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold">
+                  <span>{data.infrastructure.total_users > 0 ? Math.round((data.infrastructure.active_users / data.infrastructure.total_users) * 100) : 0}% active users</span>
+                  <span>{data.infrastructure.total_users - data.infrastructure.active_users} inactive accounts</span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* System Details & Diagnostics Divider */}
+            <div className="mt-8 pt-6 border-t border-slate-100 dark:border-violet-500/10">
+              <h4 className="text-[10px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest mb-4">System Details & Diagnostics</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                
+                <div className="p-3 bg-slate-50 dark:bg-violet-950/10 rounded-xl border border-slate-100/50 dark:border-violet-500/5">
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-indigo-200/40 uppercase tracking-wider block">Database Size</span>
+                  <span className="text-xs font-black text-[#1E1B4B] dark:text-indigo-50 mt-0.5 block">{formatBytes(data.infrastructure.database_size_bytes)}</span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-violet-950/10 rounded-xl border border-slate-100/50 dark:border-violet-500/5">
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-indigo-200/40 uppercase tracking-wider block">Memory Usage</span>
+                  <span className="text-xs font-black text-[#1E1B4B] dark:text-indigo-50 mt-0.5 block">{formatBytes(data.infrastructure.memory_usage_bytes)}</span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-violet-950/10 rounded-xl border border-slate-100/50 dark:border-violet-500/5">
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-indigo-200/40 uppercase tracking-wider block">Peak Memory</span>
+                  <span className="text-xs font-black text-[#1E1B4B] dark:text-indigo-50 mt-0.5 block">{formatBytes(data.infrastructure.memory_peak_bytes)}</span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-violet-950/10 rounded-xl border border-slate-100/50 dark:border-violet-500/5">
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-indigo-200/40 uppercase tracking-wider block">Memory Limit</span>
+                  <span className="text-xs font-black text-[#1E1B4B] dark:text-indigo-50 mt-0.5 block">{data.infrastructure.memory_limit}</span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-violet-950/10 rounded-xl border border-slate-100/50 dark:border-violet-500/5">
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-indigo-200/40 uppercase tracking-wider block">Active Sessions</span>
+                  <span className="text-xs font-black text-emerald-500 mt-0.5 block">{data.infrastructure.active_sessions} Online</span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-violet-950/10 rounded-xl border border-slate-100/50 dark:border-violet-500/5">
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-indigo-200/40 uppercase tracking-wider block">PHP Version</span>
+                  <span className="text-xs font-black text-[#1E1B4B] dark:text-indigo-50 mt-0.5 block">v{data.infrastructure.php_version}</span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-violet-950/10 rounded-xl border border-slate-100/50 dark:border-violet-500/5">
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-indigo-200/40 uppercase tracking-wider block">Database Node</span>
+                  <span className="text-xs font-black text-[#1E1B4B] mt-0.5 block truncate" title={data.infrastructure.database_version}>{data.infrastructure.database_version}</span>
+                </div>
+
+              </div>
             </div>
           </div>
 

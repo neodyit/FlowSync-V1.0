@@ -19,7 +19,9 @@ import {
   AlertTriangle,
   Lock,
   Unlock,
-  Info
+  Info,
+  ChevronDown,
+  User
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import SEO from '@/components/SEO';
@@ -27,6 +29,8 @@ import { cn, formatDate } from '@/lib/utils';
 import DateTimePicker from '@/components/ui/DateTimePicker';
 
 interface Department {
+  code: string;
+  description: string;
   id: number;
   name: string;
   college_id: number;
@@ -68,72 +72,162 @@ const FEATURE_METADATA: FeatureGroup[] = [
   {
     category: 'Reporting Features',
     features: [
-      { key: 'reporting_personalized_faculty', label: 'Personalized Faculty Reports', desc: 'Allows faculty members to generate self-performance metrics and summaries.' },
-      { key: 'reporting_department', label: 'Department Reports', desc: 'Enables HODs to view and export department-wide aggregated stats.' },
-      { key: 'reporting_institution', label: 'Institution Reports', desc: 'Gives administrators dashboard exports and aggregate analytics.' },
-      { key: 'reporting_historical', label: 'Historical Reports', desc: 'Allows downloading records of previous academic seasons.' },
-      { key: 'reporting_performance_analytics', label: 'Performance Analytics', desc: 'Enables metrics visualizers and efficiency comparisons.' }
+      { key: 'reporting_personalized_faculty', label: 'Faculty Reports', desc: 'Allow faculty to view self-performance reports.' },
+      { key: 'reporting_department', label: 'Department Reports', desc: 'Allow HODs to view department stats.' },
+      { key: 'reporting_institution', label: 'Institution Reports', desc: 'Allow admins to export overall stats.' },
+      { key: 'reporting_historical', label: 'Historical Reports', desc: 'Allow viewing reports from past seasons.' },
+      { key: 'reporting_performance_analytics', label: 'Analytics Dashboard', desc: 'Show interactive performance metrics.' }
     ]
   },
   {
     category: 'Season Features',
     features: [
-      { key: 'season_management', label: 'Season Management', desc: 'Allows defining custom calendar ranges and terms.' },
-      { key: 'season_comparison_reports', label: 'Season Comparison', desc: 'Provides comparison metrics between different terms.' },
-      { key: 'season_historical_analytics', label: 'Historical Season Analytics', desc: 'Analyzes long-term institutional progress.' },
-      { key: 'season_locking', label: 'Season Locking', desc: 'Prevents edits and writes on past terms.' }
+      { key: 'season_management', label: 'Season Control', desc: 'Define custom terms and term dates.' },
+      { key: 'season_comparison_reports', label: 'Compare Seasons', desc: 'Compare metric reports between terms.' },
+      { key: 'season_historical_analytics', label: 'Historical Trends', desc: 'Analyze overall performance history.' },
+      { key: 'season_locking', label: 'Lock Seasons', desc: 'Prevent edits to past terms/seasons.' }
     ]
   },
   {
     category: 'Leaderboard Features',
     features: [
-      { key: 'leaderboard_faculty', label: 'Faculty Leaderboard', desc: 'Shows points rankings among faculty members.' },
-      { key: 'leaderboard_department', label: 'Department Leaderboard', desc: 'Shows comparative performance of departments.' },
-      { key: 'leaderboard_institution_rankings', label: 'Institution Rankings', desc: 'Shows high-level leaderboard statistics.' },
-      { key: 'leaderboard_performance_awards', label: 'Performance Awards', desc: 'Displays badge decorations and achievements.' }
+      { key: 'leaderboard_faculty', label: 'Faculty Leaderboard', desc: 'Show points ranking among faculty.' },
+      { key: 'leaderboard_department', label: 'Department Leaderboard', desc: 'Show comparative department ranking.' },
+      { key: 'leaderboard_institution_rankings', label: 'Campus Leaderboards', desc: 'Display global campus-wide rankings.' },
+      { key: 'leaderboard_performance_awards', label: 'Badges & Achievements', desc: 'Enable awards and badges for high performance.' }
     ]
   },
   {
     category: 'Task Management Features',
     features: [
-      { key: 'task_group', label: 'Group Tasks', desc: 'Enables assigning tasks to collaborative groups.' },
-      { key: 'task_broadcast', label: 'Broadcast Tasks', desc: 'Allows HODs to broadcast open tasks to all personnel.' },
-      { key: 'task_acceptance_workflow', label: 'Task Acceptance Workflow', desc: 'Requires faculty to accept tasks manually.' },
-      { key: 'task_auto_accept', label: 'Auto-Accept Tasks', desc: 'Skips acceptance steps for standard operations.' },
-      { key: 'task_reminder_system', label: 'Reminder System', desc: 'Enables sending warnings and reminders.' },
-      { key: 'task_deadline_tracking', label: 'Deadline Tracking', desc: 'Displays timers and delay indicators.' },
-      { key: 'allow_ia_task_management', label: 'Allow IA Task Privileges', desc: 'Permits Institution Admins (IA) to manage college tasks.' }
+      { key: 'task_group', label: 'Group Tasks', desc: 'Assign tasks to collaborative groups.' },
+      { key: 'task_broadcast', label: 'Broadcast Tasks', desc: 'Allow broadcasting tasks open to everyone.' },
+      { key: 'task_acceptance_workflow', label: 'Task Acceptance', desc: 'Require staff to accept tasks manually.' },
+      { key: 'task_auto_accept', label: 'Auto-Accept Tasks', desc: 'Bypass acceptance step for assigned tasks.' },
+      { key: 'task_reminder_system', label: 'Reminders & Alerts', desc: 'Send automatic reminders for tasks.' },
+      { key: 'task_deadline_tracking', label: 'Deadline Countdown', desc: 'Show timers and deadline warnings.' },
+      { key: 'allow_ia_task_management', label: 'IA Task Privileges', desc: 'Let Institution Admins manage tasks.' }
     ]
   },
   {
     category: 'Collaboration Features',
     features: [
-      { key: 'collab_member_visibility', label: 'Team Member Visibility', desc: 'Lets departments browse other staff.' },
-      { key: 'collab_profile_access', label: 'Faculty Profile Access', desc: 'Allows viewing staff profiles.' },
-      { key: 'collab_tools', label: 'Faculty Collaboration Tools', desc: 'Enables chat rooms and comments on task boards.' }
+      { key: 'collab_member_visibility', label: 'Member Visibility', desc: 'Allow browsing of other department staff.' },
+      { key: 'collab_profile_access', label: 'Profile Access', desc: 'Allow viewing other staff members profile.' },
+      { key: 'collab_tools', label: 'Comments & Forums', desc: 'Enable task boards chat and discussion.' }
     ]
   },
   {
     category: 'Notification Features',
     features: [
-      { key: 'notice_popups', label: 'Popup Notifications', desc: 'Triggers alerts upon logging in.' },
-      { key: 'notice_banners', label: 'Banner Notifications', desc: 'Displays alerts on topbars.' },
-      { key: 'notice_broadcasts', label: 'Institution Broadcasts', desc: 'Enables institution-wide text alerts.' }
+      { key: 'notice_popups', label: 'Login Popups', desc: 'Trigger important alerts upon log in.' },
+      { key: 'notice_banners', label: 'Alert Banners', desc: 'Show notification banners on dashboard topbars.' },
+      { key: 'notice_broadcasts', label: 'Global Alerts', desc: 'Send high-priority notifications to everyone.' }
     ]
   },
   {
     category: 'Audit & Security Features',
     features: [
-      { key: 'ia_audit_log_visibility', label: 'IA Activity Center', desc: 'Enables access to the Activity Center (Audit Logs) page in the IA panel.' }
+      { key: 'ia_audit_log_visibility', label: 'Audit Log Center', desc: 'Allow IA access to Activity Center logs.' }
     ]
   }
 ];
+
+interface CustomSelectProps {
+  label?: string;
+  value: string | number;
+  onChange: (value: string | number) => void;
+  options: { value: string | number; label: string }[];
+  placeholder?: string;
+  icon?: React.ElementType;
+  disabled?: boolean;
+}
+
+const CustomSelect: React.FC<CustomSelectProps> = ({ 
+  label, value, onChange, options, placeholder, icon: Icon, disabled 
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => opt.value.toString() === value.toString());
+
+  return (
+    <div className="relative flex flex-col gap-1.5 w-full" ref={containerRef}>
+      {label && <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">{label}</label>}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setIsOpen(!isOpen)}
+        className={`
+          flex items-center justify-between w-full px-5 py-3.5 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-2xl transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100
+          ${isOpen ? 'border-[#7C3AED] dark:border-violet-400 ring-4 ring-[#7C3AED]/5 dark:ring-violet-400/5' : 'border-[#7C3AED]/10 dark:border-violet-500/20 hover:border-[#7C3AED]/30 dark:hover:border-violet-400/40'}
+          ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-50 dark:bg-violet-950/20' : 'cursor-pointer'}
+        `}
+      >
+        <div className="flex items-center gap-3 truncate">
+          {Icon && <Icon className="w-4 h-4 text-[#7C3AED] dark:text-violet-400 opacity-40" />}
+          <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
+        </div>
+        <ChevronDown className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-[#110A24] rounded-2xl border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-2xl z-[100] overflow-hidden py-2"
+          >
+            <div className="max-h-60 overflow-y-auto">
+              {options.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`
+                    w-full px-5 py-3 text-left text-sm font-bold transition-all flex items-center justify-between cursor-pointer
+                    ${opt.value.toString() === value.toString() ? 'bg-[#7C3AED] dark:bg-violet-600 text-white' : 'text-[#1E1B4B] dark:text-indigo-200 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/40 hover:text-[#7C3AED] dark:hover:text-violet-300'}
+                  `}
+                >
+                  {opt.label}
+                  {opt.value.toString() === value.toString() && <CheckCircle2 className="w-4 h-4 text-white" />}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 const CollegeDetails: React.FC = () => {
   const { shortName } = useParams<{ shortName: string }>();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'departments' | 'seasons' | 'features' | 'broadcast'>('departments');
+  const [activeTab, setActiveTab] = useState<'departments' | 'seasons' | 'features' | 'broadcast'>(() => {
+    const saved = sessionStorage.getItem('college_details_active_tab');
+    return (saved as any) || 'departments';
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem('college_details_active_tab', activeTab);
+  }, [activeTab]);
+
   const [college, setCollege] = useState<College | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -143,7 +237,8 @@ const CollegeDetails: React.FC = () => {
   // Departments Modals/Form
   const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
   const [editingDept, setEditingDept] = useState<Department | null>(null);
-  const [deptFormData, setDeptFormData] = useState({ name: '', hod_id: '' });
+  const [deptFormData, setDeptFormData] = useState({ name: '', code: '', description: '', hod_id: '' });
+  const [hods, setHods] = useState<Array<{ id: number; name: string }>>([]);
 
   // Seasons Modals/Form
   const [isSeasonModalOpen, setIsSeasonModalOpen] = useState(false);
@@ -175,6 +270,7 @@ const CollegeDetails: React.FC = () => {
           if (setData.status === 'success') {
             setCollege(setData.college);
             setDepartments(setData.departments);
+            setHods(setData.hods || []);
             
             // Map features to lookup object
             const flags: Record<string, boolean> = {};
@@ -496,7 +592,7 @@ const CollegeDetails: React.FC = () => {
 
         {activeTab === 'departments' && (
           <button
-            onClick={() => { setEditingDept(null); setDeptFormData({ name: '', hod_id: '' }); setIsDeptModalOpen(true); }}
+            onClick={() => { setEditingDept(null); setDeptFormData({ name: '', code: '', description: '', hod_id: '' }); setIsDeptModalOpen(true); }}
             className="flex items-center gap-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-purple-500/20 cursor-pointer text-sm shrink-0 self-start md:self-auto"
           >
             <Plus className="w-5 h-5" />
@@ -575,7 +671,7 @@ const CollegeDetails: React.FC = () => {
                     >
                       {dept.is_enabled === 1 ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
                     </button>
-                    <button onClick={() => { setEditingDept(dept); setDeptFormData({ name: dept.name, hod_id: dept.hod_id?.toString() || '' }); setIsDeptModalOpen(true); }} className="p-2 text-gray-400 dark:text-violet-400/55 hover:text-[#7C3AED] dark:hover:text-violet-300 cursor-pointer">
+                    <button onClick={() => { setEditingDept(dept); setDeptFormData({ name: dept.name, code: dept.code || '', description: dept.description || '', hod_id: dept.hod_id?.toString() || '' }); setIsDeptModalOpen(true); }} className="p-2 text-gray-400 dark:text-violet-400/55 hover:text-[#7C3AED] dark:hover:text-violet-300 cursor-pointer">
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button onClick={() => handleDeleteDept(dept.id)} className="p-2 text-gray-400 dark:text-violet-400/55 hover:text-rose-500 cursor-pointer">
@@ -590,6 +686,16 @@ const CollegeDetails: React.FC = () => {
                     <span className="text-[8px] font-black bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-500/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Disabled</span>
                   )}
                 </h3>
+                {dept.code && (
+                  <span className="inline-block mb-3 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest bg-violet-50 dark:bg-violet-950/40 text-[#7C3AED] dark:text-violet-400 rounded-md">
+                    {dept.code}
+                  </span>
+                )}
+                {dept.description && (
+                  <p className="text-xs text-gray-400 dark:text-violet-300/40 line-clamp-2 mb-4 leading-relaxed">
+                    {dept.description}
+                  </p>
+                )}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-xs font-medium text-gray-400 dark:text-violet-400/60">
                     <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", dept.is_enabled === 1 ? "bg-emerald-400" : "bg-rose-400")} />
@@ -900,24 +1006,66 @@ const CollegeDetails: React.FC = () => {
         {isDeptModalOpen && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsDeptModalOpen(false)} className="absolute inset-0 bg-[#1E1B4B]/40 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-[32px] w-full max-w-md p-6 sm:p-8 shadow-2xl z-10">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-indigo-100">{editingDept ? 'Edit Dept' : 'New Dept'}</h2>
-                <button onClick={() => setIsDeptModalOpen(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-violet-950/40 rounded-full cursor-pointer"><X className="w-6 h-6 text-gray-400 dark:text-violet-400" /></button>
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-[2.5rem] w-full max-w-xl p-6 sm:p-8 md:p-10 shadow-2xl z-10 max-h-[90vh] flex flex-col overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-2 bg-[#7C3AED] rounded-t-[2.5rem]" />
+              
+              <div className="flex justify-between items-center mb-6 flex-shrink-0">
+                <div className="text-left">
+                  <h2 className="text-xl sm:text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">{editingDept ? 'Edit Department details' : 'Create Department'}</h2>
+                  <p className="text-xs font-bold text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest mt-1">Institutional Structuring Protocol</p>
+                </div>
+                <button onClick={() => setIsDeptModalOpen(false)} className="p-3 hover:bg-slate-100 dark:hover:bg-violet-950/40 rounded-2xl transition-colors cursor-pointer"><X className="w-6 h-6 text-[#1E1B4B]/40 dark:text-violet-400" /></button>
               </div>
-              <form onSubmit={handleDeptSubmit} className="space-y-5">
-                <div className="space-y-1.5">
-                  <label className="text-[12px] font-bold text-gray-600 dark:text-violet-400 ml-1">Department Name</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={deptFormData.name} 
-                    onChange={(e) => setDeptFormData({ ...deptFormData, name: e.target.value })} 
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-[#1A0F35]/30 border border-gray-200 dark:border-violet-500/20 rounded-xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 transition-all text-sm text-gray-900 dark:text-indigo-100" 
-                    placeholder="e.g. Computer Science" 
+              <form onSubmit={handleDeptSubmit} className="flex flex-col flex-1 overflow-hidden space-y-6">
+                <div className="space-y-6 overflow-y-auto flex-1 pr-1.5 py-1 -mr-2 scrollbar-thin pb-32">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">Department Name</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={deptFormData.name} 
+                        onChange={(e) => setDeptFormData({ ...deptFormData, name: e.target.value })} 
+                        className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100" 
+                        placeholder="e.g. Computer Science Engineering" 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">Department Code</label>
+                      <input 
+                        type="text" 
+                        value={deptFormData.code} 
+                        onChange={(e) => setDeptFormData({ ...deptFormData, code: e.target.value })} 
+                        className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100" 
+                        placeholder="e.g. CSE" 
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest ml-1">Description</label>
+                    <textarea 
+                      value={deptFormData.description} 
+                      onChange={(e) => setDeptFormData({ ...deptFormData, description: e.target.value })} 
+                      rows={3} 
+                      className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100 resize-none" 
+                      placeholder="Provide brief details about the department..." 
+                    />
+                  </div>
+                  <CustomSelect
+                    label="Assign Head of Department"
+                    value={deptFormData.hod_id}
+                    onChange={(val) => setDeptFormData({ ...deptFormData, hod_id: val.toString() })}
+                    options={[
+                      { value: '', label: 'Unassigned (No HOD)' },
+                      ...hods.map(h => ({ value: h.id, label: h.name }))
+                    ]}
+                    icon={User}
                   />
                 </div>
-                <button type="submit" className="w-full py-3 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl font-bold shadow-lg shadow-purple-500/20 mt-4 cursor-pointer">{editingDept ? 'Update' : 'Create'}</button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-slate-100 dark:border-violet-500/10 flex-shrink-0 mt-auto">
+                  <button type="submit" className="flex-1 py-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-black shadow-xl shadow-purple-500/20 transition-all uppercase tracking-widest text-xs cursor-pointer">{editingDept ? 'Update Department' : 'Construct Department'}</button>
+                  <button type="button" onClick={() => setIsDeptModalOpen(false)} className="px-8 py-4 bg-slate-100 dark:bg-violet-950/60 hover:bg-slate-200 dark:hover:bg-violet-900/60 text-[#1E1B4B] dark:text-indigo-200 rounded-2xl font-black transition-all uppercase tracking-widest text-xs cursor-pointer">Cancel</button>
+                </div>
               </form>
             </motion.div>
           </div>
