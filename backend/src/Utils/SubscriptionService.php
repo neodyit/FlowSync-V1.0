@@ -319,4 +319,178 @@ class SubscriptionService
 
         return true;
     }
+
+    public function getDashboardMetrics()
+    {
+        $today = new DateTime('today');
+
+        // Fetch all colleges and their current subscription data
+        $stmt = $this->db->query("
+            SELECT c.id as college_id, c.name as college_name, isub.id as sub_id, isub.plan_id, isub.status, isub.start_date, isub.expiry_date, isub.bonus_days, isub.final_expiry_date, isub.is_lifetime, sp.name as plan_name
+            FROM colleges c
+            LEFT JOIN institution_subscriptions isub ON c.id = isub.institution_id
+            LEFT JOIN subscription_plans sp ON isub.plan_id = sp.id
+        ");
+        $institutions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $counts = [
+            'total' => count($institutions),
+            'active' => 0,
+            'trial' => 0,
+            'expired' => 0,
+            'suspended' => 0,
+            'lifetime' => 0,
+            'free' => 0
+        ];
+
+        $expiring30 = [];
+        $expiring15 = [];
+        $expiring7 = [];
+        $expiredList = [];
+        $planDistribution = [];
+
+        foreach ($institutions as $inst) {
+            $status = $inst['status'] ?? 'trial';
+            $isLifetime = (bool)($inst['is_lifetime'] ?? false);
+            $finalExpiryDate = $inst['final_expiry_date'] ?? null;
+            $remainingDays = 0;
+
+            if ($isLifetime || $status === 'lifetime') {
+                $computedStatus = 'lifetime';
+                $remainingDays = 9999;
+            } elseif ($status === 'free') {
+                $computedStatus = 'free';
+                $remainingDays = 9999;
+            } elseif ($status === 'suspended') {
+                $computedStatus = 'suspended';
+                $remainingDays = 0;
+            } else {
+                if (!empty($finalExpiryDate)) {
+                    $expiry = new DateTime($finalExpiryDate);
+                    $diff = $today->diff($expiry);
+                    $remainingDays = (int)$diff->format('%r%a');
+
+                    if ($remainingDays < 0) {
+                        $computedStatus = 'expired';
+                    } else {
+                        $computedStatus = $status; // 'active' or 'trial'
+                    }
+                } else {
+                    // If trial has no expiry set, let's treat it as active trial with 14 days remaining from creation if created_at is available, or expired
+                    $computedStatus = 'expired';
+                }
+            }
+
+            // Increment status count
+            if (array_key_exists($computedStatus, $counts)) {
+                $counts[$computedStatus]++;
+            }
+
+            $instInfo = [
+                'id' => $inst['college_id'],
+                'name' => $inst['college_name'],
+                'plan_name' => $inst['plan_name'] ?: ($computedStatus === 'lifetime' ? 'Lifetime' : ($computedStatus === 'free' ? 'Free' : 'Trial')),
+                'remaining_days' => $remainingDays,
+                'final_expiry_date' => $finalExpiryDate
+            ];
+
+            // Expiry Monitoring
+            if ($computedStatus === 'expired') {
+                $expiredList[] = $instInfo;
+            } elseif (in_array($computedStatus, ['active', 'trial']) && $remainingDays >= 0) {
+                if ($remainingDays <= 7) {
+                    $expiring7[] = $instInfo;
+                    $expiring15[] = $instInfo;
+                    $expiring30[] = $instInfo;
+                } elseif ($remainingDays <= 15) {
+                    $expiring15[] = $instInfo;
+                    $expiring30[] = $instInfo;
+                } elseif ($remainingDays <= 30) {
+                    $expiring30[] = $instInfo;
+                }
+            }
+
+            // Plan distribution (only for active plans)
+            if (in_array($computedStatus, ['active', 'lifetime', 'free'])) {
+                $pName = $instInfo['plan_name'];
+                $planDistribution[$pName] = ($planDistribution[$pName] ?? 0) + 1;
+            }
+        }
+
+        // Fetch Revenue: Current Month
+        $stmtRevMonth = $this->db->query("
+            SELECT SUM(amount) as total FROM subscription_transactions
+            WHERE payment_status = 'completed' AND MONTH(paid_at) = MONTH(CURRENT_DATE()) AND YEAR(paid_at) = YEAR(CURRENT_DATE())
+        ");
+        $revenueMonth = (float)($stmtRevMonth->fetchColumn() ?? 0);
+
+        // Fetch Revenue: Current Year
+        $stmtRevYear = $this->db->query("
+            SELECT SUM(amount) as total FROM subscription_transactions
+            WHERE payment_status = 'completed' AND YEAR(paid_at) = YEAR(CURRENT_DATE())
+        ");
+        $revenueYear = (float)($stmtRevYear->fetchColumn() ?? 0);
+
+        // Fetch Monthly Revenue (last 12 months)
+        $stmtMonthly = $this->db->query("
+            SELECT DATE_FORMAT(paid_at, '%Y-%m') as month, SUM(amount) as total
+            FROM subscription_transactions
+            WHERE payment_status = 'completed'
+            GROUP BY DATE_FORMAT(paid_at, '%Y-%m')
+            ORDER BY month DESC
+            LIMIT 12
+        ");
+        $monthlyRevenue = $stmtMonthly->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch Yearly Revenue
+        $stmtYearly = $this->db->query("
+            SELECT YEAR(paid_at) as year, SUM(amount) as total
+            FROM subscription_transactions
+            WHERE payment_status = 'completed'
+            GROUP BY YEAR(paid_at)
+            ORDER BY year DESC
+        ");
+        $yearlyRevenue = $stmtYearly->fetchAll(PDO::FETCH_ASSOC);
+
+        // Renewal Rate Calculation
+        $stmtPaying = $this->db->query("
+            SELECT COUNT(DISTINCT institution_id) as paying_count, COUNT(*) as total_count 
+            FROM subscription_transactions 
+            WHERE payment_status = 'completed'
+        ");
+        $txStats = $stmtPaying->fetch(PDO::FETCH_ASSOC);
+        $payingCount = (int)($txStats['paying_count'] ?? 0);
+        $totalCount = (int)($txStats['total_count'] ?? 0);
+        $renewalRate = 0.0;
+        if ($payingCount > 0) {
+            $renewalRate = (($totalCount - $payingCount) / $payingCount) * 100;
+        }
+
+        return [
+            'metrics' => [
+                'total_institutions' => $counts['total'],
+                'active_institutions' => $counts['active'],
+                'trial_institutions' => $counts['trial'],
+                'expired_institutions' => $counts['expired'],
+                'lifetime_institutions' => $counts['lifetime'],
+                'free_institutions' => $counts['free'],
+                'suspended_institutions' => $counts['suspended'],
+                'revenue_this_month' => $revenueMonth,
+                'revenue_this_year' => $revenueYear
+            ],
+            'expiry_monitoring' => [
+                'expiring_30_days' => $expiring30,
+                'expiring_15_days' => $expiring15,
+                'expiring_7_days' => $expiring7,
+                'expired_list' => $expiredList
+            ],
+            'revenue_insights' => [
+                'monthly_revenue' => $monthlyRevenue,
+                'yearly_revenue' => $yearlyRevenue,
+                'plan_distribution' => $planDistribution,
+                'renewal_rate' => round($renewalRate, 2)
+            ]
+        ];
+    }
 }
+
