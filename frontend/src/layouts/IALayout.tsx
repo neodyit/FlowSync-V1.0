@@ -163,9 +163,9 @@ export default function IALayout() {
     { name: 'Tasks', icon: CheckSquare, path: '/ia/tasks' },
     { name: 'Notices', icon: Bell, path: '/ia/notices' },
     { name: 'Reports', icon: FileText, path: '/ia/reports' },
-    { name: 'Activity Center', icon: History, path: '/ia/activity' },
+    { name: 'Activity Center', icon: History, path: '/ia/activity', featureKey: 'ia_audit_log_visibility' },
     { name: 'Settings', icon: Settings, path: '/ia/settings' },
-  ];
+  ].filter(item => !item.featureKey || user.features?.[item.featureKey] !== false);
 
   const initials = (user.name || 'User')
     .split(' ')

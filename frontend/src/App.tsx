@@ -61,6 +61,8 @@ import IADashboard from './pages/ia/Dashboard';
 import IAUsers from './pages/ia/Users';
 import IADepartments from './pages/ia/Departments';
 import IATasks from './pages/ia/Tasks';
+import IATaskForm from './pages/ia/TaskForm';
+import IATaskDetails from './pages/ia/TaskDetails';
 import IANotices from './pages/ia/Notices';
 import IAReports from './pages/ia/Reports';
 import IAActivity from './pages/ia/Activity';
@@ -226,6 +228,9 @@ function App() {
                 <Route path="users" element={<IAUsers />} />
                 <Route path="departments" element={<IADepartments />} />
                 <Route path="tasks" element={<IATasks />} />
+                <Route path="tasks/new" element={<IATaskForm />} />
+                <Route path="tasks/edit/:id" element={<IATaskForm />} />
+                <Route path="tasks/:id" element={<IATaskDetails />} />
                 <Route path="notices" element={<IANotices />} />
                 <Route path="reports" element={<IAReports />} />
                 <Route path="activity" element={<IAActivity />} />

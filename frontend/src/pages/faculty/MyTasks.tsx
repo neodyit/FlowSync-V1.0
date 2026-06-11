@@ -59,6 +59,7 @@ interface Task {
   task_type: string;
   assigned_by_name: string;
   assigned_by_pic: string | null;
+  assigned_by_role_id?: number;
   attachment_count: number;
   attachments: Attachment[];
   points: number;
@@ -1126,6 +1127,14 @@ const FacultyMyTasks: React.FC = () => {
                           </div>
 
                           {(() => {
+                            if (selectedTask.assigned_by_role_id === 4) {
+                              return (
+                                <p className="text-[10px] font-bold text-slate-400 dark:text-violet-400/55 italic text-center">
+                                  Deadline extensions are not allowed for tasks assigned by Institution Admins.
+                                </p>
+                              );
+                            }
+
                             const latestRequest = [...extensionRequests]
                               .filter(r => r.task_id === selectedTask.id)
                               .sort((a, b) => new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime())[0];

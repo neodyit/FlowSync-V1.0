@@ -208,7 +208,7 @@ const FacultyNotifications: React.FC = () => {
                       {notif.trigger_user_name && (
                         <span className="text-[9px] sm:text-[10px] font-black text-[#7C3AED] dark:text-violet-400 bg-[#7C3AED]/5 dark:bg-violet-950/30 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg flex items-center gap-1.5">
                           <User className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-                          {notif.trigger_user_name} (HOD)
+                          {notif.trigger_user_name}
                         </span>
                       )}
                     </div>

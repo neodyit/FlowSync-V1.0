@@ -9,6 +9,13 @@ use FlowSync\Config\Database;
 $session = InstitutionAdminMiddleware::check();
 $collegeId = (int)$session['college_id'];
 
+require_once __DIR__ . '/../../src/Utils/FeatureService.php';
+if (!\FlowSync\Utils\FeatureService::isEnabled($collegeId, 'ia_audit_log_visibility')) {
+    http_response_code(403);
+    echo json_encode(['status' => 'error', 'message' => 'Activity Center is disabled.']);
+    exit;
+}
+
 $db = Database::getInstance()->getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 

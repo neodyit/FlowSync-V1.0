@@ -15,12 +15,22 @@ try {
             throw new Exception("Missing required fields");
         }
 
-        // Get task details and uploader name
-        $stmt = $db->prepare("SELECT t.title, t.assigned_by_id, u.name as faculty_name FROM tasks t JOIN users u ON u.id = ? WHERE t.id = ?");
+        // Get task details, creator's role, and uploader name
+        $stmt = $db->prepare("
+            SELECT t.title, t.assigned_by_id, creator.role_id as creator_role_id, u.name as faculty_name 
+            FROM tasks t 
+            JOIN users u ON u.id = ? 
+            JOIN users creator ON t.assigned_by_id = creator.id 
+            WHERE t.id = ?
+        ");
         $stmt->execute([$data['user_id'], $data['task_id']]);
         $task = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$task) throw new Exception("Task not found");
+
+        if ($task['creator_role_id'] == 4) {
+            throw new Exception("Deadline extensions are not allowed for tasks assigned by Institution Admins.");
+        }
 
         $stmt = $db->prepare("SELECT deadline FROM tasks WHERE id = ?");
         $stmt->execute([$data['task_id']]);

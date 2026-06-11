@@ -29,16 +29,19 @@ try {
             
             $db->beginTransaction();
             $stmt = $db->prepare("
-                UPDATE system_settings 
-                SET setting_value = :val, updated_by = :uid, updated_at = CURRENT_TIMESTAMP
-                WHERE setting_key = :key
+                INSERT INTO system_settings (setting_key, setting_value, updated_by, updated_at)
+                VALUES (:key, :val, :uid, CURRENT_TIMESTAMP)
+                ON DUPLICATE KEY UPDATE 
+                    setting_value = :val, 
+                    updated_by = :uid, 
+                    updated_at = CURRENT_TIMESTAMP
             ");
             
             foreach ($data as $key => $val) {
                 $stmt->execute([
+                    'key' => $key,
                     'val' => (string)$val,
-                    'uid' => $session['user_id'] ?? null,
-                    'key' => $key
+                    'uid' => $session['user_id'] ?? null
                 ]);
             }
             

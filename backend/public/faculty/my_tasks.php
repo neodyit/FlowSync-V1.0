@@ -28,7 +28,7 @@ try {
                  SELECT t.*, t.status AS overall_status, t.completed_at AS overall_completed_at,
                        (SELECT tr.remarks FROM task_reviews tr WHERE tr.task_id = t.id AND tr.status = 'Approved' ORDER BY tr.created_at DESC LIMIT 1) AS completion_reason,
                        CASE WHEN (SELECT COUNT(*) FROM task_reviews tr WHERE tr.task_id = t.id AND tr.status = 'Rework Required') > 0 OR ta.status = 'Rework Required' THEN 'Rework' ELSE 'Regular' END AS flow_type,
-                       u.name as assigned_by_name, u.profile_pic as assigned_by_pic,
+                       u.name as assigned_by_name, u.profile_pic as assigned_by_pic, u.role_id as assigned_by_role_id,
                         ta.status as my_status, ta.progress, 
                        ta.points as my_points, ta.bonus_points as my_bonus, 
                        ta.remarks as my_remarks, ta.public_remarks, ta.private_remarks, ta.submission_link, ta.submitted_at as my_submitted_at,

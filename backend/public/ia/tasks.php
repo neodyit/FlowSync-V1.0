@@ -4,6 +4,7 @@ require_once __DIR__ . '/../bootstrap.php';
 
 use FlowSync\Utils\InstitutionAdminMiddleware;
 use FlowSync\Config\Database;
+use FlowSync\Utils\FeatureService;
 
 // Verify user is Institution Admin
 $session = InstitutionAdminMiddleware::check();
@@ -14,6 +15,15 @@ $db = Database::getInstance()->getConnection();
 $logger = new \FlowSync\Utils\AuditLogger();
 $notifier = new \FlowSync\Utils\NotificationService();
 $method = $_SERVER['REQUEST_METHOD'];
+
+if ($method === 'POST' || $method === 'PUT' || $method === 'DELETE') {
+    require_once __DIR__ . '/../../src/Utils/FeatureService.php';
+    if (!FeatureService::isEnabled($collegeId, 'allow_ia_task_management')) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Task management is currently disabled for Institution Admins by the system administrator.']);
+        exit();
+    }
+}
 
 try {
     switch ($method) {
@@ -95,12 +105,16 @@ try {
             $stmtU->execute(['cid' => $collegeId]);
             $users = $stmtU->fetchAll();
 
+            require_once __DIR__ . '/../../src/Utils/FeatureService.php';
+            $allowIaTaskManagement = FeatureService::isEnabled($collegeId, 'allow_ia_task_management') ? 'true' : 'false';
+
             echo json_encode([
                 'status' => 'success',
                 'data' => [
                     'tasks' => $tasks,
                     'departments' => $departments,
-                    'users' => $users
+                    'users' => $users,
+                    'allow_ia_task_management' => $allowIaTaskManagement
                 ]
             ]);
             break;

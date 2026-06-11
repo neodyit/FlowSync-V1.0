@@ -20,6 +20,7 @@ import {
   Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 
 interface AuditLog {
@@ -54,12 +55,27 @@ interface FilterUser {
 }
 
 export default function IAActivity() {
+  const navigate = useNavigate();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [departments, setDepartments] = useState<FilterDepartment[]>([]);
   const [users, setUsers] = useState<FilterUser[]>([]);
   const [stats, setStats] = useState({ total: 0, deletes: 0, logins: 0, updates: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const rawUser = localStorage.getItem('user');
+    if (rawUser) {
+      try {
+        const user = JSON.parse(rawUser);
+        if (user.features?.ia_audit_log_visibility === false) {
+          navigate('/ia/dashboard');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }, [navigate]);
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState('');
