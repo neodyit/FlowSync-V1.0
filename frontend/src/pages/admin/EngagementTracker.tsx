@@ -101,6 +101,17 @@ export default function EngagementTracker() {
         fetchFiltersData();
     }, []);
 
+    // Dynamically extract unique roles from users list to feed role filters
+    const dynamicRoles = React.useMemo(() => {
+        const uniqueRolesMap = new Map();
+        users.forEach(u => {
+            if (u.role_id && u.role_name) {
+                uniqueRolesMap.set(u.role_id, u.role_name);
+            }
+        });
+        return Array.from(uniqueRolesMap.entries()).map(([id, name]) => ({ id, name }));
+    }, [users]);
+
     // Cascade: Dynamically filter selectable Departments based on College
     const filteredDepartments = filterCollege === 'all'
         ? departments
@@ -311,9 +322,11 @@ export default function EngagementTracker() {
                             className="w-full bg-slate-50 dark:bg-[#110A24] border border-slate-200 dark:border-violet-500/20 text-slate-900 dark:text-indigo-100 rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-violet-400 transition-all cursor-pointer appearance-none shadow-sm"
                         >
                             <option value="all" className="dark:bg-[#110A24]">All Operator Roles</option>
-                            <option value="1" className="dark:bg-[#110A24]">Administrator</option>
-                            <option value="2" className="dark:bg-[#110A24]">Head of Dept (HOD)</option>
-                            <option value="3" className="dark:bg-[#110A24]">Faculty</option>
+                            {dynamicRoles.map((r) => (
+                                <option key={r.id} value={r.id} className="dark:bg-[#110A24]">
+                                    {r.name === 'Admin' ? 'Administrator' : r.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
 

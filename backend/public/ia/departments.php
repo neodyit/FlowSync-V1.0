@@ -22,21 +22,21 @@ try {
                     d.id, d.name, d.code, d.description, d.hod_id, d.is_enabled,
                     u.name as hod_name,
                     (SELECT COUNT(*) FROM faculty_departments WHERE department_id = d.id) as faculty_count,
-                    (SELECT COUNT(*) FROM tasks WHERE department_id = d.id AND season_id = :sid AND status = 'Completed') as completed_tasks,
-                    (SELECT COUNT(*) FROM tasks WHERE department_id = d.id AND season_id = :sid AND status != 'Draft') as total_tasks,
+                    (SELECT COUNT(*) FROM tasks WHERE department_id = d.id AND season_id = :sid1 AND status = 'Completed') as completed_tasks,
+                    (SELECT COUNT(*) FROM tasks WHERE department_id = d.id AND season_id = :sid2 AND status != 'Draft') as total_tasks,
                     (
                         SELECT IFNULL(SUM(lp.total_points), 0) 
                         FROM leaderboard_points lp
                         JOIN users usr ON lp.user_id = usr.id
                         JOIN faculty_departments fd ON usr.id = fd.user_id
-                        WHERE fd.department_id = d.id AND lp.season_id = :sid
+                        WHERE fd.department_id = d.id AND lp.season_id = :sid3
                     ) as engagement_score
                 FROM departments d
                 LEFT JOIN users u ON d.hod_id = u.id
                 WHERE d.college_id = :cid
                 ORDER BY d.created_at DESC
             ");
-            $stmt->execute(['cid' => $collegeId, 'sid' => $seasonId]);
+            $stmt->execute(['cid' => $collegeId, 'sid1' => $seasonId, 'sid2' => $seasonId, 'sid3' => $seasonId]);
             $departments = $stmt->fetchAll();
 
             // Fetch eligible HODs (role_id = 2) for this college to assign

@@ -50,7 +50,7 @@ class AuthService {
                 return ['status' => 'error', 'message' => 'User not found or inactive'];
             }
 
-            if ($user['college_enabled'] == 0) {
+            if ($user['college_enabled'] == 0 && (int)$user['role_id'] !== 1) {
                 return ['status' => 'error', 'message' => 'Access blocked: Your institution has been deactivated.'];
             }
 
@@ -230,7 +230,7 @@ class AuthService {
         ]);
         $dbSession = $stmt->fetch();
 
-        if (!$dbSession || $dbSession['college_enabled'] == 0) {
+        if (!$dbSession || ($dbSession['college_enabled'] == 0 && (int)$dbSession['role_id'] !== 1)) {
             $this->logout();
             return false;
         }

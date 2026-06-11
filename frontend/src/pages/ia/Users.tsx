@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Users, 
   UserPlus, 
@@ -186,7 +186,10 @@ export default function IAUsers() {
         .then(res => res.json())
         .then(data => {
           if (data.status === 'success') {
-            setUsers(data.data.users);
+            setUsers(prev => {
+              if (JSON.stringify(prev) === JSON.stringify(data.data.users)) return prev;
+              return data.data.users;
+            });
           }
         })
         .catch(err => console.error('Silent poll failed:', err));
@@ -210,6 +213,38 @@ export default function IAUsers() {
       return matchesSearch && matchesRole && matchesDept && matchesOnlineOnly;
     });
   }, [users, searchQuery, selectedRole, selectedDept, showOnlineOnly]);
+
+  // Chunk loading configuration for performance optimization
+  const CHUNK_SIZE = 12;
+  const [visibleCount, setVisibleCount] = useState(CHUNK_SIZE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Reset visible count to initial chunk size when any filters are modified
+  useEffect(() => {
+    setVisibleCount(CHUNK_SIZE);
+  }, [searchQuery, selectedRole, selectedDept, showOnlineOnly]);
+
+  // Intersection Observer to implement smooth automatic infinite scroll loading
+  useEffect(() => {
+    const currentSentinel = sentinelRef.current;
+    if (!currentSentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + CHUNK_SIZE, filteredUsers.length));
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    observer.observe(currentSentinel);
+    return () => {
+      if (currentSentinel) {
+        observer.unobserve(currentSentinel);
+      }
+    };
+  }, [filteredUsers.length]);
 
   const handleToggleStatus = async (user: User) => {
     const newStatus = user.is_active ? 0 : 1;
@@ -364,7 +399,7 @@ export default function IAUsers() {
       </div>
 
       {/* Stats Bar */}
-      <div className="bg-white/80 dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-2xl p-4 border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* <div className="bg-white/80 dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-2xl p-4 border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4 w-full sm:w-auto">
           <div className="relative shrink-0">
             <div className="w-11 h-11 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl flex items-center justify-center text-emerald-500 dark:text-emerald-400 animate-pulse">
@@ -405,7 +440,7 @@ export default function IAUsers() {
             <div className="w-11 h-6 bg-slate-200 dark:bg-violet-950/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
           </label>
         </div>
-      </div>
+      </div> */}
 
       {/* Filters */}
       <div className="bg-white/70 dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-3xl p-4 border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex flex-col sm:flex-row gap-4 relative z-[50]">
@@ -452,13 +487,13 @@ export default function IAUsers() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           <AnimatePresence mode="popLayout">
-            {filteredUsers.map((user) => (
+            {filteredUsers.slice(0, visibleCount).map((user) => (
               <motion.div
                 key={user.id}
-                layout
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.2 }}
                 className="flex"
               >
                 <ProfileCard
@@ -479,6 +514,31 @@ export default function IAUsers() {
               </motion.div>
             ))}
           </AnimatePresence>
+        </div>
+      )}
+
+      {/* Sentinel / Chunk Loading Indicator for Performance Optimization */}
+      {!isLoading && visibleCount < filteredUsers.length && (
+        <div ref={sentinelRef} className="flex flex-col items-center justify-center py-10 gap-3">
+          <div className="w-10 h-10 border-4 border-[#7C3AED]/20 border-t-[#7C3AED] rounded-full animate-spin" />
+          <p className="text-xs font-bold text-[#4C1D95]/60 dark:text-violet-400/60 tracking-wider">
+            Loading more records... (Showing {Math.min(visibleCount, filteredUsers.length)} of {filteredUsers.length})
+          </p>
+          <button
+            type="button"
+            onClick={() => setVisibleCount((prev) => Math.min(prev + CHUNK_SIZE, filteredUsers.length))}
+            className="mt-2 px-6 py-2.5 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 hover:border-[#7C3AED] dark:hover:border-violet-400 text-xs font-black uppercase tracking-wider rounded-xl text-[#7C3AED] dark:text-violet-400 hover:bg-[#7C3AED]/5 transition-all cursor-pointer shadow-sm active:scale-95"
+          >
+            Load More Manually
+          </button>
+        </div>
+      )}
+
+      {!isLoading && visibleCount >= filteredUsers.length && filteredUsers.length > 0 && (
+        <div className="text-center py-10">
+          <p className="text-xs font-bold text-[#4C1D95]/40 dark:text-violet-400/40 uppercase tracking-widest">
+            Showing all {filteredUsers.length} synchronized records
+          </p>
         </div>
       )}
 

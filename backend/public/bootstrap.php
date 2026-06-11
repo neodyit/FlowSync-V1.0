@@ -72,7 +72,7 @@ register_shutdown_function(function() use (&$session) {
             // Extract resource name from URI
             $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
             $basename = basename($path, '.php');
-            if ($basename === 'track_engagement') {
+            if ($basename === 'track_engagement' || ($basename === 'notifications' && $method === 'PUT')) {
                 return;
             }
             $resource = strtoupper($basename ?: 'API');

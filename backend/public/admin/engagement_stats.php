@@ -132,8 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 JOIN engagement_sessions es ON es.user_id = u.id
                 $tempWhereSql
                 GROUP BY u.id
+                HAVING total_time > 0
                 ORDER BY total_time DESC
-                LIMIT 10
             ");
             $topUsersStmt->execute($params);
             $rows = $topUsersStmt->fetchAll();

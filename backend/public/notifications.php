@@ -17,9 +17,11 @@ try {
 
     $userId = $session['user_id'];
 
-    // Update user's last active timestamp
-    $stmt = $db->prepare("UPDATE users SET last_active_at = NOW() WHERE id = :uid");
-    $stmt->execute(['uid' => $userId]);
+    // Update user's last active timestamp (except for Super Admin user_id = 1)
+    if ($userId != 1) {
+        $stmt = $db->prepare("UPDATE users SET last_active_at = NOW() WHERE id = :uid");
+        $stmt->execute(['uid' => $userId]);
+    }
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Fetch notifications: BOTH READ AND UNREAD and ONLY LATEST 3 DAYS

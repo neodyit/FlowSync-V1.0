@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Users, 
   UserPlus, 
@@ -154,7 +154,8 @@ const UsersManagement: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([
     { id: 1, name: 'Admin' },
     { id: 2, name: 'HOD' },
-    { id: 3, name: 'Faculty' }
+    { id: 3, name: 'Faculty' },
+    { id: 4, name: 'Institution Admin' }
   ]);
   
   const [isLoading, setIsLoading] = useState(true);
@@ -209,7 +210,10 @@ const UsersManagement: React.FC = () => {
         .then(res => res.json())
         .then(data => {
           if (data.status === 'success') {
-            setUsers(data.data);
+            setUsers(prev => {
+              if (JSON.stringify(prev) === JSON.stringify(data.data)) return prev;
+              return data.data;
+            });
           }
         })
         .catch(err => console.error('Silent poll failed:', err));
@@ -241,6 +245,38 @@ const UsersManagement: React.FC = () => {
     if (selectedCollege === 'all') return departments;
     return departments.filter(d => d.college_id.toString() === selectedCollege);
   }, [departments, selectedCollege]);
+
+  // Chunk loading configuration for performance optimization
+  const CHUNK_SIZE = 12;
+  const [visibleCount, setVisibleCount] = useState(CHUNK_SIZE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Reset visible count to initial chunk size when any filters are modified
+  useEffect(() => {
+    setVisibleCount(CHUNK_SIZE);
+  }, [searchQuery, selectedCollege, selectedRole, selectedDept, showOnlineOnly]);
+
+  // Intersection Observer to implement smooth automatic infinite scroll loading
+  useEffect(() => {
+    const currentSentinel = sentinelRef.current;
+    if (!currentSentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + CHUNK_SIZE, filteredUsers.length));
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    observer.observe(currentSentinel);
+    return () => {
+      if (currentSentinel) {
+        observer.unobserve(currentSentinel);
+      }
+    };
+  }, [filteredUsers.length]);
 
   // Actions
   const handleToggleStatus = async (user: User) => {
@@ -530,13 +566,13 @@ const UsersManagement: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           <AnimatePresence mode="popLayout">
-            {filteredUsers.map((user) => (
+            {filteredUsers.slice(0, visibleCount).map((user) => (
               <motion.div
                 key={user.id}
-                layout
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.2 }}
                 className="flex"
               >
                 <ProfileCard
@@ -557,6 +593,31 @@ const UsersManagement: React.FC = () => {
               </motion.div>
             ))}
           </AnimatePresence>
+        </div>
+      )}
+
+      {/* Sentinel / Chunk Loading Indicator for Performance Optimization */}
+      {!isLoading && visibleCount < filteredUsers.length && (
+        <div ref={sentinelRef} className="flex flex-col items-center justify-center py-10 gap-3">
+          <div className="w-10 h-10 border-4 border-[#7C3AED]/20 border-t-[#7C3AED] rounded-full animate-spin" />
+          <p className="text-xs font-bold text-[#4C1D95]/60 dark:text-violet-400/60 tracking-wider">
+            Loading more records... (Showing {Math.min(visibleCount, filteredUsers.length)} of {filteredUsers.length})
+          </p>
+          <button
+            type="button"
+            onClick={() => setVisibleCount((prev) => Math.min(prev + CHUNK_SIZE, filteredUsers.length))}
+            className="mt-2 px-6 py-2.5 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 hover:border-[#7C3AED] dark:hover:border-violet-400 text-xs font-black uppercase tracking-wider rounded-xl text-[#7C3AED] dark:text-violet-400 hover:bg-[#7C3AED]/5 transition-all cursor-pointer shadow-sm active:scale-95"
+          >
+            Load More Manually
+          </button>
+        </div>
+      )}
+
+      {!isLoading && visibleCount >= filteredUsers.length && filteredUsers.length > 0 && (
+        <div className="text-center py-10">
+          <p className="text-xs font-bold text-[#4C1D95]/40 dark:text-violet-400/40 uppercase tracking-widest">
+            Showing all {filteredUsers.length} synchronized records
+          </p>
         </div>
       )}
 
