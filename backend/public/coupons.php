@@ -21,11 +21,11 @@ try {
         throw new Exception("Method not allowed. Use GET.");
     }
 
-    $code = $_GET['code'] ?? null;
     $planId = $_GET['plan_id'] ?? null;
+    $code = $_GET['code'] ?? null;
 
-    if (!$code || !$planId) {
-        throw new Exception("code and plan_id parameters are required.");
+    if (!$planId) {
+        throw new Exception("plan_id parameter is required.");
     }
 
     $plan = $subscriptionService->getPlanById($planId);
@@ -33,20 +33,23 @@ try {
         throw new Exception("Invalid plan specified.");
     }
 
-    $coupon = $paymentService->validateCoupon($code);
-    if (!$coupon) {
-        throw new Exception("Invalid, expired, or inactive coupon code.");
+    $coupon = null;
+    if (!empty($code)) {
+        $coupon = $paymentService->validateCoupon($code);
+        if (!$coupon) {
+            throw new Exception("Invalid, expired, or inactive coupon code.");
+        }
     }
 
-    $amounts = $paymentService->calculateAmounts($plan['price'], $code);
+    $amounts = $paymentService->calculateAmounts($plan['price'], $code, $planId);
 
     echo json_encode([
         'status' => 'success',
-        'coupon' => [
+        'coupon' => $coupon ? [
             'code' => $coupon['code'],
             'discount_type' => $coupon['discount_type'],
             'discount_value' => (float)$coupon['discount_value']
-        ],
+        ] : null,
         'amounts' => $amounts
     ]);
 

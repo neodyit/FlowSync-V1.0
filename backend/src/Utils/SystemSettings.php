@@ -17,6 +17,17 @@ class SystemSettings {
             }
         } catch (\Exception $e) {}
         
+        // Fallback to environment variables if not present in the database table
+        $envVal = getenv($key);
+        if ($envVal !== false) {
+            return $envVal;
+        }
+
+        $envValUpper = getenv(strtoupper($key));
+        if ($envValUpper !== false) {
+            return $envValUpper;
+        }
+        
         return $default;
     }
 

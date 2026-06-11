@@ -34,7 +34,23 @@ try {
         exit;
     }
 
-    $subtotal = $invoice['amount'] - $invoice['gst_amount'];
+    // Original plan price
+    $originalPrice = isset($invoice['plan_price']) ? (float)$invoice['plan_price'] : (float)$invoice['amount'];
+    
+    // Gateway charges / processing fees
+    $gatewayCharge = isset($invoice['gateway_charge']) ? (float)$invoice['gateway_charge'] : 0.0;
+    
+    // GST
+    $gstAmount = isset($invoice['gst_amount']) ? (float)$invoice['gst_amount'] : 0.0;
+    
+    // Total amount paid
+    $totalPaid = (float)$invoice['amount'];
+    
+    // Net plan price paid = Total - Gateway Charge - GST
+    $netPaid = $totalPaid - $gatewayCharge - $gstAmount;
+    
+    // Discount = Original plan price - Net paid
+    $discount = max(0.0, $originalPrice - $netPaid);
     
 } catch (Exception $e) {
     http_response_code(500);
@@ -51,77 +67,207 @@ header('Content-Type: text/html; charset=utf-8');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice - <?php echo htmlspecialchars($invoice['invoice_number']); ?></title>
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #333;
-            background-color: #f9f9f9;
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 40px;
+            padding: 0;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #1e293b;
+            background-color: #f8fafc;
+            line-height: 1.5;
+            padding: 40px 20px;
+        }
+        .actions-bar {
+            max-width: 850px;
+            margin: 0 auto 24px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-link {
+            font-size: 13px;
+            font-weight: 700;
+            color: #64748b;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+        .back-link:hover {
+            color: #7c3aed;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            font-family: inherit;
+            background-color: #7c3aed;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+            transition: all 0.2s ease;
+        }
+        .btn:hover {
+            background-color: #6d28d9;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(124, 58, 237, 0.25);
+        }
+        .btn-secondary {
+            background-color: #fff;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            box-shadow: none;
+        }
+        .btn-secondary:hover {
+            background-color: #f8fafc;
+            color: #0f172a;
+            transform: none;
+            box-shadow: none;
         }
         .invoice-card {
-            max-width: 800px;
+            max-width: 850px;
             margin: 0 auto;
             background: #fff;
-            padding: 50px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: 1px solid #eaeaea;
+            padding: 60px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+            border: 1px solid #f1f5f9;
             position: relative;
+            overflow: hidden;
+        }
+        .invoice-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(90deg, #7c3aed 0%, #a78bfa 100%);
         }
         .invoice-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            border-bottom: 2px solid #f2f2f2;
-            padding-bottom: 30px;
-            margin-bottom: 30px;
+            margin-bottom: 48px;
+        }
+        .brand-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
         .company-logo {
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 28px;
-            font-weight: 800;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .company-logo span {
+            color: #7c3aed;
+        }
+        .company-subtext {
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+        .invoice-title-block {
+            text-align: right;
+        }
+        .invoice-title-block h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0 0 4px 0;
+            font-size: 32px;
+            font-weight: 700;
             color: #0f172a;
             letter-spacing: -0.5px;
         }
-        .company-logo span {
-            color: #3b82f6;
-        }
-        .invoice-title {
-            text-align: right;
-        }
-        .invoice-title h2 {
-            margin: 0 0 10px 0;
-            font-size: 24px;
-            font-weight: 700;
-            color: #0f172a;
-        }
-        .invoice-title p {
-            margin: 0;
+        .invoice-number {
+            font-family: monospace;
             font-size: 14px;
             color: #64748b;
+            background-color: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-block;
         }
-        .details-container {
+        .details-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 40px;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 60px;
+            margin-bottom: 48px;
+            padding-bottom: 36px;
+            border-bottom: 1px solid #f1f5f9;
         }
         .details-block h4 {
-            margin: 0 0 12px 0;
-            font-size: 13px;
+            margin: 0 0 16px 0;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             color: #94a3b8;
-            font-weight: 600;
+            font-weight: 700;
         }
         .details-block p {
             margin: 0 0 6px 0;
-            font-size: 15px;
-            line-height: 1.5;
-            color: #334155;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #475569;
         }
         .details-block p strong {
             color: #0f172a;
+            font-weight: 700;
+        }
+        .meta-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #475569;
+        }
+        .meta-label {
+            color: #94a3b8;
+        }
+        .meta-val {
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .paid-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 8px;
+            background-color: #dcfce7;
+            color: #15803d;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .table-items {
             width: 100%;
@@ -130,94 +276,72 @@ header('Content-Type: text/html; charset=utf-8');
         }
         .table-items th {
             text-align: left;
-            padding: 14px;
+            padding: 16px 20px;
             background-color: #f8fafc;
-            border-bottom: 2px solid #e2e8f0;
-            font-size: 13px;
-            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 11px;
+            font-weight: 700;
             color: #475569;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .table-items td {
-            padding: 18px 14px;
+            padding: 24px 20px;
             border-bottom: 1px solid #f1f5f9;
-            font-size: 15px;
+            font-size: 14px;
             color: #334155;
+            vertical-align: top;
+        }
+        .plan-main {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+        .plan-sub {
+            font-size: 12px;
+            color: #64748b;
         }
         .text-right {
             text-align: right !important;
         }
+        .summary-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 48px;
+        }
         .summary-container {
-            width: 50%;
-            margin-left: auto;
-            margin-bottom: 40px;
+            width: 380px;
+            background-color: #f8fafc;
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid #f1f5f9;
         }
         .summary-row {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            font-size: 15px;
+            padding: 8px 0;
+            font-size: 13px;
             color: #475569;
         }
         .summary-row.total-row {
-            border-top: 2px solid #f1f5f9;
-            padding-top: 15px;
-            margin-top: 10px;
-            font-size: 19px;
-            font-weight: 700;
-            color: #0f172a;
-        }
-        .paid-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 9999px;
-            background-color: #dcfce7;
-            color: #15803d;
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 16px;
+            margin-top: 12px;
+            font-size: 18px;
+            font-weight: 800;
+            color: #7c3aed;
         }
         .footer-note {
             border-top: 1px solid #f1f5f9;
-            padding-top: 30px;
+            padding-top: 40px;
             text-align: center;
             color: #94a3b8;
-            font-size: 13px;
+            font-size: 12px;
+            line-height: 1.6;
         }
-        .actions-bar {
-            max-width: 800px;
-            margin: 0 auto 20px auto;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-        .btn {
-            background-color: #3b82f6;
-            color: #fff;
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: background-color 0.2s;
-        }
-        .btn:hover {
-            background-color: #2563eb;
-        }
-        .btn-secondary {
-            background-color: #fff;
-            color: #475569;
-            border: 1px solid #e2e8f0;
-        }
-        .btn-secondary:hover {
-            background-color: #f8fafc;
-            color: #0f172a;
+        .footer-note p strong {
+            color: #64748b;
         }
         
         @media print {
@@ -229,9 +353,17 @@ header('Content-Type: text/html; charset=utf-8');
                 box-shadow: none;
                 border: none;
                 padding: 0;
+                border-radius: 0;
+            }
+            .invoice-card::before {
+                display: none;
             }
             .actions-bar {
                 display: none;
+            }
+            .summary-container {
+                background-color: #fff;
+                border: 1px solid #e2e8f0;
             }
         }
     </style>
@@ -239,33 +371,55 @@ header('Content-Type: text/html; charset=utf-8');
 <body>
 
     <div class="actions-bar">
-        <button onclick="window.close();" class="btn btn-secondary">Close</button>
-        <button onclick="window.print();" class="btn">Print / Save as PDF</button>
+        <a href="javascript:window.close();" class="back-link">
+            &larr; Back to Billing
+        </a>
+        <div class="btn-group">
+            <button onclick="window.close();" class="btn btn-secondary">Close</button>
+            <button onclick="window.print();" class="btn">Print Invoice</button>
+        </div>
     </div>
 
     <div class="invoice-card">
         <div class="invoice-header">
-            <div class="company-logo">Flow<span>Sync</span></div>
-            <div class="invoice-title">
+            <div class="brand-section">
+                <div class="company-logo">Flow<span>Sync</span></div>
+                <div class="company-subtext">Faculty Task Management & Workflow System</div>
+            </div>
+            <div class="invoice-title-block">
                 <h2>INVOICE</h2>
-                <p>#<?php echo htmlspecialchars($invoice['invoice_number']); ?></p>
+                <div class="invoice-number">#<?php echo htmlspecialchars($invoice['invoice_number']); ?></div>
             </div>
         </div>
 
-        <div class="details-container">
+        <div class="details-grid">
             <div class="details-block">
                 <h4>Bill To:</h4>
                 <p><strong><?php echo htmlspecialchars($invoice['college_name']); ?></strong></p>
                 <?php if (!empty($invoice['college_address'])): ?>
-                    <p><?php echo nl2br(htmlspecialchars($invoice['college_address'])); ?></p>
+                    <p style="margin-top: 6px; white-space: pre-line; color: #64748b; font-size: 13px;"><?php echo htmlspecialchars($invoice['college_address']); ?></p>
                 <?php endif; ?>
             </div>
-            <div class="details-block" style="text-align: right;">
+            <div class="details-block">
                 <h4>Invoice Details:</h4>
-                <p>Date: <strong><?php echo date('d M Y', strtotime($invoice['generated_at'])); ?></strong></p>
-                <p>Payment Status: <span class="paid-badge">Paid</span></p>
-                <p>Payment Method: <strong><?php echo htmlspecialchars(ucfirst($invoice['payment_gateway'])); ?></strong></p>
-                <p>Ref ID: <strong><?php echo htmlspecialchars($invoice['pg_order_id']); ?></strong></p>
+                <div class="meta-list">
+                    <div class="meta-item">
+                        <span class="meta-label">Date Issued</span>
+                        <span class="meta-val"><?php echo date('d M Y', strtotime($invoice['generated_at'])); ?></span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Payment Status</span>
+                        <span class="meta-val"><span class="paid-badge">Paid</span></span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Method</span>
+                        <span class="meta-val"><?php echo htmlspecialchars(ucfirst($invoice['payment_gateway'])); ?></span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Ref ID</span>
+                        <span class="meta-val" style="font-family: monospace; font-size: 12px;"><?php echo htmlspecialchars($invoice['pg_order_id']); ?></span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -281,13 +435,13 @@ header('Content-Type: text/html; charset=utf-8');
             <tbody>
                 <tr>
                     <td>
-                        <strong>FlowSync Subscription Plan - <?php echo htmlspecialchars($invoice['plan_name']); ?></strong><br>
-                        <span style="font-size: 13px; color: #64748b;">Duration: <?php echo (int)$invoice['duration_months']; ?> Months</span>
+                        <div class="plan-main">FlowSync Subscription Plan - <?php echo htmlspecialchars($invoice['plan_name']); ?></div>
+                        <div class="plan-sub">Licensing Period: <?php echo (int)$invoice['duration_months']; ?> Months</div>
                     </td>
-                    <td class="text-right">₹<?php echo number_format($subtotal, 2); ?></td>
-                    <td class="text-right">
+                    <td class="text-right" style="font-weight: 500;">₹<?php echo number_format($originalPrice, 2); ?></td>
+                    <td class="text-right" style="color: #64748b;">
                         <?php 
-                        $bonusDays = (int)$invoice['bonus_days'];
+                        $bonusDays = isset($invoice['bonus_days']) ? (int)$invoice['bonus_days'] : 0;
                         if ($bonusDays > 0) {
                             if ($bonusDays % 30 === 0) {
                                 echo ($bonusDays / 30) . " Months FREE";
@@ -299,37 +453,50 @@ header('Content-Type: text/html; charset=utf-8');
                         }
                         ?>
                     </td>
-                    <td class="text-right">₹<?php echo number_format($subtotal, 2); ?></td>
+                    <td class="text-right" style="font-weight: 600;">₹<?php echo number_format($netPaid, 2); ?></td>
                 </tr>
             </tbody>
         </table>
 
-        <div class="summary-container">
-            <div class="summary-row">
-                <span>Subtotal</span>
-                <span>₹<?php echo number_format($subtotal, 2); ?></span>
-            </div>
-            <?php if ((float)$invoice['gateway_charge'] > 0): ?>
+        <div class="summary-wrapper">
+            <div class="summary-container">
                 <div class="summary-row">
-                    <span>Gateway Charges</span>
-                    <span>₹<?php echo number_format((float)$invoice['gateway_charge'], 2); ?></span>
+                    <span>Licensing Subtotal</span>
+                    <span style="font-weight: 600;">₹<?php echo number_format($originalPrice, 2); ?></span>
                 </div>
-            <?php endif; ?>
-            <div class="summary-row">
-                <span>GST (Tax)</span>
-                <span>₹<?php echo number_format((float)$invoice['gst_amount'], 2); ?></span>
-            </div>
-            <div class="summary-row total-row">
-                <span>Total Paid</span>
-                <span>₹<?php echo number_format((float)$invoice['amount'], 2); ?></span>
+                <?php if ($discount > 0.001): ?>
+                    <div class="summary-row" style="color: #16a34a;">
+                        <span>Discount Applied</span>
+                        <span>-₹<?php echo number_format($discount, 2); ?></span>
+                    </div>
+                    <div class="summary-row" style="border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 4px;">
+                        <span>Net Subtotal</span>
+                        <span>₹<?php echo number_format($netPaid, 2); ?></span>
+                    </div>
+                <?php endif; ?>
+                <?php if ($gatewayCharge > 0.001): ?>
+                    <div class="summary-row">
+                        <span>Tax & Processing fee</span>
+                        <span>₹<?php echo number_format($gatewayCharge, 2); ?></span>
+                    </div>
+                <?php endif; ?>
+                <?php if ($gstAmount > 0.001): ?>
+                    <div class="summary-row">
+                        <span>GST (Tax Rate)</span>
+                        <span>₹<?php echo number_format($gstAmount, 2); ?></span>
+                    </div>
+                <?php endif; ?>
+                <div class="summary-row total-row">
+                    <span>Total Paid</span>
+                    <span>₹<?php echo number_format($totalPaid, 2); ?></span>
+                </div>
             </div>
         </div>
 
         <div class="footer-note">
-            <p>Thank you for choosing FlowSync. If you have any billing queries, contact support@flowsync.in</p>
-            <p style="font-size: 11px; margin-top: 15px; color: #cbd5e1;">This is a computer-generated invoice and does not require a signature.</p>
+            <p>Thank you for choosing FlowSync. If you have any questions regarding this invoice, please reach out to <strong>support@flowsync.in</strong></p>
+            <p style="font-size: 10px; margin-top: 16px; color: #cbd5e1; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;">This is a computer-generated invoice and does not require a physical signature.</p>
         </div>
     </div>
-
 </body>
 </html>

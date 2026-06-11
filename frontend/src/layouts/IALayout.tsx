@@ -20,7 +20,8 @@ import {
   Sun, 
   Moon,
   ChevronDown,
-  Check
+  Check,
+  CreditCard
 } from 'lucide-react';
 import { checkSession } from '../utils/auth';
 import { useTheme } from '../components/ThemeProvider';
@@ -110,6 +111,7 @@ export default function IALayout() {
 
   const [seasons, setSeasons] = useState<any[]>([]);
   const [activeSeasonId, setActiveSeasonId] = useState<number | null>(null);
+  const [subStatus, setSubStatus] = useState<any>({});
 
   useEffect(() => {
     const fetchSeasons = async () => {
@@ -139,7 +141,21 @@ export default function IALayout() {
         console.error('Error fetching seasons for switcher:', err);
       }
     };
+    
+    const fetchSubStatus = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/ia/subscription_status.php`, { credentials: 'include' });
+        const data = await res.json();
+        if (data.status === 'success') {
+          setSubStatus(data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching subscription status:', err);
+      }
+    };
+
     fetchSeasons();
+    fetchSubStatus();
   }, []);
 
   const handleSeasonChange = (id: number) => {
@@ -164,7 +180,6 @@ export default function IALayout() {
     { name: 'Departments', icon: Building2, path: '/ia/departments' },
     { name: 'Tasks', icon: CheckSquare, path: '/ia/tasks' },
     { name: 'Notices', icon: Bell, path: '/ia/notices' },
-    { name: 'Reports', icon: FileText, path: '/ia/reports' },
     { name: 'Activity Center', icon: History, path: '/ia/activity', featureKey: 'ia_audit_log_visibility' },
     { name: 'Settings', icon: Settings, path: '/ia/settings' },
   ].filter(item => !item.featureKey || currentUser.features?.[item.featureKey] !== false);

@@ -213,7 +213,7 @@ class SubscriptionService
     // Subscription Assignment & Management Actions
     // ==========================================
 
-    public function assignSubscription($collegeId, $planId, $startDate = null, $customBonusDays = null)
+    public function assignSubscription($collegeId, $planId, $startDate = null, $customBonusDays = null, $createTransaction = true)
     {
         $plan = $this->getPlanById($planId);
         if (!$plan) {
@@ -271,16 +271,18 @@ class SubscriptionService
             'final_expiry_date' => $finalExpiryDateStr
         ]);
 
-        // Create transaction record
-        $stmtTx = $this->db->prepare("
-            INSERT INTO subscription_transactions (institution_id, plan_id, amount, payment_status, paid_at)
-            VALUES (:college_id, :plan_id, :amount, 'completed', CURRENT_TIMESTAMP)
-        ");
-        $stmtTx->execute([
-            'college_id' => $collegeId,
-            'plan_id' => $planId,
-            'amount' => $plan['price']
-        ]);
+        if ($createTransaction) {
+            // Create transaction record
+            $stmtTx = $this->db->prepare("
+                INSERT INTO subscription_transactions (institution_id, plan_id, amount, payment_status, paid_at)
+                VALUES (:college_id, :plan_id, :amount, 'completed', CURRENT_TIMESTAMP)
+            ");
+            $stmtTx->execute([
+                'college_id' => $collegeId,
+                'plan_id' => $planId,
+                'amount' => $plan['price']
+            ]);
+        }
 
         return true;
     }

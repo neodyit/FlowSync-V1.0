@@ -5,10 +5,23 @@ require_once __DIR__ . '/../bootstrap.php';
 use FlowSync\Utils\AdminMiddleware;
 use FlowSync\Utils\SubscriptionService;
 
-AdminMiddleware::check();
+$method = $_SERVER['REQUEST_METHOD'];
+
+// Allow GET for both Super Admins (1) and Institution Admins (4)
+if ($method === 'GET') {
+    $auth = new \FlowSync\Auth\AuthService();
+    $session = $auth->validateSession();
+    if (!$session || !in_array((int)$session['role_id'], [1, 4])) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Forbidden: Access restricted']);
+        exit;
+    }
+} else {
+    // POST, PUT, DELETE require Super Admin
+    AdminMiddleware::check();
+}
 
 $subscriptionService = new SubscriptionService();
-$method = $_SERVER['REQUEST_METHOD'];
 
 try {
     switch ($method) {
