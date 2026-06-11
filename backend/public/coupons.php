@@ -41,7 +41,7 @@ try {
         }
     }
 
-    $amounts = $paymentService->calculateAmounts($plan['price'], $code, $planId);
+    $amounts = $paymentService->calculateAmounts($planId);
 
     echo json_encode([
         'status' => 'success',

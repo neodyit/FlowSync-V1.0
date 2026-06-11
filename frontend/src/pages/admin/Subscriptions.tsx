@@ -62,7 +62,22 @@ interface Transaction {
 }
 
 export default function Subscriptions() {
-  const [activeTab, setActiveTab] = useState<'colleges' | 'plans' | 'coupons' | 'transactions'>('colleges');
+  const [activeTab, setActiveTab] = useState<'colleges' | 'plans' | 'coupons' | 'transactions'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab === 'colleges' || tab === 'plans' || tab === 'coupons' || tab === 'transactions') {
+      return tab;
+    }
+    return 'colleges';
+  });
+
+  const handleTabChange = (tab: 'colleges' | 'plans' | 'coupons' | 'transactions') => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', tab);
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState(null, '', newUrl);
+  };
   const [metrics, setMetrics] = useState<any>({});
   const [colleges, setColleges] = useState<any[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -107,40 +122,40 @@ export default function Subscriptions() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/subscription_dashboard.php`, { credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/subscription_dashboard.php?_t=${Date.now()}`, { credentials: 'include' });
       const data = await res.json();
       if (data.status === 'success') {
         setMetrics(data.data.metrics || {});
       }
       
       // Fetch Plans
-      const resPlans = await fetch(`${import.meta.env.VITE_API_URL}/admin/subscription_plans.php`, { credentials: 'include' });
+      const resPlans = await fetch(`${import.meta.env.VITE_API_URL}/admin/subscription_plans.php?_t=${Date.now()}`, { credentials: 'include' });
       const dataPlans = await resPlans.json();
       if (dataPlans.status === 'success') {
         setPlans(dataPlans.data);
       }
 
       // Fetch Coupons
-      const resCoupons = await fetch(`${import.meta.env.VITE_API_URL}/admin/coupons.php`, { credentials: 'include' });
+      const resCoupons = await fetch(`${import.meta.env.VITE_API_URL}/admin/coupons.php?_t=${Date.now()}`, { credentials: 'include' });
       const dataCoupons = await resCoupons.json();
       if (dataCoupons.status === 'success') {
         setCoupons(dataCoupons.data);
       }
 
       // Fetch Transactions
-      const resTx = await fetch(`${import.meta.env.VITE_API_URL}/admin/billing_history.php`, { credentials: 'include' });
+      const resTx = await fetch(`${import.meta.env.VITE_API_URL}/admin/billing_history.php?_t=${Date.now()}`, { credentials: 'include' });
       const dataTx = await resTx.json();
       if (dataTx.status === 'success') {
         setTransactions(dataTx.data);
       }
 
       // Fetch Colleges
-      const resColl = await fetch(`${import.meta.env.VITE_API_URL}/admin/colleges.php`, { credentials: 'include' });
+      const resColl = await fetch(`${import.meta.env.VITE_API_URL}/admin/colleges.php?_t=${Date.now()}`, { credentials: 'include' });
       const dataColl = await resColl.json();
       if (dataColl.status === 'success') {
         const detailedColleges = await Promise.all(dataColl.data.map(async (c: any) => {
           try {
-            const statusRes = await fetch(`${import.meta.env.VITE_API_URL}/admin/institution_subscriptions.php?college_id=${c.id}`, { credentials: 'include' });
+            const statusRes = await fetch(`${import.meta.env.VITE_API_URL}/admin/institution_subscriptions.php?college_id=${c.id}&_t=${Date.now()}`, { credentials: 'include' });
             const statusData = await statusRes.json();
             return {
               id: c.id,
@@ -382,25 +397,25 @@ export default function Subscriptions() {
       {/* Tabs Menu */}
       <div className="flex border-b border-slate-200 dark:border-slate-800 gap-6">
         <button 
-          onClick={() => setActiveTab('colleges')}
+          onClick={() => handleTabChange('colleges')}
           className={`pb-4 text-sm font-black transition-all ${activeTab === 'colleges' ? 'border-b-2 border-[#7C3AED] text-[#7C3AED]' : 'text-slate-400 hover:text-slate-600'}`}
         >
           Institutions
         </button>
         <button 
-          onClick={() => setActiveTab('plans')}
+          onClick={() => handleTabChange('plans')}
           className={`pb-4 text-sm font-black transition-all ${activeTab === 'plans' ? 'border-b-2 border-[#7C3AED] text-[#7C3AED]' : 'text-slate-400 hover:text-slate-600'}`}
         >
           Subscription Plans
         </button>
         <button 
-          onClick={() => setActiveTab('coupons')}
+          onClick={() => handleTabChange('coupons')}
           className={`pb-4 text-sm font-black transition-all ${activeTab === 'coupons' ? 'border-b-2 border-[#7C3AED] text-[#7C3AED]' : 'text-slate-400 hover:text-slate-600'}`}
         >
           Promo Coupons
         </button>
         <button 
-          onClick={() => setActiveTab('transactions')}
+          onClick={() => handleTabChange('transactions')}
           className={`pb-4 text-sm font-black transition-all ${activeTab === 'transactions' ? 'border-b-2 border-[#7C3AED] text-[#7C3AED]' : 'text-slate-400 hover:text-slate-600'}`}
         >
           Billing Transactions

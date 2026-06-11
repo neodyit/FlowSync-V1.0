@@ -11,49 +11,44 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? null;
 
 try {
-    if ($method !== 'POST' && $action !== 'verify_redirect') {
+    if ($method !== 'POST') {
         http_response_code(405);
         throw new Exception("Method not allowed. Use POST.");
     }
 
     $rawInput = file_get_contents('php://input');
     $data = json_decode($rawInput, true) ?: [];
-
-    // Extract order ID robustly
-    $orderId = $data['order_id'] ?? ($data['orderId'] ?? ($_POST['order_id'] ?? ($_POST['orderId'] ?? ($_GET['order_id'] ?? null))));
+    $orderId = $data['order_id'] ?? ($data['orderId'] ?? null);
 
     switch ($action) {
         case 'create':
-            // Creation requires active user session
             if (empty($session) || empty($session['user_id'])) {
                 http_response_code(401);
                 throw new Exception("Unauthorized. Please login.");
             }
 
             $planId = $data['plan_id'] ?? null;
-            $couponCode = $data['coupon_code'] ?? null;
             $returnUrl = $data['return_url'] ?? null;
 
             if (!$planId || !$returnUrl) {
                 throw new Exception("plan_id and return_url are required.");
             }
 
-            // Fetch user info for Cashfree checkout customer parameters
             $stmtUser = $db->prepare("SELECT email, phone, college_id FROM users WHERE id = :id LIMIT 1");
             $stmtUser->execute(['id' => $session['user_id']]);
             $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
 
             if (!$user || !$user['college_id']) {
-                throw new Exception("User institution details not found.");
+                throw new Exception("User details not found.");
             }
 
+            // Create order securely using server-calculated values
             $orderPayload = $paymentService->createCashfreeOrder(
                 $user['college_id'],
                 $planId,
                 $user['email'],
                 $user['phone'] ?? '9999999999',
-                $returnUrl,
-                $couponCode
+                $returnUrl
             );
 
             echo json_encode([
@@ -63,8 +58,32 @@ try {
             break;
 
         case 'verify':
+            if (empty($session) || empty($session['user_id'])) {
+                http_response_code(401);
+                throw new Exception("Unauthorized. Please login first.");
+            }
             if (!$orderId) {
                 throw new Exception("order_id is required.");
+            }
+
+            // Verify logged-in user details
+            $stmtUser = $db->prepare("SELECT college_id FROM users WHERE id = :id LIMIT 1");
+            $stmtUser->execute(['id' => $session['user_id']]);
+            $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            if (!$user || !$user['college_id']) {
+                http_response_code(401);
+                throw new Exception("Unauthorized. College details not found.");
+            }
+
+            // Verify transaction ownership
+            $stmtTx = $db->prepare("SELECT institution_id FROM subscription_transactions WHERE transaction_id = :tx_id LIMIT 1");
+            $stmtTx->execute(['tx_id' => $orderId]);
+            $tx = $stmtTx->fetch(PDO::FETCH_ASSOC);
+
+            if (!$tx || (int)$tx['institution_id'] !== (int)$user['college_id']) {
+                http_response_code(403);
+                throw new Exception("Forbidden. You do not own this transaction.");
             }
 
             $isSuccess = $paymentService->verifyCashfreePayment($orderId);
@@ -77,28 +96,10 @@ try {
             } else {
                 echo json_encode([
                     'status' => 'failed',
-                    'message' => 'Payment has failed or is still pending verification.'
+                    'message' => 'Payment verification returned pending or failed status.'
                 ]);
             }
             break;
-
-        case 'verify_redirect':
-            $isSuccess = false;
-            try {
-                if ($orderId) {
-                    $isSuccess = $paymentService->verifyCashfreePayment($orderId);
-                }
-            } catch (Exception $e) {
-                // Keep isSuccess as false if it threw an error
-            }
-
-            $redirectTo = $_GET['redirect_to'] ?? ($_POST['redirect_to'] ?? null);
-            $redirectUrl = $redirectTo ?: 'http://localhost:5173/ia/billing';
-            $separator = (strpos($redirectUrl, '?') === false) ? '?' : '&';
-            $finalUrl = $redirectUrl . $separator . 'payment_status=' . ($isSuccess ? 'success' : 'failed') . '&order_id=' . urlencode($orderId ?? '');
-
-            header("Location: " . $finalUrl);
-            exit;
 
         default:
             http_response_code(400);
