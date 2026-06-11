@@ -31,7 +31,6 @@ loadEnv(__DIR__ . '/../.env');
 \FlowSync\Config\Database::handleCORS();
 header('Content-Type: application/json');
 
-// Session validation for global access
 try {
     $auth = new \FlowSync\Auth\AuthService();
     $session = $auth->validateSession();
@@ -39,6 +38,48 @@ try {
     http_response_code(500);
     echo json_encode(['status' => 'error', 'message' => 'Server initialization error.']);
     exit;
+}
+
+// Global Subscription and Grace Period Enforcement
+if ($session && (int)$session['role_id'] !== 1) {
+    $collegeId = $session['college_id'] ?? null;
+    if ($collegeId) {
+        $subService = new \FlowSync\Utils\SubscriptionService();
+        $subStatus = $subService->getSubscriptionStatus($collegeId);
+        
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        $isMutating = in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH']);
+        
+        if ($isMutating) {
+            $status = $subStatus['status'];
+            $remainingDays = $subStatus['remaining_days'];
+            
+            // 1. Suspension or Expiration past grace period -> Read-Only Mode
+            if ($status === 'suspended' || $remainingDays < -7) {
+                http_response_code(403);
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Subscription Blocked: Your institution has entered Read-Only Mode. Please contact your administrator or renew your subscription.'
+                ]);
+                exit;
+            }
+            
+            // 2. Expiry within 7-day grace period
+            if ($remainingDays < 0 && $remainingDays >= -7) {
+                $scriptName = basename($_SERVER['SCRIPT_NAME'] ?? '');
+                $restrictedFiles = ['tasks.php', 'users.php', 'departments.php', 'notices.php', 'push_notices.php', 'push_notification.php', 'reminders.php'];
+                
+                if (in_array($scriptName, $restrictedFiles)) {
+                    http_response_code(403);
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Subscription Grace Period: This action is restricted. Please renew your subscription to resume operations.'
+                    ]);
+                    exit;
+                }
+            }
+        }
+    }
 }
 
 // Ensure storage directories exist outside public folder
