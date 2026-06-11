@@ -62,6 +62,8 @@ const Profile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [extraStats, setExtraStats] = useState<any>(null);
+
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const isOwnProfile = !targetId || targetId === currentUser.id?.toString();
 
@@ -76,6 +78,28 @@ const Profile = () => {
       const result = await response.json();
       if (result.status === 'success') {
         setProfile(result.data);
+        const roleId = Number(result.data.role_id);
+        if (roleId === 1) {
+          try {
+            const statsRes = await fetch(`${import.meta.env.VITE_API_URL}/admin/stats.php`, { credentials: 'include' });
+            const statsData = await statsRes.json();
+            if (statsData.status === 'success') {
+              setExtraStats(statsData.data);
+            }
+          } catch (err) {
+            console.error('Failed to fetch admin stats:', err);
+          }
+        } else if (roleId === 4) {
+          try {
+            const statsRes = await fetch(`${import.meta.env.VITE_API_URL}/ia/stats.php`, { credentials: 'include' });
+            const statsData = await statsRes.json();
+            if (statsData.status === 'success') {
+              setExtraStats(statsData.data);
+            }
+          } catch (err) {
+            console.error('Failed to fetch IA stats:', err);
+          }
+        }
       } else {
         Swal.fire('Error', result.message || 'Profile not accessible.', 'error');
       }
@@ -235,12 +259,12 @@ const Profile = () => {
       <SEO title={`${profile.name} | Professional Profile`} description="View and manage your academic and professional mission credentials." />
 
       {/* Hero Header */}
-      <div className="relative bg-white rounded-[3rem] border border-slate-100 p-8 md:p-12 shadow-sm overflow-hidden">
+      <div className="relative bg-white dark:bg-[#110A24] rounded-[3rem] border border-slate-100 dark:border-violet-500/10 p-8 md:p-12 shadow-sm overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#7C3AED]/5 to-transparent rounded-full -mr-32 -mt-32 blur-3xl" />
         
         <div className="flex flex-col md:flex-row items-center gap-10 relative z-10">
           <div className="relative group">
-            <div className="w-40 h-40 rounded-[2.5rem] bg-slate-100 overflow-hidden border-4 border-white shadow-xl">
+            <div className="w-40 h-40 rounded-[2.5rem] bg-slate-100 dark:bg-violet-950/20 overflow-hidden border-4 border-white dark:border-[#110A24] shadow-xl">
               {profile.profile_pic ? (
                 <img 
                   src={`${import.meta.env.VITE_API_URL}/${profile.profile_pic}`} 
@@ -248,7 +272,7 @@ const Profile = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-5xl font-black text-[#7C3AED]">
+                <div className="w-full h-full flex items-center justify-center text-5xl font-black text-[#7C3AED] dark:text-violet-400">
                   {profile.name.charAt(0)}
                 </div>
               )}
@@ -279,17 +303,17 @@ const Profile = () => {
               </span>
               <div className={cn(
                 "px-4 py-1 text-[10px] font-black rounded-full uppercase tracking-widest flex items-center gap-2",
-                profile.is_public ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"
+                profile.is_public ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400" : "bg-slate-100 dark:bg-violet-950/20 text-slate-500 dark:text-slate-400"
               )}>
                 {profile.is_public ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
                 {profile.is_public ? "Public Profile" : "Private Session"}
               </div>
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-black text-[#1E184B] tracking-tight mb-2">
+            <h1 className="text-4xl md:text-5xl font-black text-[#1E184B] dark:text-indigo-100 tracking-tight mb-2">
               {profile.name}
             </h1>
-            <p className="text-lg font-bold text-[#1E184B]/60 flex items-center justify-center md:justify-start gap-2">
+            <p className="text-lg font-bold text-[#1E184B]/60 dark:text-indigo-200/60 flex items-center justify-center md:justify-start gap-2">
               <Briefcase className="w-5 h-5 text-[#7C3AED]" />
               {profile.designation || 'Academic Professional'}
             </p>
@@ -323,28 +347,104 @@ const Profile = () => {
       </div>
 
       {/* Analytics Dashboard Stats Card */}
-      {profile.role_id === 2 || profile.role_name?.toLowerCase().includes('hod') ? (
+      {profile.role_id === 1 ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {/* Registered Colleges */}
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Colleges Registered</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-[#7C3AED] dark:text-violet-400">{extraStats?.colleges ?? 0}</span>
+              <span className="text-xs text-slate-400 font-bold">CAMPUSES</span>
+            </div>
+          </div>
+
+          {/* Active Departments */}
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Departments</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-[#1E184B] dark:text-indigo-100">{extraStats?.departments ?? 0}</span>
+              <span className="text-xs text-slate-400 font-bold">DEPTS</span>
+            </div>
+          </div>
+
+          {/* Assigned HODs */}
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assigned HODs</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-emerald-500">{extraStats?.hods ?? 0}</span>
+              <span className="text-xs text-slate-400 font-bold">HOD ACCTS</span>
+            </div>
+          </div>
+
+          {/* Faculty Accounts */}
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Faculty Accounts</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-blue-500">{extraStats?.faculty ?? 0}</span>
+              <span className="text-xs text-slate-400 font-bold">STAFF</span>
+            </div>
+          </div>
+        </div>
+      ) : profile.role_id === 4 ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {/* Departments Constructed */}
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Departments constructed</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-[#7C3AED] dark:text-violet-400">{extraStats?.overview?.total_departments ?? 0}</span>
+              <span className="text-xs text-slate-400 font-bold">DEPTS</span>
+            </div>
+          </div>
+
+          {/* Active HOD Accounts */}
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active HOD Accounts</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-[#1E184B] dark:text-indigo-100">{extraStats?.overview?.total_hods ?? 0}</span>
+              <span className="text-xs text-slate-400 font-bold">HODS</span>
+            </div>
+          </div>
+
+          {/* Active Faculty Accounts */}
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Faculty Accounts</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-emerald-500">{extraStats?.overview?.total_faculty ?? 0}</span>
+              <span className="text-xs text-slate-400 font-bold">FACULTY</span>
+            </div>
+          </div>
+
+          {/* Storage Used */}
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Storage Consumption</span>
+            <div className="flex items-baseline gap-2 mt-4">
+              <span className="text-3xl font-black text-blue-500">{extraStats?.infrastructure?.storage_percentage != null ? `${extraStats.infrastructure.storage_percentage}%` : '0%'}</span>
+              <span className="text-xs text-slate-400 font-bold">USED</span>
+            </div>
+          </div>
+        </div>
+      ) : profile.role_id === 2 || profile.role_name?.toLowerCase().includes('hod') ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {/* Department Points */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Department Points</span>
             <div className="flex items-baseline gap-2 mt-4">
-              <span className="text-3xl font-black text-[#7C3AED]">{profile.total_points ?? 0}</span>
+              <span className="text-3xl font-black text-[#7C3AED] dark:text-violet-400">{profile.total_points ?? 0}</span>
               <span className="text-xs text-slate-400 font-bold">PTS</span>
             </div>
           </div>
 
           {/* Department Completion Rate */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dept Completion Rate</span>
             <div className="flex items-baseline gap-2 mt-4">
-              <span className="text-3xl font-black text-[#1E184B]">{profile.leaderboard_rank ?? '0%'}</span>
+              <span className="text-3xl font-black text-[#1E184B] dark:text-indigo-100">{profile.leaderboard_rank ?? '0%'}</span>
               <span className="text-xs text-slate-400 font-bold">RATE</span>
             </div>
           </div>
 
           {/* Pending Reviews */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Reviews</span>
             <div className="flex items-baseline gap-2 mt-4">
               <span className="text-3xl font-black text-emerald-500">{profile.tasks_completed ?? 0}</span>
@@ -353,7 +453,7 @@ const Profile = () => {
           </div>
 
           {/* Active Department Load */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Dept Load</span>
             <div className="flex items-baseline gap-2 mt-4">
               <span className="text-3xl font-black text-blue-500">{profile.adherence_rate ?? 0}</span>
@@ -364,25 +464,25 @@ const Profile = () => {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {/* Total Points */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Points (Season)</span>
             <div className="flex items-baseline gap-2 mt-4">
-              <span className="text-3xl font-black text-[#7C3AED]">{profile.total_points ?? 0}</span>
+              <span className="text-3xl font-black text-[#7C3AED] dark:text-violet-400">{profile.total_points ?? 0}</span>
               <span className="text-xs text-slate-400 font-bold">PTS</span>
             </div>
           </div>
 
           {/* Leaderboard Standing */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Leaderboard Stand</span>
             <div className="flex items-baseline gap-2 mt-4">
-              <span className="text-3xl font-black text-[#1E184B]">#{profile.leaderboard_rank ?? 'N/A'}</span>
+              <span className="text-3xl font-black text-[#1E184B] dark:text-indigo-100">#{profile.leaderboard_rank ?? 'N/A'}</span>
               <span className="text-xs text-slate-400 font-bold">RANK</span>
             </div>
           </div>
 
           {/* Tasks Completed */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tasks Completed</span>
             <div className="flex items-baseline gap-2 mt-4">
               <span className="text-3xl font-black text-emerald-500">{profile.tasks_completed ?? 0}</span>
@@ -391,7 +491,7 @@ const Profile = () => {
           </div>
 
           {/* Adherence Rate */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-[#110A24] rounded-3xl p-6 border border-slate-100 dark:border-violet-500/10 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Task Adherence</span>
             <div className="flex items-baseline gap-2 mt-4">
               <span className="text-3xl font-black text-blue-500">{profile.adherence_rate ?? 100}%</span>
@@ -404,47 +504,47 @@ const Profile = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Basic Info */}
         <div className="lg:col-span-4 space-y-8">
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+          <div className="bg-white dark:bg-[#110A24] rounded-[2.5rem] border border-slate-100 dark:border-violet-500/10 p-8 shadow-sm">
+            <h3 className="text-xs font-black text-slate-400 dark:text-violet-400 uppercase tracking-widest mb-6 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#7C3AED]" /> Contact & System Details
             </h3>
             <div className="space-y-6">
               <div className="flex items-center gap-4 group">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[#7C3AED]/10 group-hover:text-[#7C3AED] transition-all">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-violet-950/20 flex items-center justify-center text-slate-400 dark:text-violet-400 group-hover:bg-[#7C3AED]/10 group-hover:text-[#7C3AED] transition-all">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Email Channel</p>
-                  <p className="text-sm font-bold text-[#1E1B4B]">{profile.email}</p>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest leading-none mb-1">Email Channel</p>
+                  <p className="text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">{profile.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 group">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[#7C3AED]/10 group-hover:text-[#7C3AED] transition-all">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-violet-950/20 flex items-center justify-center text-slate-400 dark:text-violet-400 group-hover:bg-[#7C3AED]/10 group-hover:text-[#7C3AED] transition-all">
                   <Phone className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Comm Line</p>
-                  <p className="text-sm font-bold text-[#1E1B4B]">{profile.phone || 'No active line'}</p>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest leading-none mb-1">Comm Line</p>
+                  <p className="text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">{profile.phone || 'No active line'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 group">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[#7C3AED]/10 group-hover:text-[#7C3AED] transition-all">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-violet-950/20 flex items-center justify-center text-slate-400 dark:text-violet-400 group-hover:bg-[#7C3AED]/10 group-hover:text-[#7C3AED] transition-all">
                   <Calendar className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Joining Date</p>
-                  <p className="text-sm font-bold text-[#1E1B4B]">{profile.created_at ? new Date(profile.created_at).toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</p>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest leading-none mb-1">Joining Date</p>
+                  <p className="text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">{profile.created_at ? new Date(profile.created_at).toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 group">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[#7C3AED]/10 group-hover:text-[#7C3AED] transition-all">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-violet-950/20 flex items-center justify-center text-slate-400 dark:text-violet-400 group-hover:bg-[#7C3AED]/10 group-hover:text-[#7C3AED] transition-all">
                   <Activity className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Active Status</p>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest leading-none mb-1">Active Status</p>
                   <span className={cn(
                     "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-widest",
-                    profile.is_active ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                    profile.is_active ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400"
                   )}>
                     {profile.is_active ? "Active" : "Inactive"}
                   </span>
@@ -498,17 +598,17 @@ const Profile = () => {
           )}
 
           {isOwnProfile && (
-            <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <Lock className="w-4 h-4 text-slate-400" /> Security Credentials
+            <div className="bg-white dark:bg-[#110A24] rounded-[2.5rem] border border-slate-100 dark:border-violet-500/10 p-8 shadow-sm">
+              <h3 className="text-xs font-black text-slate-400 dark:text-violet-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Lock className="w-4 h-4 text-slate-400 dark:text-violet-400" /> Security Credentials
               </h3>
-              <p className="text-slate-400 text-xs font-bold leading-relaxed mb-6">
+              <p className="text-slate-400 dark:text-violet-300/60 text-xs font-bold leading-relaxed mb-6">
                 Protect your institutional account by keeping your passcodes updated periodically.
               </p>
               <button
                 type="button"
                 onClick={() => navigate(currentUser.role_id === 2 ? '/hod/settings?tab=Security' : '/faculty/settings?tab=Security')}
-                className="w-full py-4 bg-slate-50 hover:bg-slate-100 border border-slate-100 text-[#1E184B] rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-sm"
+                className="w-full py-4 bg-slate-50 hover:bg-slate-100 dark:bg-violet-950/20 dark:hover:bg-violet-950/40 border border-slate-100 dark:border-violet-500/10 text-[#1E184B] dark:text-indigo-100 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-sm"
               >
                 <Lock className="w-4 h-4 text-[#7C3AED]" />
                 Change Password
@@ -520,30 +620,30 @@ const Profile = () => {
         {/* Right Column: Bio & Achievements */}
         <div className="lg:col-span-8">
           <form onSubmit={handleUpdate} className="space-y-8">
-            <div className="bg-white rounded-[3rem] border border-slate-100 p-8 md:p-10 shadow-sm">
+            <div className="bg-white dark:bg-[#110A24] rounded-[3rem] border border-slate-100 dark:border-violet-500/10 p-8 md:p-10 shadow-sm">
               <div className="space-y-8">
                 {/* Edit Form Fields */}
                 {isEditing && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100 dark:border-violet-500/10">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Full Name</label>
+                      <label className="text-[10px] font-black text-[#1E184B] dark:text-indigo-200 uppercase tracking-widest ml-1">Full Name</label>
                       <input 
                         value={profile.name}
                         onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
+                        className="w-full px-5 py-3.5 bg-slate-50 dark:bg-violet-950/20 border border-slate-100 dark:border-violet-500/10 rounded-2xl text-xs font-bold text-[#1E184B] dark:text-indigo-100 focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Designation</label>
+                      <label className="text-[10px] font-black text-[#1E184B] dark:text-indigo-200 uppercase tracking-widest ml-1">Designation</label>
                       <input 
                         value={profile.designation || ''}
                         onChange={(e) => setProfile({ ...profile, designation: e.target.value })}
                         placeholder="e.g. Associate Professor"
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
+                        className="w-full px-5 py-3.5 bg-slate-50 dark:bg-violet-950/20 border border-slate-100 dark:border-violet-500/10 rounded-2xl text-xs font-bold text-[#1E184B] dark:text-indigo-100 focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#1E184B] uppercase tracking-widest ml-1">Phone Line</label>
+                      <label className="text-[10px] font-black text-[#1E184B] dark:text-indigo-200 uppercase tracking-widest ml-1">Phone Line</label>
                       <input 
                         type="tel"
                         value={profile.phone || ''}
@@ -553,7 +653,7 @@ const Profile = () => {
                           setProfile({ ...profile, phone: sanitized });
                         }}
                         placeholder="+91 XXXXX XXXXX"
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
+                        className="w-full px-5 py-3.5 bg-slate-50 dark:bg-violet-950/20 border border-slate-100 dark:border-violet-500/10 rounded-2xl text-xs font-bold text-[#1E184B] dark:text-indigo-100 focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -561,7 +661,7 @@ const Profile = () => {
 
                 {/* Bio Section */}
                 <div className="space-y-1">
-                  <h3 className="text-xs font-black text-[#1E184B] uppercase tracking-widest flex items-center gap-2">
+                  <h3 className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest flex items-center gap-2">
                     <User className="w-4 h-4 text-[#7C3AED]" />
                     Professional Bio
                   </h3>
@@ -569,12 +669,12 @@ const Profile = () => {
                     <textarea 
                       value={profile.bio}
                       onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                      className="w-full p-6 bg-slate-50 border border-slate-100 rounded-[2rem] text-sm font-bold text-[#1E184B] focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all min-h-[100px] resize-none"
+                      className="w-full p-6 bg-slate-50 dark:bg-violet-950/20 border border-slate-100 dark:border-violet-500/10 rounded-[2rem] text-sm font-bold text-[#1E184B] dark:text-indigo-100 focus:ring-4 focus:ring-[#7C3AED]/5 outline-none transition-all min-h-[100px] resize-none"
                       placeholder="Define your academic vision and professional focus..."
                     />
                   ) : (
-                    <div className="p-8 bg-slate-50/50 rounded-[2rem] border border-dashed border-slate-100">
-                      <p className="text-slate-500 font-bold leading-relaxed whitespace-pre-wrap italic">
+                    <div className="p-8 bg-slate-50/50 dark:bg-[#110A24] rounded-[2rem] border border-dashed border-slate-100 dark:border-violet-500/20">
+                      <p className="text-slate-500 dark:text-indigo-200/70 font-bold leading-relaxed whitespace-pre-wrap italic">
                         {profile.bio || "No mission brief provided yet. Define your professional identity by editing your credentials."}
                       </p>
                     </div>
@@ -582,9 +682,9 @@ const Profile = () => {
                 </div>
 
                 {/* Achievements Section */}
-                <div className="space-y-6 pt-8 border-t border-slate-100">
+                <div className="space-y-6 pt-8 border-t border-slate-100 dark:border-violet-500/10">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-black text-[#1E184B] uppercase tracking-widest flex items-center gap-2">
+                    <h3 className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest flex items-center gap-2">
                       <Award className="w-4 h-4 text-[#7C3AED]" />
                       Mission Milestones
                     </h3>
@@ -607,9 +707,9 @@ const Profile = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.9 }}
                           key={ach.id} 
-                          className="p-5 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 group hover:shadow-lg transition-all"
+                          className="p-5 bg-white dark:bg-[#110A24] border border-slate-100 dark:border-violet-500/10 rounded-2xl flex items-center gap-4 group hover:shadow-lg transition-all"
                         >
-                          <div className="w-10 h-10 rounded-xl bg-[#7C3AED]/5 flex items-center justify-center text-[#7C3AED]">
+                          <div className="w-10 h-10 rounded-xl bg-[#7C3AED]/5 dark:bg-[#7C3AED]/10 flex items-center justify-center text-[#7C3AED] dark:text-violet-400">
                             <CheckCircle2 className="w-5 h-5" />
                           </div>
                           <div className="flex-1">
@@ -622,7 +722,7 @@ const Profile = () => {
                                     setProfile({ ...profile, achievements: updated });
                                   }}
                                   placeholder="Milestone title..."
-                                  className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
+                                  className="flex-1 bg-slate-50 dark:bg-violet-950/20 border border-slate-100 dark:border-violet-500/10 rounded-xl px-4 py-2 text-xs font-bold text-[#1E184B] dark:text-indigo-100 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
                                 />
                                 <input 
                                   type="date"
@@ -631,13 +731,13 @@ const Profile = () => {
                                     const updated = profile.achievements.map(a => a.id === ach.id ? { ...a, date: e.target.value } : a);
                                     setProfile({ ...profile, achievements: updated });
                                   }}
-                                  className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
+                                  className="bg-slate-50 dark:bg-violet-950/20 border border-slate-100 dark:border-violet-500/10 rounded-xl px-4 py-2 text-xs font-bold text-[#1E184B] dark:text-indigo-100 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
                                 />
                               </div>
                             ) : (
                               <div className="flex items-center justify-between">
-                                <span className="text-sm font-black text-[#1E184B]">{ach.title || "Untitled Achievement"}</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{ach.date}</span>
+                                <span className="text-sm font-black text-[#1E184B] dark:text-indigo-100">{ach.title || "Untitled Achievement"}</span>
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">{ach.date}</span>
                               </div>
                             )}
                           </div>
@@ -645,7 +745,7 @@ const Profile = () => {
                             <button 
                               type="button"
                               onClick={() => removeAchievement(ach.id)}
-                              className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                              className="p-2 text-slate-300 dark:text-violet-400/40 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition-all"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -654,9 +754,9 @@ const Profile = () => {
                       ))}
                     </AnimatePresence>
                     {profile.achievements.length === 0 && !isEditing && (
-                      <div className="p-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-100">
-                        <Award className="w-8 h-8 text-slate-200 mx-auto mb-3" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No milestones recorded</p>
+                      <div className="p-8 text-center bg-slate-50/50 dark:bg-violet-950/10 rounded-2xl border border-dashed border-slate-100 dark:border-violet-500/20">
+                        <Award className="w-8 h-8 text-slate-200 dark:text-violet-500/20 mx-auto mb-3" />
+                        <p className="text-[10px] font-black text-slate-400 dark:text-violet-400/60 uppercase tracking-widest">No milestones recorded</p>
                       </div>
                     )}
                   </div>
@@ -676,7 +776,7 @@ const Profile = () => {
                   <button 
                     type="button"
                     onClick={() => setIsEditing(false)}
-                    className="px-10 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
+                    className="px-10 py-4 bg-slate-100 dark:bg-violet-950/30 text-slate-500 dark:text-violet-300 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-violet-950/50 transition-all"
                   >
                     Abort
                   </button>

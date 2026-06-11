@@ -187,7 +187,19 @@ export default function IALayout() {
     };
     validate();
     const interval = setInterval(validate, 60000);
-    return () => clearInterval(interval);
+
+    const handleProfileUpdate = () => {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        setCurrentUser(JSON.parse(raw));
+      }
+    };
+    window.addEventListener('profile-updated', handleProfileUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('profile-updated', handleProfileUpdate);
+    };
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -331,9 +343,17 @@ export default function IALayout() {
                   <p className="text-xs font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight">{currentUser.name}</p>
                   <p className="text-[9px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest opacity-60">IA Admin</p>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-[#7C3AED]/20">
-                  {initials}
-                </div>
+                {currentUser.profile_pic ? (
+                  <img 
+                    src={`${import.meta.env.VITE_API_URL}/${currentUser.profile_pic}`} 
+                    alt={currentUser.name} 
+                    className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-[#7C3AED]/20 border border-[#7C3AED]/20"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-[#7C3AED]/20">
+                    {initials}
+                  </div>
+                )}
               </button>
 
               {isProfileOpen && (
