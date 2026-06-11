@@ -20,23 +20,55 @@ class SubscriptionService
     // Plan Management (CRUD)
     // ==========================================
 
+    public static function formatPlan($plan)
+    {
+        if (!$plan) return null;
+        
+        $durationMonths = (int)$plan['duration_months'];
+        $bonusDays = (int)$plan['bonus_days'];
+        
+        $formattedBonus = '';
+        $formattedTotal = "{$durationMonths} Months";
+        
+        if ($bonusDays > 0) {
+            if ($bonusDays % 30 === 0) {
+                $bonusMonths = $bonusDays / 30;
+                $formattedBonus = "+ {$bonusMonths} Month" . ($bonusMonths > 1 ? 's' : '') . " FREE";
+                $totalMonths = $durationMonths + $bonusMonths;
+                $formattedTotal = "{$durationMonths} Months + {$bonusMonths} Month" . ($bonusMonths > 1 ? 's' : '') . " FREE (Total Access: {$totalMonths} Months)";
+            } else {
+                $formattedBonus = "+ {$bonusDays} Days FREE";
+                $formattedTotal = "{$durationMonths} Months + {$bonusDays} Days FREE";
+            }
+        }
+        
+        $plan['formatted_bonus_text'] = $formattedBonus;
+        $plan['formatted_total_duration'] = $formattedTotal;
+        $plan['total_days'] = ($durationMonths * 30) + $bonusDays;
+        
+        return $plan;
+    }
+
     public function getAllPlans()
     {
         $stmt = $this->db->query("SELECT * FROM subscription_plans ORDER BY id DESC");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array_map([self::class, 'formatPlan'], $plans);
     }
 
     public function getActivePlans()
     {
         $stmt = $this->db->query("SELECT * FROM subscription_plans WHERE status = 'active' ORDER BY price ASC");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array_map([self::class, 'formatPlan'], $plans);
     }
 
     public function getPlanById($id)
     {
         $stmt = $this->db->prepare("SELECT * FROM subscription_plans WHERE id = :id LIMIT 1");
         $stmt->execute(['id' => $id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $plan = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $plan ? self::formatPlan($plan) : null;
     }
 
     public function createPlan($data)
