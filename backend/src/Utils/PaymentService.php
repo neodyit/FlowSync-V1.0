@@ -31,23 +31,51 @@ class PaymentService
         ];
     }
 
-    public function calculateAmounts($planPrice)
+    public function validateCoupon($code)
+    {
+        $stmt = $this->db->prepare("
+            SELECT * FROM coupons 
+            WHERE code = :code AND status = 'active' AND (expiry_date >= CURDATE() OR expiry_date IS NULL)
+            LIMIT 1
+        ");
+        $stmt->execute(['code' => $code]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public function calculateAmounts($planPrice, $couponCode = null)
     {
         $config = $this->getPaymentConfig();
         
         $subtotal = (float)$planPrice;
+        $discount = 0.0;
+        
+        if (!empty($couponCode)) {
+            $coupon = $this->validateCoupon($couponCode);
+            if ($coupon) {
+                if ($coupon['discount_type'] === 'percentage') {
+                    $discount = round($subtotal * ($coupon['discount_value'] / 100), 2);
+                } else {
+                    $discount = (float)$coupon['discount_value'];
+                }
+                $discount = min($discount, $subtotal);
+            }
+        }
+        
+        $discountedSubtotal = $subtotal - $discount;
         $gatewayCharge = 0.0;
         
         if (!$config['absorb_charges']) {
-            $gatewayCharge = round($subtotal * ($config['gateway_charge_pct'] / 100), 2);
+            $gatewayCharge = round($discountedSubtotal * ($config['gateway_charge_pct'] / 100), 2);
         }
 
-        $taxableAmount = $subtotal + $gatewayCharge;
+        $taxableAmount = $discountedSubtotal + $gatewayCharge;
         $taxAmount = round($taxableAmount * ($config['tax_rate'] / 100), 2);
         $total = $taxableAmount + $taxAmount;
 
         return [
             'subtotal' => $subtotal,
+            'discount' => $discount,
+            'discounted_subtotal' => $discountedSubtotal,
             'gateway_charge' => $gatewayCharge,
             'taxable_amount' => $taxableAmount,
             'tax_amount' => $taxAmount,
@@ -55,7 +83,7 @@ class PaymentService
         ];
     }
 
-    public function createCashfreeOrder($institutionId, $planId, $customerEmail, $customerPhone, $returnUrl)
+    public function createCashfreeOrder($institutionId, $planId, $customerEmail, $customerPhone, $returnUrl, $couponCode = null)
     {
         $subService = new SubscriptionService();
         $plan = $subService->getPlanById($planId);
@@ -68,7 +96,7 @@ class PaymentService
             throw new Exception("Payment gateway keys are not configured.");
         }
 
-        $amounts = $this->calculateAmounts($plan['price']);
+        $amounts = $this->calculateAmounts($plan['price'], $couponCode);
         $orderId = $config['invoice_prefix'] . '-SUB-' . time() . '-' . rand(1000, 9999);
 
         // Payload for Cashfree

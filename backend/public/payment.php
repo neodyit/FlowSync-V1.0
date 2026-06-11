@@ -28,6 +28,7 @@ try {
         case 'create':
             $planId = $data['plan_id'] ?? null;
             $returnUrl = $data['return_url'] ?? null;
+            $couponCode = $data['coupon_code'] ?? null;
 
             if (!$planId || !$returnUrl) {
                 throw new Exception("plan_id and return_url are required.");
@@ -47,7 +48,8 @@ try {
                 $planId,
                 $user['email'],
                 $user['phone'] ?? '9999999999',
-                $returnUrl
+                $returnUrl,
+                $couponCode
             );
 
             echo json_encode([
