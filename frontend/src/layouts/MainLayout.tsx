@@ -156,9 +156,11 @@ export default function MainLayout() {
     }
   }, [location.pathname]);
   
-  // Get user from localStorage with robust parsing
-  const rawUser = localStorage.getItem('user');
-  const user = rawUser ? JSON.parse(rawUser) : { name: 'Admin', role: 'Super Admin', role_id: 1 };
+  // Get user from localStorage with robust parsing and dynamic state
+  const [currentUser, setCurrentUser] = useState(() => {
+    const raw = localStorage.getItem('user');
+    return raw ? JSON.parse(raw) : { name: 'Admin', role: 'Super Admin', role_id: 1 };
+  });
   
   const navigation = [
     { name: 'Dashboard', icon: LayoutGrid, path: '/admin/dashboard' },
@@ -174,7 +176,7 @@ export default function MainLayout() {
     { name: 'System Controls', icon: Settings, path: '/admin/controls' },
   ];
 
-  const initials = (user.name || 'User')
+  const initials = (currentUser.name || 'User')
     .split(' ')
     .filter(Boolean)
     .map((n: string) => n[0])
@@ -185,12 +187,26 @@ export default function MainLayout() {
   useEffect(() => {
     const validate = async () => {
       const sessionData = await checkSession();
-      // Only logout if checkSession explicitly cleared auth or if we're sure it's invalid
-      // If it's just a network error (sessionData === null), we stay on the page
+      if (sessionData && sessionData.user) {
+        localStorage.setItem('user', JSON.stringify(sessionData.user));
+        setCurrentUser(sessionData.user);
+      }
     };
     validate();
     const interval = setInterval(validate, 60000);
-    return () => clearInterval(interval);
+
+    const handleProfileUpdate = () => {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        setCurrentUser(JSON.parse(raw));
+      }
+    };
+    window.addEventListener('profile-updated', handleProfileUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('profile-updated', handleProfileUpdate);
+    };
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -366,39 +382,49 @@ export default function MainLayout() {
                   setIsNotificationsOpen(false);
                 }}
                 className="flex items-center justify-center sm:justify-start gap-3 w-[52px] h-[52px] sm:w-auto sm:h-auto p-1.5 sm:pl-4 rounded-2xl bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 hover:border-[#7C3AED]/30 dark:hover:border-violet-500/40 transition-all shadow-sm cursor-pointer z-50"
-              >
-                <div className="text-right hidden sm:block">
-                  <p className="text-xs font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight">{user.name}</p>
-                  <p className="text-[9px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest opacity-60">{user.role}</p>
+              >                <div className="text-right hidden sm:block">
+                  <p className="text-xs font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight">{currentUser.name}</p>
+                  <p className="text-[9px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest opacity-60">{currentUser.role}</p>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-[#7C3AED]/20">
-                  {initials}
-                </div>
+                {currentUser.profile_pic ? (
+                  <img 
+                    src={`${import.meta.env.VITE_API_URL}/${currentUser.profile_pic}`} 
+                    alt={currentUser.name} 
+                    className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-[#7C3AED]/20 border border-[#7C3AED]/20"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-[#7C3AED]/20">
+                    {initials}
+                  </div>
+                )}
               </button>
 
               {isProfileOpen && (
                 <div className="fixed inset-x-4 top-24 md:absolute md:inset-auto md:right-0 md:mt-3 md:w-64 bg-white/90 dark:bg-[#1A0F35]/90 backdrop-blur-3x1 rounded-2xl shadow-2xl border border-[#7C3AED]/10 dark:border-violet-500/20 overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="p-5 bg-slate-50 dark:bg-violet-950/30 border-b border-[#7C3AED]/5 dark:border-violet-500/20">
-                    <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">{user.name}</p>
+                    <p className="text-xs font-black text-[#1E184B] dark:text-indigo-100 uppercase tracking-widest">{currentUser.name}</p>
                     <p className="text-[10px] text-[#4C1D95] dark:text-violet-400 mt-1 font-bold">Authenticated User</p>
                   </div>
                   <div className="p-2">
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-200 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/20 hover:text-[#7C3AED] dark:hover:text-violet-400 transition-all">
+                    <button 
+                      onClick={() => navigate('/admin/profile')}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E1B4B] dark:text-indigo-200 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/20 hover:text-[#7C3AED] dark:hover:text-violet-400 transition-all text-left"
+                    >
                       <User className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" />
                       Institutional Profile
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-200 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/20 hover:text-[#7C3AED] dark:hover:text-violet-400 transition-all">
+                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E1B4B] dark:text-indigo-200 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/20 hover:text-[#7C3AED] dark:hover:text-violet-400 transition-all text-left">
                       <Settings className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" />
                       Security Settings
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E184B] dark:text-indigo-200 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/20 hover:text-[#7C3AED] dark:hover:text-violet-400 transition-all">
+                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-[#1E1B4B] dark:text-indigo-200 hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/20 hover:text-[#7C3AED] dark:hover:text-violet-400 transition-all text-left">
                       <History className="w-4 h-4 text-[#7C3AED] dark:text-violet-400" />
                       Audit History
                     </button>
                     <div className="h-px bg-slate-100 dark:bg-violet-500/10 my-2" />
                     <button 
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-500/5 transition-all"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-500/5 transition-all text-left"
                     >
                       <LogOut className="w-4 h-4" />
                       Terminate Session
@@ -435,8 +461,8 @@ export default function MainLayout() {
                   <p className="text-[11px] font-black text-[#1E184B]/60 dark:text-indigo-200/60 uppercase tracking-[0.15em]">
                     Made with <span className="text-rose-500 animate-pulse mx-1">❤️</span> by 
                     <span className="ml-1.5 space-x-1">
-                      <a href="https://mayank.neodyit.in/" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Mayank Tiwari</a>,
-                      <a href="https://saurabhupadhyay.com" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Saurabh Upadhyay</a>
+                      <a href="profile?id=1" target="" rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Mayank Tiwari</a>,
+                      <a rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Saurabh Upadhyay</a>
                     </span>
                   </p>
                   

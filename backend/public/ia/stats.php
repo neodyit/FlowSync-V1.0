@@ -175,7 +175,7 @@ try {
     $stmt->execute(['cid' => $collegeId]);
     $storageUsedBytes = (float)$stmt->fetchColumn();
 
-    $storageLimitBytes = 5 * 1024 * 1024 * 1024; // 5 GB
+    $storageLimitBytes = 5 * 1024 * 1024 * 1024;
     $storagePercentage = ($storageUsedBytes / $storageLimitBytes) * 100;
     if ($storagePercentage > 100) $storagePercentage = 100;
 
