@@ -80,6 +80,7 @@ const Login: React.FC = () => {
           if (roleId === 1) navigate('/admin/dashboard');
           else if (roleId === 2) navigate('/hod/dashboard');
           else if (roleId === 3) navigate('/faculty/dashboard');
+          else if (roleId === 4) navigate('/ia/dashboard');
           else navigate('/login');
         }, 1500);
       } else {

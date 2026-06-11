@@ -3,21 +3,13 @@ import {
   Users, 
   UserPlus, 
   Search, 
-  Filter, 
-  Building2, 
   Briefcase, 
   Shield, 
-  Edit2, 
-  Trash2, 
   Power, 
-  History, 
   X, 
-  MoreVertical,
   CheckCircle2,
-  XCircle,
   ChevronDown,
   Download,
-  Plus,
   Wifi
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { ProfileCard } from '@/components/ui/info-card';
-import { cn, getImageUrl } from '@/lib/utils';
+import { getImageUrl } from '@/lib/utils';
 import SEO from '@/components/SEO';
 
 const MySwal = withReactContent(Swal);
@@ -44,12 +36,6 @@ interface User {
   department_name?: string;
   is_current_hod?: number;
   is_online?: number | boolean;
-}
-
-interface College {
-  id: number;
-  name: string;
-  short_name: string;
 }
 
 interface Department {
@@ -146,21 +132,17 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   );
 };
 
-const UsersManagement: React.FC = () => {
+export default function IAUsers() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
-  const [colleges, setColleges] = useState<College[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [roles, setRoles] = useState<Role[]>([
-    { id: 1, name: 'Admin' },
+  const roles: Role[] = [
     { id: 2, name: 'HOD' },
-    { id: 3, name: 'Faculty' },
-    { id: 4, name: 'Institution Admin' }
-  ]);
+    { id: 3, name: 'Faculty' }
+  ];
   
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCollege, setSelectedCollege] = useState<string>('all');
   const [selectedDept, setSelectedDept] = useState<string>('all');
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const [showOnlineOnly, setShowOnlineOnly] = useState<boolean>(false);
@@ -173,7 +155,6 @@ const UsersManagement: React.FC = () => {
     email: '',
     password: '',
     role_id: 3,
-    college_id: '',
     department_id: '',
     is_active: 1
   });
@@ -181,21 +162,15 @@ const UsersManagement: React.FC = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [usersRes, collegesRes, deptsRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL}/admin/users.php`, { credentials: 'include' }),
-        fetch(`${import.meta.env.VITE_API_URL}/admin/colleges.php`, { credentials: 'include' }),
-        fetch(`${import.meta.env.VITE_API_URL}/admin/departments.php`, { credentials: 'include' })
-      ]);
-
-      const usersData = await usersRes.json();
-      const collegesData = await collegesRes.json();
-      const deptsData = await deptsRes.json();
-
-      if (usersData.status === 'success') setUsers(usersData.data);
-      if (collegesData.status === 'success') setColleges(collegesData.data);
-      if (deptsData.status === 'success') setDepartments(deptsData.data);
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const res = await fetch(`${apiUrl}/ia/users.php`, { credentials: 'include' });
+      const result = await res.json();
+      if (result.status === 'success') {
+        setUsers(result.data.users);
+        setDepartments(result.data.departments);
+      }
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('Failed to fetch user management data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -204,15 +179,16 @@ const UsersManagement: React.FC = () => {
   useEffect(() => {
     fetchData();
 
-    // Silent background poll for live online status updates
+    // Silent background poll for online updates
     const intervalId = setInterval(() => {
-      fetch(`${import.meta.env.VITE_API_URL}/admin/users.php`, { credentials: 'include' })
+      const apiUrl = import.meta.env.VITE_API_URL;
+      fetch(`${apiUrl}/ia/users.php`, { credentials: 'include' })
         .then(res => res.json())
         .then(data => {
           if (data.status === 'success') {
             setUsers(prev => {
-              if (JSON.stringify(prev) === JSON.stringify(data.data)) return prev;
-              return data.data;
+              if (JSON.stringify(prev) === JSON.stringify(data.data.users)) return prev;
+              return data.data.users;
             });
           }
         })
@@ -222,29 +198,21 @@ const UsersManagement: React.FC = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Derived counts
   const onlineUsersCount = useMemo(() => users.filter(u => u.is_online).length, [users]);
 
-  // Filter logic
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
       const matchesSearch = 
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchesCollege = selectedCollege === 'all' || user.college_id.toString() === selectedCollege;
       const matchesRole = selectedRole === 'all' || user.role_id.toString() === selectedRole;
       const matchesDept = selectedDept === 'all' || user.department_id?.toString() === selectedDept;
       const matchesOnlineOnly = !showOnlineOnly || user.is_online;
       
-      return matchesSearch && matchesCollege && matchesRole && matchesDept && matchesOnlineOnly;
+      return matchesSearch && matchesRole && matchesDept && matchesOnlineOnly;
     });
-  }, [users, searchQuery, selectedCollege, selectedRole, selectedDept, showOnlineOnly]);
-
-  const filteredDepts = useMemo(() => {
-    if (selectedCollege === 'all') return departments;
-    return departments.filter(d => d.college_id.toString() === selectedCollege);
-  }, [departments, selectedCollege]);
+  }, [users, searchQuery, selectedRole, selectedDept, showOnlineOnly]);
 
   // Chunk loading configuration for performance optimization
   const CHUNK_SIZE = 12;
@@ -254,7 +222,7 @@ const UsersManagement: React.FC = () => {
   // Reset visible count to initial chunk size when any filters are modified
   useEffect(() => {
     setVisibleCount(CHUNK_SIZE);
-  }, [searchQuery, selectedCollege, selectedRole, selectedDept, showOnlineOnly]);
+  }, [searchQuery, selectedRole, selectedDept, showOnlineOnly]);
 
   // Intersection Observer to implement smooth automatic infinite scroll loading
   useEffect(() => {
@@ -278,15 +246,11 @@ const UsersManagement: React.FC = () => {
     };
   }, [filteredUsers.length]);
 
-  // Actions
   const handleToggleStatus = async (user: User) => {
-    if (user.id === 1) {
-      MySwal.fire('Protected!', 'The Super Admin account cannot be deactivated.', 'warning');
-      return;
-    }
     const newStatus = user.is_active ? 0 : 1;
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/users.php`, {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${apiUrl}/ia/users.php`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -295,7 +259,6 @@ const UsersManagement: React.FC = () => {
           name: user.name,
           email: user.email,
           role_id: user.role_id,
-          college_id: user.college_id,
           department_id: user.department_id,
           is_active: newStatus
         })
@@ -319,23 +282,20 @@ const UsersManagement: React.FC = () => {
   };
 
   const handleDeleteUser = async (id: number) => {
-    if (id === 1) {
-      MySwal.fire('Protected!', 'The Super Admin account cannot be deleted.', 'warning');
-      return;
-    }
     const result = await MySwal.fire({
       title: 'Are you sure?',
-      text: "This action cannot be undone!",
+      text: "This user profile will be removed completely from FlowSync.",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#7C3AED',
       cancelButtonColor: '#EF4444',
-      confirmButtonText: 'Yes, delete it!'
+      confirmButtonText: 'Yes, delete!'
     });
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/users.php?id=${id}`, {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const response = await fetch(`${apiUrl}/ia/users.php?id=${id}`, {
           method: 'DELETE',
           credentials: 'include'
         });
@@ -353,18 +313,10 @@ const UsersManagement: React.FC = () => {
   };
 
   const handleOpenModal = (user?: User) => {
-    if (user?.id === 1) {
-      MySwal.fire('Protected!', 'The Super Admin account cannot be updated from this interface.', 'warning');
-      return;
-    }
-    
-    // Check if they are a current HOD
     if (user && (user.is_current_hod ?? 0) > 0) {
-      // We can allow editing name/email but should warn or block role change if they try to change it.
-      // Actually, let's just show a toast warning when they open the modal.
       MySwal.fire({
         title: 'HOD Protection Active',
-        text: 'This user is currently assigned as an HOD. Role changes are disabled until they are unassigned from their department.',
+        text: 'This user is currently assigned as an HOD. Role and department changes are disabled until they are unassigned in Department Management.',
         icon: 'info',
         timer: 3000,
         toast: true,
@@ -380,7 +332,6 @@ const UsersManagement: React.FC = () => {
         email: user.email,
         password: '',
         role_id: user.role_id,
-        college_id: user.college_id.toString(),
         department_id: user.department_id?.toString() || '',
         is_active: Number(user.is_active)
       });
@@ -391,7 +342,6 @@ const UsersManagement: React.FC = () => {
         email: '',
         password: '',
         role_id: 3,
-        college_id: '',
         department_id: '',
         is_active: 1
       });
@@ -405,7 +355,8 @@ const UsersManagement: React.FC = () => {
     const payload = editingUser ? { ...formData, id: editingUser.id } : formData;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/users.php`, {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${apiUrl}/ia/users.php`, {
         method,
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -425,41 +376,33 @@ const UsersManagement: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
-      <SEO title="User Management" description="Manage institutional accounts, roles, and access permissions within FlowSync." />
-      {/* Page Header */}
+    <div className="space-y-8">
+      <SEO title="User Management" description="Manage institutional accounts within your institution." />
+
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-black text-[#1E1B4B] dark:text-indigo-100 tracking-tight animate-fade-in">
             User Management
           </h1>
-          <p className="text-[#4C1D95]/60 dark:text-violet-400/60 mt-1 font-medium text-xs sm:text-sm">Manage institutional accounts and access permissions.</p>
+          <p className="text-[#4C1D95]/60 dark:text-violet-400/60 mt-1 font-medium text-xs sm:text-sm">Manage HODs and Faculty members assignment.</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-          <a
-            href={`${import.meta.env.VITE_API_URL}/admin/export_users.php`}
-            className="flex items-center justify-center gap-2 bg-white dark:bg-[#110A24] hover:bg-slate-50 dark:hover:bg-violet-950/30 text-[#1E1B4B] dark:text-indigo-100 border border-slate-200 dark:border-violet-500/20 px-6 py-3 rounded-2xl font-bold transition-all shadow-sm active:scale-95 cursor-pointer text-xs sm:text-sm"
-          >
-            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-            Export CSV
-          </a>
+        <div className="flex items-center gap-3">
           <button
             onClick={() => handleOpenModal()}
-            className="flex items-center justify-center gap-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-xl shadow-purple-500/20 active:scale-95 cursor-pointer text-xs sm:text-sm"
+            className="flex items-center justify-center gap-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-6 py-3 rounded-2xl font-black uppercase tracking-wider text-xs shadow-xl shadow-purple-500/20 active:scale-95 cursor-pointer transition-all"
           >
-            <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <UserPlus className="w-4 h-4" />
             Add New User
           </button>
         </div>
       </div>
 
-      {/* Online Users Statistics Bar */}
-      <div className="bg-white/80 dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-2xl p-4 border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        {/* Left: Online count info */}
+      {/* Stats Bar */}
+      {/* <div className="bg-white/80 dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-2xl p-4 border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4 w-full sm:w-auto">
-          {/* Icon with pulse ring */}
           <div className="relative shrink-0">
-            <div className="w-11 h-11 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl flex items-center justify-center text-emerald-500 dark:text-emerald-400">
+            <div className="w-11 h-11 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl flex items-center justify-center text-emerald-500 dark:text-emerald-400 animate-pulse">
               <Wifi className="w-5 h-5" />
             </div>
             {onlineUsersCount > 0 && (
@@ -477,24 +420,15 @@ const UsersManagement: React.FC = () => {
                 <span className="text-emerald-500">{onlineUsersCount}</span>
                 <span className="text-[#1E1B4B]/30 dark:text-indigo-100/30 font-bold text-sm"> / {users.length}</span>
               </p>
-              <span className="text-xs font-semibold text-slate-400 dark:text-violet-400/50">users currently online</span>
+              <span className="text-xs font-semibold text-slate-400 dark:text-violet-400/50">staff currently active</span>
             </div>
-          </div>
-
-          {/* Mini progress bar */}
-          <div className="hidden sm:block w-32 h-2 bg-slate-100 dark:bg-violet-950/30 rounded-full overflow-hidden shrink-0">
-            <div
-              className="h-full bg-emerald-500 rounded-full transition-all duration-700"
-              style={{ width: users.length ? `${(onlineUsersCount / users.length) * 100}%` : '0%' }}
-            />
           </div>
         </div>
 
-        {/* Right: Online filter toggle */}
         <div className="flex items-center gap-3 self-stretch sm:self-auto justify-between bg-slate-50 dark:bg-[#110A24] px-4 py-2.5 rounded-xl border border-slate-100 dark:border-violet-500/10 shrink-0 min-w-[180px]">
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full shrink-0 ${showOnlineOnly ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-violet-800'}`} />
-            <span className="text-xs font-bold text-slate-600 dark:text-violet-300 select-none">Online Users Only</span>
+            <span className="text-xs font-bold text-slate-600 dark:text-violet-300 select-none">Online Only</span>
           </div>
           <label className="relative inline-flex items-center cursor-pointer shrink-0">
             <input 
@@ -506,10 +440,10 @@ const UsersManagement: React.FC = () => {
             <div className="w-11 h-6 bg-slate-200 dark:bg-violet-950/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
           </label>
         </div>
-      </div>
+      </div> */}
 
-      {/* Filter Bar */}
-      <div className="bg-white/70 dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-3xl p-4 border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex flex-col lg:flex-row gap-4 relative z-[50]">
+      {/* Filters */}
+      <div className="bg-white/70 dark:bg-[#1A0F35]/20 backdrop-blur-md rounded-3xl p-4 border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-sm flex flex-col sm:flex-row gap-4 relative z-[50]">
         <div className="flex-1 relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7C3AED] dark:text-violet-400 opacity-40 group-focus-within:opacity-100 transition-opacity" />
           <input 
@@ -521,26 +455,13 @@ const UsersManagement: React.FC = () => {
           />
         </div>
         
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <CustomSelect
-            value={selectedCollege}
-            onChange={(val) => {
-              setSelectedCollege(val.toString());
-              setSelectedDept('all');
-            }}
-            options={[
-              { value: 'all', label: 'All Colleges' },
-              ...colleges.map(c => ({ value: c.id, label: c.name }))
-            ]}
-            icon={Building2}
-          />
-
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <CustomSelect
             value={selectedDept}
             onChange={(val) => setSelectedDept(val.toString())}
             options={[
               { value: 'all', label: 'All Departments' },
-              ...filteredDepts.map(d => ({ value: d.id, label: d.name }))
+              ...departments.map(d => ({ value: d.id, label: d.name }))
             ]}
             icon={Briefcase}
           />
@@ -557,11 +478,11 @@ const UsersManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Content Grid */}
+      {/* Grid List */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <div className="w-12 h-12 border-4 border-[#7C3AED]/20 border-t-[#7C3AED] rounded-full animate-spin" />
-          <p className="text-[#4C1D95]/60 dark:text-violet-400/60 font-black text-xs uppercase tracking-widest">Synchronizing Records...</p>
+          <p className="text-[#4C1D95]/60 dark:text-violet-400/60 font-black text-xs uppercase tracking-widest">Syncing Institutional Directory...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -584,11 +505,11 @@ const UsersManagement: React.FC = () => {
                   avatar={getImageUrl(user.profile_pic)}
                   college={user.college_name}
                   department={user.department_name}
-                  onEdit={user.id === 1 ? undefined : () => handleOpenModal(user)}
-                  onToggleStatus={user.id === 1 ? undefined : () => handleToggleStatus(user)}
-                  onDelete={user.id === 1 ? undefined : () => handleDeleteUser(user.id)}
-                  onClickName={() => navigate(`/admin/profile?id=${user.id}`)}
-                  onLogs={() => navigate(`/admin/audit?search=${encodeURIComponent(user.name)}`)}
+                  onEdit={() => handleOpenModal(user)}
+                  onToggleStatus={() => handleToggleStatus(user)}
+                  onDelete={() => handleDeleteUser(user.id)}
+                  onClickName={() => navigate(`/ia/profile?id=${user.id}`)}
+                  onLogs={() => {}}
                 />
               </motion.div>
             ))}
@@ -627,9 +548,9 @@ const UsersManagement: React.FC = () => {
           <div className="w-20 h-20 bg-[#7C3AED]/10 dark:bg-violet-950/40 rounded-full flex items-center justify-center mx-auto">
             <Users className="w-10 h-10 text-[#7C3AED] dark:text-violet-400 opacity-20" />
           </div>
-          <h3 className="text-xl font-black text-[#1E1B4B] dark:text-indigo-100">No records synchronized</h3>
+          <h3 className="text-xl font-black text-[#1E1B4B] dark:text-indigo-100">Directory clean</h3>
           <p className="text-sm font-bold text-[#4C1D95]/60 dark:text-violet-400/60 max-w-xs mx-auto">
-            Adjust your filters or try a different search query to find the users you're looking for.
+            No matching users were found based on your filter criteria.
           </p>
         </div>
       )}
@@ -656,7 +577,7 @@ const UsersManagement: React.FC = () => {
               <div className="flex justify-between items-center mb-6 flex-shrink-0">
                 <div>
                   <h2 className="text-xl sm:text-2xl font-black text-[#1E1B4B] dark:text-indigo-100">{editingUser ? 'Edit User Credentials' : 'Create New User'}</h2>
-                  <p className="text-xs font-bold text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest mt-1">Identity Management Protocol</p>
+                  <p className="text-xs font-bold text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest mt-1">Institutional User Setup</p>
                 </div>
                 <button 
                   onClick={() => setIsModalOpen(false)}
@@ -667,7 +588,6 @@ const UsersManagement: React.FC = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden space-y-6">
-                {/* Scrollable Fields Container */}
                 <div className="space-y-6 overflow-y-auto flex-1 pr-1.5 py-1 -mr-2 scrollbar-thin">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
@@ -678,7 +598,7 @@ const UsersManagement: React.FC = () => {
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
-                        placeholder="e.g. John Doe"
+                        placeholder="John Doe"
                       />
                     </div>
 
@@ -690,7 +610,7 @@ const UsersManagement: React.FC = () => {
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="w-full px-5 py-3.5 bg-slate-50 dark:bg-[#1A0F35]/30 border border-slate-200 dark:border-violet-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#110A24] focus:border-[#7C3AED] dark:focus:border-violet-400 focus:ring-4 focus:ring-[#7C3AED]/5 transition-all text-sm font-bold text-[#1E1B4B] dark:text-indigo-100"
-                        placeholder="john@example.com"
+                        placeholder="john@institution.edu"
                       />
                     </div>
                   </div>
@@ -707,7 +627,7 @@ const UsersManagement: React.FC = () => {
                       />
                       {editingUser && editingUser.is_current_hod && editingUser.is_current_hod > 0 && (
                         <p className="text-[9px] text-amber-600 font-bold mt-1 ml-1 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> HOD of {editingUser.department_name} (Role Protected)
+                          <CheckCircle2 className="w-3 h-3" /> Assigned as HOD (Role Protected)
                         </p>
                       )}
                     </div>
@@ -727,53 +647,36 @@ const UsersManagement: React.FC = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <CustomSelect
-                      label="College Assignment"
-                      value={formData.college_id}
-                      onChange={(val) => setFormData({ ...formData, college_id: val.toString(), department_id: '' })}
-                      options={[
-                        { value: '', label: 'Select College' },
-                        ...colleges.map(c => ({ value: c.id, label: c.name }))
-                      ]}
-                      disabled={!!(editingUser && editingUser.is_current_hod && editingUser.is_current_hod > 0)}
-                    />
-
-                    <CustomSelect
                       label="Department Assignment"
                       value={formData.department_id}
                       onChange={(val) => setFormData({ ...formData, department_id: val.toString() })}
-                      disabled={!formData.college_id || !!(editingUser && editingUser.is_current_hod && editingUser.is_current_hod > 0)}
+                      disabled={!!(editingUser && editingUser.is_current_hod && editingUser.is_current_hod > 0)}
                       options={[
                         { value: '', label: 'Select Department' },
-                        ...departments
-                          .filter(d => d.college_id.toString() === formData.college_id)
-                          .map(d => ({ value: d.id, label: d.name }))
+                        ...departments.map(d => ({ value: d.id, label: d.name }))
                       ]}
+                      icon={Briefcase}
+                    />
+
+                    <CustomSelect
+                      label="Operational Status"
+                      value={formData.is_active}
+                      onChange={(val) => setFormData({ ...formData, is_active: Number(val) })}
+                      options={[
+                        { value: 1, label: 'Active (Permit Access)' },
+                        { value: 0, label: 'Inactive (Revoke Access)' }
+                      ]}
+                      icon={Power}
                     />
                   </div>
-
-                  {(!editingUser || editingUser.id !== 1) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <CustomSelect
-                        label="Account Operational Status"
-                        value={formData.is_active}
-                        onChange={(val) => setFormData({ ...formData, is_active: Number(val) })}
-                        options={[
-                          { value: 1, label: 'Active (Permit Access)' },
-                          { value: 0, label: 'Inactive (Revoke Access)' }
-                        ]}
-                        icon={Power}
-                      />
-                    </div>
-                  )}
                 </div>
 
-                {/* Fixed Footer Actions */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-slate-100 dark:border-violet-500/10 flex-shrink-0 mt-auto">
                   <button
                     type="submit"
                     className="flex-1 py-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-2xl font-black shadow-xl shadow-purple-500/20 transition-all uppercase tracking-widest text-xs cursor-pointer"
                   >
-                    {editingUser ? 'Update Protocol' : 'Initialize Account'}
+                    {editingUser ? 'Update Profile' : 'Initialize Account'}
                   </button>
                   <button
                     type="button"
@@ -790,6 +693,4 @@ const UsersManagement: React.FC = () => {
       </AnimatePresence>
     </div>
   );
-};
-
-export default UsersManagement;
+}

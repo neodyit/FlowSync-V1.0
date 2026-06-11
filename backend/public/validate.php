@@ -34,6 +34,13 @@ $auth = new \FlowSync\Auth\AuthService();
 $session = $auth->validateSession();
 
 if ($session) {
+    // Update user's last active timestamp (except for Super Admin user_id = 1)
+    if ((int)$session['user_id'] !== 1) {
+        $db = \FlowSync\Config\Database::getInstance()->getConnection();
+        $stmtActive = $db->prepare("UPDATE users SET last_active_at = NOW() WHERE id = :uid");
+        $stmtActive->execute(['uid' => $session['user_id']]);
+    }
+
     require_once __DIR__ . '/../src/Utils/SystemSettings.php';
     $isMaintenance = \FlowSync\Utils\SystemSettings::get('maintenance_mode') === 'true';
     
@@ -71,7 +78,7 @@ if ($session) {
         }
     }
 
-    if ($collegeEnabled == 0) {
+    if ($collegeEnabled == 0 && (int)$session['role_id'] !== 1) {
         http_response_code(401);
         echo json_encode(['status' => 'error', 'message' => 'Your institution has been deactivated.']);
         exit;

@@ -42,6 +42,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
     if (session.role_id === 1) return <Navigate to="/admin/dashboard" replace />;
     if (session.role_id === 2) return <Navigate to="/hod/dashboard" replace />;
     if (session.role_id === 3) return <Navigate to="/faculty/dashboard" replace />;
+    if (session.role_id === 4) return <Navigate to="/ia/dashboard" replace />;
     return <Navigate to="/login" replace />;
   }
 

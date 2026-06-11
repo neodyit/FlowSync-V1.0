@@ -72,28 +72,30 @@ export function ProfileCard({
   return (
     <div className={cn(
       "group relative overflow-hidden rounded-[2.5rem] bg-[#EDE9FE]/70 dark:bg-[#1A0F35]/20 backdrop-blur-md p-8 w-full transition-all duration-500 hover:-translate-y-1 border border-[#7C3AED]/10 dark:border-violet-500/20",
-      status === "online" 
+      id !== 1 && status === "online" 
         ? "border-2 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]" 
         : "shadow-[12px_12px_24px_rgba(0,0,0,0.05),-12px_-12px_24px_rgba(255,255,255,0.8)] dark:shadow-[12px_12px_24px_rgba(0,0,0,0.2)] hover:shadow-[20px_20px_40px_rgba(124,58,237,0.1)] hover:scale-[1.02]"
     )}>
       {/* Status indicator with pulse animation */}
-      <div className="absolute right-6 top-6 z-10">
-        <div className="relative">
-          <div
-            className={cn(
-              "h-3 w-3 rounded-full border-2 border-white dark:border-[#110A24] transition-all duration-300 group-hover:scale-125",
-              status === "online"
-                ? "bg-green-500 group-hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
-                : status === "away"
-                  ? "bg-amber-500"
-                  : "bg-gray-400",
+      {id !== 1 && (
+        <div className="absolute right-6 top-6 z-10">
+          <div className="relative">
+            <div
+              className={cn(
+                "h-3 w-3 rounded-full border-2 border-white dark:border-[#110A24] transition-all duration-300 group-hover:scale-125",
+                status === "online"
+                  ? "bg-green-500 group-hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
+                  : status === "away"
+                    ? "bg-amber-500"
+                    : "bg-gray-400",
+              )}
+            ></div>
+            {status === "online" && (
+              <div className="absolute inset-0 h-3 w-3 rounded-full bg-green-500 animate-ping opacity-30"></div>
             )}
-          ></div>
-          {status === "online" && (
-            <div className="absolute inset-0 h-3 w-3 rounded-full bg-green-500 animate-ping opacity-30"></div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Verified badge / Role Icon */}
       <div className="absolute right-6 top-12 z-10">

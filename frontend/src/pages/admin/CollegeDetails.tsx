@@ -101,7 +101,8 @@ const FEATURE_METADATA: FeatureGroup[] = [
       { key: 'task_acceptance_workflow', label: 'Task Acceptance Workflow', desc: 'Requires faculty to accept tasks manually.' },
       { key: 'task_auto_accept', label: 'Auto-Accept Tasks', desc: 'Skips acceptance steps for standard operations.' },
       { key: 'task_reminder_system', label: 'Reminder System', desc: 'Enables sending warnings and reminders.' },
-      { key: 'task_deadline_tracking', label: 'Deadline Tracking', desc: 'Displays timers and delay indicators.' }
+      { key: 'task_deadline_tracking', label: 'Deadline Tracking', desc: 'Displays timers and delay indicators.' },
+      { key: 'allow_ia_task_management', label: 'Allow IA Task Privileges', desc: 'Permits Institution Admins (IA) to manage college tasks.' }
     ]
   },
   {
@@ -118,6 +119,12 @@ const FEATURE_METADATA: FeatureGroup[] = [
       { key: 'notice_popups', label: 'Popup Notifications', desc: 'Triggers alerts upon logging in.' },
       { key: 'notice_banners', label: 'Banner Notifications', desc: 'Displays alerts on topbars.' },
       { key: 'notice_broadcasts', label: 'Institution Broadcasts', desc: 'Enables institution-wide text alerts.' }
+    ]
+  },
+  {
+    category: 'Audit & Security Features',
+    features: [
+      { key: 'ia_audit_log_visibility', label: 'IA Activity Center', desc: 'Enables access to the Activity Center (Audit Logs) page in the IA panel.' }
     ]
   }
 ];

@@ -50,7 +50,7 @@ class AuthService {
                 return ['status' => 'error', 'message' => 'User not found or inactive'];
             }
 
-            if ($user['college_enabled'] == 0) {
+            if ($user['college_enabled'] == 0 && (int)$user['role_id'] !== 1) {
                 return ['status' => 'error', 'message' => 'Access blocked: Your institution has been deactivated.'];
             }
 
@@ -100,13 +100,14 @@ class AuthService {
                 ]);
 
                 $payload = [
-                    'jti'     => $sessionId,
-                    'user_id' => $user['id'],
-                    'email'   => $user['email'],
-                    'role'    => $user['role_name'],
-                    'role_id' => (int)$user['role_id'],
-                    'iat'     => time(),
-                    'exp'     => $expiryTime
+                    'jti'        => $sessionId,
+                    'user_id'    => $user['id'],
+                    'email'      => $user['email'],
+                    'role'       => $user['role_name'],
+                    'role_id'    => (int)$user['role_id'],
+                    'college_id' => (int)$user['college_id'],
+                    'iat'        => time(),
+                    'exp'        => $expiryTime
                 ];
 
                 JWT::setSecret(getenv('JWT_SECRET') ?: 'flowsync_neodyit_2026');
@@ -156,6 +157,7 @@ class AuthService {
                         'email' => $user['email'],
                         'role' => $user['role_name'],
                         'role_id' => (int)$user['role_id'],
+                        'college_id' => (int)$user['college_id'],
                         'profile_pic' => $user['profile_pic'],
                         'features' => $features
                     ]
@@ -228,7 +230,7 @@ class AuthService {
         ]);
         $dbSession = $stmt->fetch();
 
-        if (!$dbSession || $dbSession['college_enabled'] == 0) {
+        if (!$dbSession || ($dbSession['college_enabled'] == 0 && (int)$dbSession['role_id'] !== 1)) {
             $this->logout();
             return false;
         }
