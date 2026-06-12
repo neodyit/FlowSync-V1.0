@@ -96,6 +96,7 @@ export default function HODLayout() {
     return raw ? JSON.parse(raw) : { name: 'HOD User', role: 'Head of Department', role_id: 2, features: {} };
   });
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const isStrict = user.features?.profile_completion_strict === true;
 
   const fetchUserData = async () => {
     try {
@@ -120,8 +121,18 @@ export default function HODLayout() {
                              !p.phone || p.phone.trim() === '' || 
                              !p.profile_pic;
 
+        const isProfileCompletionEnabled = updatedUser.features?.profile_completion !== false;
+        const isStrict = updatedUser.features?.profile_completion_strict === true;
+        const onboardingDismissed = sessionStorage.getItem('onboarding_dismissed') === 'true';
+
         if (isIncomplete && !location.pathname.includes('/profile')) {
-          setShowOnboarding(true);
+          if (isStrict) {
+            setShowOnboarding(true);
+          } else if (isProfileCompletionEnabled && !onboardingDismissed) {
+            setShowOnboarding(true);
+          } else {
+            setShowOnboarding(false);
+          }
         } else {
           setShowOnboarding(false);
         }
@@ -722,7 +733,23 @@ export default function HODLayout() {
         <div ref={mainContentRef} className="flex-1 overflow-y-auto">
           <div className="p-4 md:p-10 min-h-full flex flex-col">
             <div className="flex-1">
-              <Outlet />
+              {showOnboarding && isStrict ? (
+                <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-8 bg-white dark:bg-[#110A24] rounded-[2.5rem] border border-[#7C3AED]/10 dark:border-violet-500/20 shadow-xl max-w-lg mx-auto my-12">
+                  <Lock className="w-12 h-12 text-rose-500 animate-bounce mb-4" />
+                  <h3 className="text-lg font-black text-[#1E1B4B] dark:text-indigo-100 uppercase tracking-widest">Portal Access Restricted</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium max-w-sm mt-2">
+                    Strict profile completion is active. You must complete your onboarding setup to access other platform features.
+                  </p>
+                  <button
+                    onClick={() => navigate('/hod/profile')}
+                    className="mt-6 px-6 py-3 bg-gradient-to-r from-[#7C3AED] to-purple-600 hover:from-purple-600 hover:to-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md cursor-pointer"
+                  >
+                    Go to Profile Setup
+                  </button>
+                </div>
+              ) : (
+                <Outlet />
+              )}
             </div>
             
             <footer className="mt-20 pt-12 pb-12 border-t border-[#7C3AED]/10 text-center">
@@ -785,6 +812,19 @@ export default function HODLayout() {
               className="relative bg-white dark:bg-[#110A24] w-full max-w-2xl rounded-[2.5rem] p-6 md:p-8 shadow-2xl border border-[#7C3AED]/15 dark:border-violet-500/20 overflow-hidden flex flex-col gap-6 my-8"
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-violet-500 via-purple-600 to-indigo-600" />
+              
+              {!isStrict && (
+                <button
+                  onClick={() => {
+                    sessionStorage.setItem('onboarding_dismissed', 'true');
+                    setShowOnboarding(false);
+                  }}
+                  className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer z-10"
+                  title="Dismiss profile completion alert"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
               
               <div className="flex flex-col items-center text-center gap-3">
                 <div className="w-16 h-16 bg-[#7C3AED]/10 dark:bg-violet-950/40 rounded-2xl flex items-center justify-center text-[#7C3AED] dark:text-violet-400 border border-[#7C3AED]/20">
