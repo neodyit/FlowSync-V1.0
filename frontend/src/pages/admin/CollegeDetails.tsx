@@ -128,7 +128,9 @@ const FEATURE_METADATA: FeatureGroup[] = [
   {
     category: 'Audit & Security Features',
     features: [
-      { key: 'ia_audit_log_visibility', label: 'Audit Log Center', desc: 'Allow IA access to Activity Center logs.' }
+      { key: 'ia_audit_log_visibility', label: 'Audit Log Center', desc: 'Allow IA access to Activity Center logs.' },
+      { key: 'profile_completion', label: 'Profile Completion Requirement', desc: 'Prompt users with incomplete profiles to complete their setup.' },
+      { key: 'profile_completion_strict', label: 'Strict Profile Completion', desc: 'Enforce mandatory profile completion, blocking portal access.' }
     ]
   }
 ];

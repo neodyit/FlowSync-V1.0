@@ -22,7 +22,8 @@ import {
   Sun, 
   Moon,
   ChevronDown,
-  Check
+  Check,
+  CreditCard
 } from 'lucide-react';
 import { checkSession } from '../utils/auth';
 import { useTheme } from '../components/ThemeProvider';
@@ -173,6 +174,7 @@ export default function MainLayout() {
     { name: 'Audit Logs', icon: History, path: '/admin/audit' },
     { name: 'Feedbacks', icon: MessageSquare, path: '/admin/feedbacks' },
     { name: 'Engagement Tracker', icon: Activity, path: '/admin/engagement' },
+    { name: 'Subscriptions', icon: CreditCard, path: '/admin/subscriptions' },
     { name: 'System Controls', icon: Settings, path: '/admin/controls' },
   ];
 

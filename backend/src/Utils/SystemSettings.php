@@ -17,6 +17,38 @@ class SystemSettings {
             }
         } catch (\Exception $e) {}
         
+        // Fallback to environment variables if not present in the database table
+        $envVal = getenv($key);
+        if ($envVal !== false) {
+            return $envVal;
+        }
+
+        $envValUpper = getenv(strtoupper($key));
+        if ($envValUpper !== false) {
+            return $envValUpper;
+        }
+        
         return $default;
+    }
+
+    public static function set($key, $value, $userId = null) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("
+                INSERT INTO system_settings (setting_key, setting_value, updated_by)
+                VALUES (:k, :v, :u)
+                ON DUPLICATE KEY UPDATE setting_value = :v2, updated_by = :u2
+            ");
+            $stmt->execute([
+                'k' => $key,
+                'v' => $value,
+                'u' => $userId,
+                'v2' => $value,
+                'u2' => $userId
+            ]);
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }
