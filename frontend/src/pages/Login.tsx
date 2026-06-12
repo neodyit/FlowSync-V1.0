@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
+import { clearLocalData } from '../utils/auth';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -26,6 +27,9 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Forcefully clear all cache, cookies, and local/session storage on entering login screen
+    clearLocalData();
+
     fetch('/version.json?t=' + Date.now())
       .then(res => res.json())
       .then(data => {

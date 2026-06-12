@@ -51,19 +51,13 @@ self.addEventListener('fetch', (event) => {
                      url.pathname.includes('export_') ||
                      url.pathname.includes('version.json'); // version.json must never be cached
 
-  if (isApiRequest && !isExcluded) {
+  if (isApiRequest) {
     event.respondWith(
-      caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
-        return cache.match(event.request).then((cachedResponse) => {
-          const fetchPromise = fetch(event.request).then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              cache.put(event.request, networkResponse.clone());
-            }
-            return networkResponse;
-          }).catch((err) => {
-            console.error('Dynamic fetch failed:', err);
-          });
-          return cachedResponse || fetchPromise;
+      fetch(event.request).catch((err) => {
+        console.error('API fetch failed:', err);
+        return new Response(JSON.stringify({ status: 'error', message: 'Offline connection error.' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
         });
       })
     );

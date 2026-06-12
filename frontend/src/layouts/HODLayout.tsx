@@ -30,7 +30,7 @@ import {
   Lock,
   ChevronRight
 } from 'lucide-react';
-import { checkSession } from '../utils/auth';
+import { checkSession, clearLocalData } from '../utils/auth';
 import { cn, formatDate } from "@/lib/utils";
 import Swal from 'sweetalert2';
 import { useTheme } from '../components/ThemeProvider';
@@ -445,7 +445,7 @@ export default function HODLayout() {
     } catch (error) {
       console.error('Logout request failed:', error);
     }
-    localStorage.removeItem('user');
+    clearLocalData();
     navigate('/login');
   };
 
@@ -763,7 +763,7 @@ export default function HODLayout() {
                   <p className="text-[11px] font-black text-[#1E184B]/60 dark:text-indigo-200/60 uppercase tracking-[0.15em]">
                     Made with <span className="text-rose-500 animate-pulse mx-1">❤️</span> by 
                     <span className="ml-1.5 space-x-1">
-                      <a href="https://mayank.neodyit.in/" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Mayank Tiwari</a>,
+                      <a href="/hod/profile/1" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Mayank Tiwari</a>,
                       <a className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Saurabh Upadhyay</a>
                     </span>
                   </p>

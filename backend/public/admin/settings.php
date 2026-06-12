@@ -32,8 +32,8 @@ try {
                 INSERT INTO system_settings (setting_key, setting_value, updated_by, updated_at)
                 VALUES (:key, :val, :uid, CURRENT_TIMESTAMP)
                 ON DUPLICATE KEY UPDATE 
-                    setting_value = :val, 
-                    updated_by = :uid, 
+                    setting_value = :val_update, 
+                    updated_by = :uid_update, 
                     updated_at = CURRENT_TIMESTAMP
             ");
             
@@ -41,7 +41,9 @@ try {
                 $stmt->execute([
                     'key' => $key,
                     'val' => (string)$val,
-                    'uid' => $session['user_id'] ?? null
+                    'uid' => $session['user_id'] ?? null,
+                    'val_update' => (string)$val,
+                    'uid_update' => $session['user_id'] ?? null
                 ]);
             }
             

@@ -1,23 +1,63 @@
 export const clearLocalData = () => {
   // Clear localStorage
-  localStorage.clear();
+  try {
+    localStorage.clear();
+  } catch (e) {
+    console.error('Failed to clear localStorage:', e);
+  }
+  
+  // Clear sessionStorage
+  try {
+    sessionStorage.clear();
+  } catch (e) {
+    console.error('Failed to clear sessionStorage:', e);
+  }
   
   // Clear all cookies
-  const cookies = document.cookie.split(";");
-  for (let i = 0; i < cookies.length; i++) {
-    const cookie = cookies[i];
-    const eqPos = cookie.indexOf("=");
-    const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+  try {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+      
+      // Clear cookie with standard path
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      // Clear cookie with current hostname domain
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=." + window.location.hostname;
+      // Clear for other common paths
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/FlowSync";
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/FlowSync/backend";
+    }
+  } catch (e) {
+    console.error('Failed to clear cookies:', e);
   }
 
-  // Clear cache
+  // Clear cache storage
   if ('caches' in window) {
-    caches.keys().then((names) => {
-      names.forEach((name) => {
-        caches.delete(name);
+    try {
+      caches.keys().then((names) => {
+        names.forEach((name) => {
+          caches.delete(name);
+        });
       });
-    });
+    } catch (e) {
+      console.error('Failed to clear caches:', e);
+    }
+  }
+
+  // Unregister service workers to completely disable background proxy caching
+  if ('serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    } catch (e) {
+      console.error('Failed to unregister service workers:', e);
+    }
   }
 };
 

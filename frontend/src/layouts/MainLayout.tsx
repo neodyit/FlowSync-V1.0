@@ -25,7 +25,7 @@ import {
   Check,
   CreditCard
 } from 'lucide-react';
-import { checkSession } from '../utils/auth';
+import { checkSession, clearLocalData } from '../utils/auth';
 import { useTheme } from '../components/ThemeProvider';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -219,7 +219,7 @@ export default function MainLayout() {
     } catch (error) {
       console.error('Logout request failed:', error);
     }
-    localStorage.removeItem('user');
+    clearLocalData();
     navigate('/login');
   };
 
