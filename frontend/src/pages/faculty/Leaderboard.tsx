@@ -15,7 +15,7 @@ import {
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
-import { cn } from '@/lib/utils';
+import { cn, getImageUrl } from '@/lib/utils';
 
 interface Performer {
   id: number;
@@ -109,7 +109,7 @@ const Leaderboard: React.FC = () => {
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-slate-100 dark:bg-[#110A24] rounded-2xl flex items-center justify-center border-4 border-white dark:border-[#130C24] text-slate-500 dark:text-violet-400 font-black">2</div>
             <div className="w-20 h-20 bg-slate-100 dark:bg-[#110A24] rounded-[1.5rem] overflow-hidden flex items-center justify-center mx-auto text-2xl font-black text-slate-400">
               {top3[1].profile_pic ? (
-                <img src={`${import.meta.env.VITE_API_URL}/${top3[1].profile_pic}`} className="w-full h-full object-cover" alt="" />
+                <img src={getImageUrl(top3[1].profile_pic)} className="w-full h-full object-cover" alt="" loading="lazy" />
               ) : (
                 top3[1].name.charAt(0)
               )}
@@ -138,7 +138,7 @@ const Leaderboard: React.FC = () => {
             <Sparkles className="absolute top-10 right-10 w-8 h-8 text-white/10" />
             <div className="w-28 h-28 bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] rounded-[2rem] overflow-hidden flex items-center justify-center mx-auto text-4xl font-black text-white shadow-2xl shadow-[#7C3AED]/40">
               {top3[0].profile_pic ? (
-                <img src={`${import.meta.env.VITE_API_URL}/${top3[0].profile_pic}`} className="w-full h-full object-cover" alt="" />
+                <img src={getImageUrl(top3[0].profile_pic)} className="w-full h-full object-cover" alt="" loading="lazy" />
               ) : (
                 top3[0].name.charAt(0)
               )}
@@ -167,7 +167,7 @@ const Leaderboard: React.FC = () => {
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-amber-50 dark:bg-amber-950/20 rounded-2xl flex items-center justify-center border-4 border-white dark:border-[#130C24] text-amber-600 font-black">3</div>
             <div className="w-20 h-20 bg-amber-50 dark:bg-amber-950/20 rounded-[1.5rem] overflow-hidden flex items-center justify-center mx-auto text-2xl font-black text-amber-400">
               {top3[2].profile_pic ? (
-                <img src={`${import.meta.env.VITE_API_URL}/${top3[2].profile_pic}`} className="w-full h-full object-cover" alt="" />
+                <img src={getImageUrl(top3[2].profile_pic)} className="w-full h-full object-cover" alt="" loading="lazy" />
               ) : (
                 top3[2].name.charAt(0)
               )}
@@ -206,11 +206,15 @@ const Leaderboard: React.FC = () => {
                 key={performer.id}
                 className="bg-white dark:bg-[#1A0F35]/80 rounded-3xl border border-[#7C3AED]/5 dark:border-violet-500/10 p-5 flex items-center gap-6 hover:border-[#7C3AED]/20 dark:hover:border-violet-400/40 hover:shadow-xl hover:shadow-[#7C3AED]/5 transition-all group"
               >
-                <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-[#110A24] overflow-hidden flex items-center justify-center text-[#1E184B] font-black text-sm group-hover:bg-[#7C3AED] group-hover:text-white transition-all">
+                <div className="w-8 flex items-center justify-center text-[#1E184B] dark:text-indigo-100 font-black text-sm shrink-0">
+                  {idx + 4}
+                </div>
+                
+                <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-[#110A24] overflow-hidden flex items-center justify-center text-[#1E184B] font-black text-sm shrink-0">
                   {performer.profile_pic ? (
-                    <img src={`${import.meta.env.VITE_API_URL}/${performer.profile_pic}`} className="w-full h-full object-cover" alt="" />
+                    <img src={getImageUrl(performer.profile_pic)} className="w-full h-full object-cover" alt="" loading="lazy" />
                   ) : (
-                    idx + 4
+                    performer.name.charAt(0)
                   )}
                 </div>
                 
