@@ -254,7 +254,26 @@ const FacultyTasks: React.FC = () => {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-64 bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] animate-pulse border border-[#7C3AED]/10 dark:border-violet-500/15" />
+            <div key={i} className="bg-white dark:bg-[#1A0F35]/80 rounded-[2.5rem] p-7 border border-[#7C3AED]/10 dark:border-violet-500/15 animate-pulse space-y-6 flex flex-col justify-between h-72">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="w-24 h-5 bg-slate-200 dark:bg-violet-950/40 rounded-full animate-pulse" />
+                  <div className="w-20 h-5 bg-slate-200 dark:bg-violet-950/40 rounded-lg animate-pulse" />
+                </div>
+                <div className="w-48 h-6 bg-slate-300 dark:bg-violet-950/60 rounded-xl animate-pulse" />
+                <div className="space-y-2">
+                  <div className="w-full h-4 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+                  <div className="w-5/6 h-4 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-violet-500/10">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="h-10 bg-slate-200 dark:bg-violet-950/40 rounded-xl animate-pulse" />
+                  <div className="h-10 bg-slate-200 dark:bg-violet-950/40 rounded-xl animate-pulse" />
+                </div>
+                <div className="h-10 bg-slate-300 dark:bg-violet-950/60 rounded-xl animate-pulse" />
+              </div>
+            </div>
           ))}
         </div>
       ) : (

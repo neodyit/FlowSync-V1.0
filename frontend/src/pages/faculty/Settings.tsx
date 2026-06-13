@@ -35,6 +35,85 @@ interface Session {
   expires_at: string;
 }
 
+
+const SettingsSkeleton: React.FC = () => {
+  return (
+    <div className="max-w-6xl mx-auto space-y-8 pb-20 animate-pulse">
+      {/* Header Section Skeleton */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="w-48 h-10 bg-slate-300 dark:bg-violet-950/60 rounded-xl animate-pulse" />
+          <div className="w-64 h-4 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+        </div>
+        <div className="w-80 h-12 bg-slate-100/50 dark:bg-[#1A0F35]/30 rounded-2xl border border-slate-150 animate-pulse" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Sidebar Skeleton */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-slate-100/30 dark:bg-[#1A0F35]/30 rounded-[2.5rem] border border-[#7C3AED]/5 dark:border-violet-500/5 p-8 space-y-6 flex flex-col items-center">
+            <div className="w-20 h-20 bg-slate-300 dark:bg-violet-950/40 rounded-3xl animate-pulse" />
+            <div className="space-y-2 text-center w-full flex flex-col items-center">
+              <div className="w-36 h-6 bg-slate-300 dark:bg-violet-950/60 rounded-xl animate-pulse" />
+              <div className="w-48 h-3 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+            </div>
+            <div className="w-full space-y-3 pt-6 border-t border-slate-100 dark:border-violet-500/10">
+              <div className="flex justify-between">
+                <div className="w-16 h-3 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+                <div className="w-24 h-3 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+              </div>
+              <div className="w-full h-2 bg-slate-200 dark:bg-violet-950/40 rounded-full animate-pulse" />
+            </div>
+          </div>
+
+          <div className="bg-slate-100/30 dark:bg-[#1A0F35]/30 rounded-[2.5rem] border border-[#7C3AED]/5 dark:border-violet-500/5 p-8 space-y-4">
+            <div className="w-40 h-6 bg-slate-300 dark:bg-violet-950/60 rounded-xl animate-pulse" />
+            <div className="w-full h-10 bg-slate-200 dark:bg-violet-950/40 rounded-2xl animate-pulse" />
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="w-full h-14 bg-slate-200/50 dark:bg-violet-950/20 rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Settings Content Skeleton */}
+        <div className="lg:col-span-2">
+          <div className="bg-slate-100/30 dark:bg-[#1A0F35]/30 rounded-[2.5rem] border border-[#7C3AED]/5 dark:border-violet-500/5 p-10 space-y-8">
+            <div className="flex gap-4 animate-pulse">
+              <div className="w-12 h-12 bg-slate-300 dark:bg-violet-950/40 rounded-2xl" />
+              <div className="space-y-2">
+                <div className="w-36 h-6 bg-slate-300 dark:bg-violet-950/60 rounded-xl" />
+                <div className="w-56 h-3 bg-slate-200 dark:bg-violet-950/40 rounded" />
+              </div>
+            </div>
+
+            <div className="space-y-6 pt-6 border-t border-slate-100 dark:border-violet-500/10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <div className="w-24 h-3 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+                  <div className="w-full h-14 bg-slate-200/50 dark:bg-violet-950/20 rounded-2xl animate-pulse" />
+                </div>
+                <div className="space-y-3">
+                  <div className="w-24 h-3 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+                  <div className="w-full h-14 bg-slate-200/50 dark:bg-violet-950/20 rounded-2xl animate-pulse" />
+                </div>
+              </div>
+              <div className="space-y-3 pt-4">
+                <div className="w-32 h-3 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+                <div className="w-full h-3 bg-slate-200 dark:bg-violet-950/40 rounded-full animate-pulse" />
+              </div>
+              <div className="flex justify-end pt-6 border-t border-slate-50 dark:border-violet-500/10">
+                <div className="w-36 h-12 bg-slate-300 dark:bg-violet-950/60 rounded-2xl animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const FacultySettings: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialTab = (searchParams.get('tab') as 'Security' | 'Notifications' | 'Profile') || 'Profile';
@@ -214,11 +293,7 @@ const FacultySettings: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-12 h-12 text-[#7C3AED] animate-spin opacity-20" />
-      </div>
-    );
+    return <SettingsSkeleton />;
   }
 
   return (

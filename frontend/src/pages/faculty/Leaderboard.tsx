@@ -34,6 +34,109 @@ interface Standing {
   score: number;
 }
 
+
+const LeaderboardSkeleton: React.FC = () => {
+  return (
+    <div className="max-w-6xl mx-auto space-y-12 pb-20 animate-pulse">
+      {/* Header Section Skeleton */}
+      <div className="text-center space-y-4">
+        <div className="inline-flex w-40 h-8 bg-slate-200 dark:bg-violet-950/40 rounded-2xl mx-auto animate-pulse" /> 
+        <div className="w-96 h-12 bg-slate-300 dark:bg-violet-950/60 rounded-3xl mx-auto animate-pulse" />
+        <div className="w-80 h-4 bg-slate-200 dark:bg-violet-950/40 rounded mx-auto animate-pulse" />
+      </div>
+
+      {/* Podium Section Skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-6 pt-10 px-4">
+        {/* 2nd Place */}
+        <div className="order-2 md:order-1 bg-slate-100/30 dark:bg-[#1A0F35]/30 rounded-[2.5rem] border border-[#7C3AED]/5 dark:border-violet-500/5 p-8 text-center space-y-6">
+          <div className="w-10 h-10 bg-slate-200 dark:bg-violet-950/40 rounded-2xl mx-auto animate-pulse" />
+          <div className="w-20 h-20 bg-slate-300 dark:bg-violet-950/60 rounded-[1.5rem] mx-auto animate-pulse" />
+          <div className="space-y-2 flex flex-col items-center">
+            <div className="w-28 h-5 bg-slate-300 dark:bg-violet-950/60 rounded animate-pulse" />
+            <div className="w-16 h-3 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+          </div>
+          <div className="pt-4 border-t border-[#7C3AED]/5">
+            <div className="w-14 h-6 bg-slate-300 dark:bg-violet-950/60 rounded mx-auto animate-pulse" />
+            <div className="w-10 h-3 bg-slate-200 dark:bg-violet-950/40 rounded mx-auto mt-2 animate-pulse" />
+          </div>
+        </div>
+
+        {/* 1st Place */}
+        <div className="order-1 md:order-2 bg-slate-100/30 dark:bg-[#1A0F35]/30 rounded-[3rem] p-10 text-center space-y-8 border border-transparent dark:border-violet-500/10 shadow-2xl relative transform md:-translate-y-6">
+          <div className="w-14 h-14 bg-slate-200 dark:bg-violet-950/40 rounded-2xl mx-auto animate-pulse" />
+          <div className="w-28 h-28 bg-slate-300 dark:bg-violet-950/60 rounded-[2rem] mx-auto animate-pulse" />
+          <div className="space-y-2 flex flex-col items-center">
+            <div className="w-36 h-6 bg-slate-300 dark:bg-violet-950/60 rounded animate-pulse" />
+            <div className="w-20 h-3 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+          </div>
+          <div className="bg-slate-200/40 dark:bg-violet-950/20 rounded-[2rem] p-6 border border-white/5">
+            <div className="w-16 h-8 bg-slate-300 dark:bg-violet-950/60 rounded mx-auto animate-pulse" />
+            <div className="w-24 h-3 bg-slate-200 dark:bg-violet-950/40 rounded mx-auto mt-2 animate-pulse" />
+          </div>
+        </div>
+
+        {/* 3rd Place */}
+        <div className="order-3 md:order-3 bg-slate-100/30 dark:bg-[#1A0F35]/30 rounded-[2.5rem] border border-[#7C3AED]/5 dark:border-violet-500/5 p-8 text-center space-y-6">
+          <div className="w-10 h-10 bg-slate-200 dark:bg-violet-950/40 rounded-2xl mx-auto animate-pulse" />
+          <div className="w-20 h-20 bg-slate-300 dark:bg-violet-950/60 rounded-[1.5rem] mx-auto animate-pulse" />
+          <div className="space-y-2 flex flex-col items-center">
+            <div className="w-28 h-5 bg-slate-300 dark:bg-violet-950/60 rounded animate-pulse" />
+            <div className="w-16 h-3 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+          </div>
+          <div className="pt-4 border-t border-[#7C3AED]/5">
+            <div className="w-14 h-6 bg-slate-300 dark:bg-violet-950/60 rounded mx-auto animate-pulse" />
+            <div className="w-10 h-3 bg-slate-200 dark:bg-violet-950/40 rounded mx-auto mt-2 animate-pulse" />
+          </div>
+        </div>
+      </div>
+
+      {/* Main List Section Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="lg:col-span-8 space-y-4">
+          <div className="flex justify-between items-center px-6 mb-6">
+            <div className="w-32 h-4 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+            <div className="w-24 h-4 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+          </div>
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="bg-slate-100/30 dark:bg-[#1A0F35]/30 rounded-3xl border border-[#7C3AED]/5 dark:border-violet-500/5 p-5 flex items-center gap-6">
+                <div className="w-8 h-6 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+                <div className="w-12 h-12 bg-slate-300 dark:bg-violet-950/40 rounded-2xl shrink-0 animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="w-32 h-4 bg-slate-300 dark:bg-violet-950/60 rounded animate-pulse" />
+                  <div className="w-24 h-3 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+                </div>
+                <div className="text-right space-y-2">
+                  <div className="w-14 h-5 bg-slate-300 dark:bg-violet-950/60 rounded ml-auto animate-pulse" />
+                  <div className="w-8 h-3 bg-slate-200 dark:bg-violet-950/40 rounded ml-auto animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* My Standing Section Skeleton */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-slate-100/30 dark:bg-[#1A0F35]/30 border border-[#7C3AED]/5 dark:border-violet-500/5 rounded-[2.5rem] p-10 space-y-8">
+            <div className="space-y-2">
+              <div className="w-32 h-3 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+              <div className="w-28 h-6 bg-slate-300 dark:bg-violet-950/60 rounded animate-pulse" />
+            </div>
+            <div className="bg-slate-200/40 dark:bg-violet-950/20 rounded-2xl p-5 border border-white/5">
+              <div className="w-24 h-3 bg-slate-200 dark:bg-violet-950/40 rounded animate-pulse" />
+              <div className="w-16 h-6 bg-slate-300 dark:bg-violet-950/60 rounded mt-2 animate-pulse" />
+              <div className="w-20 h-3 bg-slate-200 dark:bg-violet-950/40 rounded mt-2 animate-pulse" />
+            </div>
+            <div className="pt-6 border-t border-[#7C3AED]/5">
+              <div className="w-full h-8 bg-slate-200/60 dark:bg-violet-950/30 rounded-lg animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Leaderboard: React.FC = () => {
   const [performers, setPerformers] = useState<Performer[]>([]);
   const [myStanding, setMyStanding] = useState<Standing | null>(null);
@@ -68,11 +171,7 @@ const Leaderboard: React.FC = () => {
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-12 h-12 border-4 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <LeaderboardSkeleton />;
   }
 
   const top3 = performers.slice(0, 3);
