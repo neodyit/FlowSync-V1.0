@@ -161,9 +161,20 @@ const FacultyNotifications: React.FC = () => {
 
       <div className="space-y-4">
         {isLoading ? (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-pulse">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-24 bg-white dark:bg-[#1A0F35] rounded-3xl animate-pulse border border-[#7C3AED]/10 dark:border-violet-500/10" />
+              <div key={i} className="bg-white dark:bg-[#1A0F35] rounded-[2rem] p-6 flex items-start gap-6 border border-[#7C3AED]/10 dark:border-violet-500/10">
+                <div className="w-14 h-14 rounded-2xl bg-slate-200 dark:bg-violet-950/40 shrink-0" />
+                <div className="flex-1 space-y-3">
+                  <div className="flex gap-3">
+                    <div className="w-24 h-4 bg-slate-200 dark:bg-violet-950/40 rounded" />
+                    <div className="w-20 h-4 bg-slate-200 dark:bg-violet-950/40 rounded" />
+                  </div>
+                  <div className="w-full h-5 bg-slate-300 dark:bg-violet-950/60 rounded-lg" />
+                  <div className="w-48 h-8 bg-slate-200 dark:bg-violet-950/40 rounded-xl" />
+                </div>
+                <div className="w-6 h-6 bg-slate-200 dark:bg-violet-950/40 rounded-lg shrink-0" />
+              </div>
             ))}
           </div>
         ) : notifications.length === 0 ? (
