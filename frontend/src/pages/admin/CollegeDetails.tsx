@@ -108,7 +108,8 @@ const FEATURE_METADATA: FeatureGroup[] = [
       { key: 'task_auto_accept', label: 'Auto-Accept Tasks', desc: 'Bypass acceptance step for assigned tasks.' },
       { key: 'task_reminder_system', label: 'Reminders & Alerts', desc: 'Send automatic reminders for tasks.' },
       { key: 'task_deadline_tracking', label: 'Deadline Countdown', desc: 'Show timers and deadline warnings.' },
-      { key: 'allow_ia_task_management', label: 'IA Task Privileges', desc: 'Let Institution Admins manage tasks.' }
+      { key: 'allow_ia_task_management', label: 'IA Task Privileges', desc: 'Let Institution Admins manage tasks.' },
+      { key: 'grace_period_penalties', label: 'Grace Period Penalties', desc: 'Enable automated point deductions for late submissions after a grace period.' }
     ]
   },
   {

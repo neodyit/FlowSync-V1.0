@@ -349,8 +349,8 @@ try {
 
             $db->beginTransaction();
 
-            // Fetch task to verify ownership
-            $check = $db->prepare("SELECT id, title, assigned_to_id, status, season_id FROM tasks WHERE id = :id AND department_id = :dept_id");
+            // Fetch task to verify ownership (selecting deadline and college_id for automated grace period checks)
+            $check = $db->prepare("SELECT id, title, assigned_to_id, status, season_id, deadline, college_id FROM tasks WHERE id = :id AND department_id = :dept_id");
             $check->execute(['id' => $taskId, 'dept_id' => $deptId]);
             $task = $check->fetch();
             if (!$task) throw new Exception("Task not found or access denied.");
@@ -391,6 +391,29 @@ try {
                     }
                     
                     $newRemarks = $data['remarks'] ?? $assignment['remarks'] ?? '';
+
+                    // Automated late submission penalty check (if feature is enabled for the college)
+                    if ($newStatus === 'Approved' && isset($data['points']) && \FlowSync\Utils\FeatureService::isEnabled($task['college_id'], 'grace_period_penalties')) {
+                        $submittedAt = $assignment['submitted_at'] ?? null;
+                        $deadline = $task['deadline'] ?? null;
+                        if ($submittedAt && $deadline && strtotime($submittedAt) > strtotime($deadline)) {
+                            $diffSeconds = strtotime($submittedAt) - strtotime($deadline);
+                            // 2-hour grace period (7200 seconds)
+                            if ($diffSeconds > 7200) {
+                                $delaySecondsPastGrace = $diffSeconds - 7200;
+                                $delayHours = ceil($delaySecondsPastGrace / 3600);
+                                $penaltyPercentage = min(50, $delayHours * 10); // 10% per hour, capped at 50%
+                                $deductedPoints = (int)round($newPoints * ($penaltyPercentage / 100));
+                                $newPoints = max(0, $newPoints - $deductedPoints);
+                                
+                                // Append penalty detail to HOD remarks
+                                $penaltyText = " [Late Submission Penalty: -$penaltyPercentage% ($delayHours hr(s) past 2h grace period)]";
+                                if (strpos($newRemarks, "Late Submission Penalty") === false) {
+                                    $newRemarks = trim($newRemarks) !== '' ? $newRemarks . $penaltyText : trim($penaltyText);
+                                }
+                            }
+                        }
+                    }
 
                     $progressVal = 0;
                     if ($newStatus === 'Approved') {
