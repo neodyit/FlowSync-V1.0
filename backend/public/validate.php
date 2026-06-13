@@ -35,10 +35,19 @@ $session = $auth->validateSession();
 
 if ($session) {
     // Update user's last active timestamp (except for Super Admin user_id = 1)
+    // Fetch user profile info
+    $db = \FlowSync\Config\Database::getInstance()->getConnection();
+    $stmtUser = $db->prepare("SELECT name, profile_pic, last_active_at FROM users WHERE id = :uid LIMIT 1");
+    $stmtUser->execute(['uid' => $session['user_id']]);
+    $uRow = $stmtUser->fetch();
+
+    // Update user's last active timestamp (except for Super Admin user_id = 1) if it's older than 5 minutes (300s)
     if ((int)$session['user_id'] !== 1) {
-        $db = \FlowSync\Config\Database::getInstance()->getConnection();
-        $stmtActive = $db->prepare("UPDATE users SET last_active_at = NOW() WHERE id = :uid");
-        $stmtActive->execute(['uid' => $session['user_id']]);
+        $lastActive = $uRow['last_active_at'] ?? null;
+        if (!$lastActive || (time() - strtotime($lastActive)) > 300) {
+            $stmtActive = $db->prepare("UPDATE users SET last_active_at = NOW() WHERE id = :uid");
+            $stmtActive->execute(['uid' => $session['user_id']]);
+        }
     }
 
     require_once __DIR__ . '/../src/Utils/SystemSettings.php';
@@ -50,7 +59,6 @@ if ($session) {
     }
 
     // Query enabled features for the user's college
-    $db = \FlowSync\Config\Database::getInstance()->getConnection();
     // Fetch user details including college_id
     $stmt = $db->prepare("SELECT college_id FROM users WHERE id = :uid LIMIT 1");
     $stmt->execute(['uid' => $session['user_id']]);
@@ -83,11 +91,6 @@ if ($session) {
         echo json_encode(['status' => 'error', 'message' => 'Your institution has been deactivated.']);
         exit;
     }
-
-    // Fetch user profile info
-    $stmtUser = $db->prepare("SELECT name, profile_pic FROM users WHERE id = :uid LIMIT 1");
-    $stmtUser->execute(['uid' => $session['user_id']]);
-    $uRow = $stmtUser->fetch();
 
     $userObj = [
         'id' => (int)$session['user_id'],

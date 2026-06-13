@@ -395,7 +395,7 @@ export default function Subscriptions() {
       </div>
 
       {/* Tabs Menu */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-6">
+      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-6 overflow-x-auto scrollbar-none whitespace-nowrap pb-2">
         <button 
           onClick={() => handleTabChange('colleges')}
           className={`pb-4 text-sm font-black transition-all ${activeTab === 'colleges' ? 'border-b-2 border-[#7C3AED] text-[#7C3AED]' : 'text-slate-400 hover:text-slate-600'}`}
@@ -438,75 +438,77 @@ export default function Subscriptions() {
             </div>
           </div>
           
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-[#1A0F35]/40 text-left text-xs font-black text-slate-400 uppercase">
-                <th className="p-4">Institution Name</th>
-                <th className="p-4">Active Plan</th>
-                <th className="p-4">Expiry Date</th>
-                <th className="p-4">Days Left</th>
-                <th className="p-4">Sub Toggle</th>
-                <th className="p-4">Status</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredColleges.map((c) => (
-                <tr key={c.id} className="border-b dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-violet-950/10 transition-colors text-sm text-slate-600 dark:text-slate-300">
-                  <td className="p-4 font-bold text-slate-800 dark:text-white">{c.name}</td>
-                  <td className="p-4">{c.plan_name}</td>
-                  <td className="p-4">{c.final_expiry_date}</td>
-                  <td className="p-4 font-black">
-                    {c.remaining_days > 9000 ? 'Lifetime' : c.remaining_days}
-                  </td>
-                  <td className="p-4">
-                    <button 
-                      onClick={() => toggleSubscription(c)}
-                      className="text-slate-400 hover:text-[#7C3AED] transition-colors cursor-pointer"
-                      title={c.status === 'suspended' ? 'Resume Subscription' : 'Suspend Subscription'}
-                    >
-                      {c.status === 'suspended' ? (
-                        <ToggleLeft className="w-9 h-9 text-slate-400" />
-                      ) : (
-                        <ToggleRight className="w-9 h-9 text-emerald-500" />
-                      )}
-                    </button>
-                  </td>
-                  <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase ${
-                      c.status === 'active' ? 'bg-emerald-100 text-emerald-800' :
-                      c.status === 'trial' ? 'bg-amber-100 text-amber-800' :
-                      c.status === 'free' ? 'bg-indigo-100 text-indigo-800' :
-                      c.status === 'lifetime' ? 'bg-violet-100 text-violet-800' :
-                      'bg-rose-100 text-rose-800'
-                    }`}>
-                      {c.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right space-x-2">
-                    <button 
-                      onClick={() => { setSelectedCollege(c); setShowAssignModal(true); }}
-                      className="px-3 py-1.5 bg-[#7C3AED] hover:bg-violet-750 text-white rounded-lg text-xs font-bold"
-                    >
-                      Assign Plan
-                    </button>
-                    <button 
-                      onClick={() => handleOverrideStatus(c.id, 'trial')}
-                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold"
-                    >
-                      Assign Trial
-                    </button>
-                    <button 
-                      onClick={() => handleOverrideStatus(c.id, 'lifetime')}
-                      className="px-3 py-1.5 border border-[#7C3AED]/20 dark:border-violet-500/20 text-[#7C3AED] hover:bg-violet-50 dark:hover:bg-violet-950/20 rounded-lg text-xs font-bold"
-                    >
-                      Lifetime
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse min-w-[900px]">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-[#1A0F35]/40 text-left text-xs font-black text-slate-400 uppercase">
+                  <th className="p-4">Institution Name</th>
+                  <th className="p-4">Active Plan</th>
+                  <th className="p-4">Expiry Date</th>
+                  <th className="p-4">Days Left</th>
+                  <th className="p-4">Sub Toggle</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredColleges.map((c) => (
+                  <tr key={c.id} className="border-b dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-violet-950/10 transition-colors text-sm text-slate-600 dark:text-slate-300">
+                    <td className="p-4 font-bold text-slate-880 dark:text-white">{c.name}</td>
+                    <td className="p-4">{c.plan_name}</td>
+                    <td className="p-4">{c.final_expiry_date}</td>
+                    <td className="p-4 font-black">
+                      {c.remaining_days > 9000 ? 'Lifetime' : c.remaining_days}
+                    </td>
+                    <td className="p-4">
+                      <button 
+                        onClick={() => toggleSubscription(c)}
+                        className="text-slate-400 hover:text-[#7C3AED] transition-colors cursor-pointer"
+                        title={c.status === 'suspended' ? 'Resume Subscription' : 'Suspend Subscription'}
+                      >
+                        {c.status === 'suspended' ? (
+                          <ToggleLeft className="w-9 h-9 text-slate-400" />
+                        ) : (
+                          <ToggleRight className="w-9 h-9 text-emerald-500" />
+                        )}
+                      </button>
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase ${
+                        c.status === 'active' ? 'bg-emerald-100 text-emerald-800' :
+                        c.status === 'trial' ? 'bg-amber-100 text-amber-800' :
+                        c.status === 'free' ? 'bg-indigo-100 text-indigo-800' :
+                        c.status === 'lifetime' ? 'bg-violet-100 text-violet-800' :
+                        'bg-rose-100 text-rose-800'
+                      }`}>
+                        {c.status}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right space-x-2">
+                      <button 
+                        onClick={() => { setSelectedCollege(c); setShowAssignModal(true); }}
+                        className="px-3 py-1.5 bg-[#7C3AED] hover:bg-violet-750 text-white rounded-lg text-xs font-bold"
+                      >
+                        Assign Plan
+                      </button>
+                      <button 
+                        onClick={() => handleOverrideStatus(c.id, 'trial')}
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold"
+                      >
+                        Assign Trial
+                      </button>
+                      <button 
+                        onClick={() => handleOverrideStatus(c.id, 'lifetime')}
+                        className="px-3 py-1.5 border border-[#7C3AED]/20 dark:border-violet-500/20 text-[#7C3AED] hover:bg-violet-50 dark:hover:bg-violet-950/20 rounded-lg text-xs font-bold"
+                      >
+                        Lifetime
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -610,40 +612,42 @@ export default function Subscriptions() {
 
       {activeTab === 'transactions' && (
         <div className="bg-white dark:bg-[#110A24] rounded-2xl border border-slate-100 dark:border-violet-500/10 shadow-sm overflow-hidden">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-[#1A0F35]/40 text-left text-xs font-black text-slate-400 uppercase">
-                <th className="p-4">Tx ID / Ref</th>
-                <th className="p-4">College</th>
-                <th className="p-4">Plan Name</th>
-                <th className="p-4">Amount</th>
-                <th className="p-4">Charges</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((tx) => (
-                <tr key={tx.id} className="border-b dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300">
-                  <td className="p-4 font-mono text-xs">{tx.transaction_id || 'manual-' + tx.id}</td>
-                  <td className="p-4 font-bold text-slate-855 dark:text-white">{tx.college_name}</td>
-                  <td className="p-4">{tx.plan_name}</td>
-                  <td className="p-4 font-black">₹{tx.amount}</td>
-                  <td className="p-4">₹{tx.gateway_charge}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
-                      tx.payment_status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
-                      tx.payment_status === 'pending' ? 'bg-amber-100 text-amber-800' :
-                      'bg-rose-100 text-rose-800'
-                    }`}>
-                      {tx.payment_status}
-                    </span>
-                  </td>
-                  <td className="p-4">{new Date(tx.created_at).toLocaleDateString()}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse min-w-[900px]">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-[#1A0F35]/40 text-left text-xs font-black text-slate-400 uppercase">
+                  <th className="p-4">Tx ID / Ref</th>
+                  <th className="p-4">College</th>
+                  <th className="p-4">Plan Name</th>
+                  <th className="p-4">Amount</th>
+                  <th className="p-4">Charges</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {transactions.map((tx) => (
+                  <tr key={tx.id} className="border-b dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300">
+                    <td className="p-4 font-mono text-xs">{tx.transaction_id || 'manual-' + tx.id}</td>
+                    <td className="p-4 font-bold text-slate-855 dark:text-white">{tx.college_name}</td>
+                    <td className="p-4">{tx.plan_name}</td>
+                    <td className="p-4 font-black">₹{tx.amount}</td>
+                    <td className="p-4">₹{tx.gateway_charge}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
+                        tx.payment_status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
+                        tx.payment_status === 'pending' ? 'bg-amber-100 text-amber-800' :
+                        'bg-rose-100 text-rose-800'
+                      }`}>
+                        {tx.payment_status}
+                      </span>
+                    </td>
+                    <td className="p-4">{new Date(tx.created_at).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

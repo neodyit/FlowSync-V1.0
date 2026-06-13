@@ -50,12 +50,29 @@ const AuditLogs: React.FC = () => {
   const [filterAction, setFilterAction] = useState('all');
   const [timeFrame, setTimeFrame] = useState('all');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
   const [copied, setCopied] = useState(false);
+
+  // Debounce search input to prevent excessive API requests
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/audit_logs.php`, {
+      const params = new URLSearchParams();
+      if (debouncedSearch) params.append('search', debouncedSearch);
+      if (filterAction && filterAction !== 'all') params.append('action', filterAction);
+      if (timeFrame && timeFrame !== 'all') params.append('timeframe', timeFrame);
+      
+      const userIdParam = searchParams.get('user_id');
+      if (userIdParam) params.append('user_id', userIdParam);
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/audit_logs.php?${params.toString()}`, {
         credentials: 'include'
       });
       const data = await response.json();
@@ -74,7 +91,7 @@ const AuditLogs: React.FC = () => {
 
   useEffect(() => {
     fetchLogs();
-  }, []);
+  }, [debouncedSearch, filterAction, timeFrame, searchParams]);
 
   useEffect(() => {
     const searchVal = searchParams.get('search');
