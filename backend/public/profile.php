@@ -47,12 +47,9 @@ if ($method === 'GET') {
         exit;
     }
 
-    // Get active season ID
-    $activeSeasonId = $GLOBALS['currentSeasonId'] ?? null;
-    if (!$activeSeasonId) {
-        require_once __DIR__ . '/../src/Utils/AcademicSeasonManager.php';
-        $activeSeasonId = \FlowSync\Utils\AcademicSeasonManager::getCurrentSeasonId($targetId);
-    }
+    // Always resolve active season ID for the target profile user
+    require_once __DIR__ . '/../src/Utils/AcademicSeasonManager.php';
+    $activeSeasonId = \FlowSync\Utils\AcademicSeasonManager::getCurrentSeasonId($targetId);
 
     $totalPoints = 0;
     $tasksCompleted = 0;

@@ -6,14 +6,14 @@ use FlowSync\Config\Database;
 use PDO;
 
 class AcademicSeasonManager {
-    private static $cachedSeasonId = null;
+    private static $cachedSeasonIds = [];
 
     /**
      * Get the active season ID for the given user ID.
      */
     public static function getCurrentSeasonId($userId) {
-        if (self::$cachedSeasonId !== null) {
-            return self::$cachedSeasonId;
+        if (isset(self::$cachedSeasonIds[$userId])) {
+            return self::$cachedSeasonIds[$userId];
         }
 
         $db = Database::getInstance()->getConnection();
@@ -24,6 +24,7 @@ class AcademicSeasonManager {
         $collegeId = $userStmt->fetchColumn();
 
         if (!$collegeId) {
+            self::$cachedSeasonIds[$userId] = null;
             return null;
         }
 
@@ -41,8 +42,8 @@ class AcademicSeasonManager {
             $validId = $validateStmt->fetchColumn();
 
             if ($validId) {
-                self::$cachedSeasonId = (int)$validId;
-                return self::$cachedSeasonId;
+                self::$cachedSeasonIds[$userId] = (int)$validId;
+                return self::$cachedSeasonIds[$userId];
             }
         }
 
@@ -56,8 +57,8 @@ class AcademicSeasonManager {
         $defaultId = $defaultStmt->fetchColumn();
 
         if ($defaultId) {
-            self::$cachedSeasonId = (int)$defaultId;
-            return self::$cachedSeasonId;
+            self::$cachedSeasonIds[$userId] = (int)$defaultId;
+            return self::$cachedSeasonIds[$userId];
         }
 
         // 4. Extreme fallback: get any season for the college
@@ -71,10 +72,11 @@ class AcademicSeasonManager {
         $anyId = $anyStmt->fetchColumn();
 
         if ($anyId) {
-            self::$cachedSeasonId = (int)$anyId;
-            return self::$cachedSeasonId;
+            self::$cachedSeasonIds[$userId] = (int)$anyId;
+            return self::$cachedSeasonIds[$userId];
         }
 
+        self::$cachedSeasonIds[$userId] = null;
         return null;
     }
 
