@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import SEO from '@/components/SEO';
-import { cn } from '@/lib/utils';
+import { cn, getImageUrl } from '@/lib/utils';
 
 interface TeamMember {
   id: number;
@@ -51,6 +51,8 @@ interface DeptData {
 const FacultyDepartment: React.FC = () => {
   const [data, setData] = useState<DeptData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [shuffledMembersWithPics, setShuffledMembersWithPics] = useState<TeamMember[]>([]);
+  const [failedImageIds, setFailedImageIds] = useState<number[]>([]);
 
   const fetchDeptData = async () => {
     try {
@@ -60,6 +62,9 @@ const FacultyDepartment: React.FC = () => {
       const result = await response.json();
       if (result.status === 'success') {
         setData(result.data);
+        const withPics = (result.data.team || []).filter((m: TeamMember) => m.profile_pic && m.profile_pic.trim() !== '');
+        const shuffled = [...withPics].sort(() => 0.5 - Math.random());
+        setShuffledMembersWithPics(shuffled);
       }
     } catch (error) {
       console.error('Failed to fetch department data:', error);
@@ -81,6 +86,8 @@ const FacultyDepartment: React.FC = () => {
   }
 
   if (!data) return null;
+
+  const visibleMembers = shuffledMembersWithPics.filter(m => !failedImageIds.includes(m.id));
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20">
@@ -104,18 +111,20 @@ const FacultyDepartment: React.FC = () => {
             </div>
             
             <div className="flex -space-x-4">
-              {data.team?.slice(0, 4).map((member, idx) => (
+              {visibleMembers.slice(0, 4).map((member, idx) => (
                 <div key={idx} className="w-16 h-16 rounded-2xl border-4 border-white dark:border-[#130C24] bg-slate-100 dark:bg-[#1A0F35] overflow-hidden flex items-center justify-center font-black text-[#7C3AED] shadow-lg">
-                  {member.profile_pic ? (
-                    <img src={`${import.meta.env.VITE_API_URL}/${member.profile_pic}`} className="w-full h-full object-cover" alt="" />
-                  ) : (
-                    member.name.charAt(0)
-                  )}
+                  <img 
+                    src={getImageUrl(member.profile_pic)} 
+                    className="w-full h-full object-cover" 
+                    alt="" 
+                    loading="lazy" 
+                    onError={() => setFailedImageIds(prev => [...prev, member.id])}
+                  />
                 </div>
               ))}
-              {data.team?.length > 4 && (
+              {visibleMembers.length > 4 && (
                 <div className="w-16 h-16 rounded-2xl border-4 border-white dark:border-[#130C24] bg-[#7C3AED] flex items-center justify-center font-black text-white text-sm shadow-lg">
-                  +{data.team.length - 4}
+                  +{visibleMembers.length - 4}
                 </div>
               )}
             </div>
@@ -170,7 +179,7 @@ const FacultyDepartment: React.FC = () => {
                 {data.hod.is_public && data.hod.id ? (
                   <Link to={`/faculty/profile/${data.hod.id}`} className="w-24 h-24 bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] rounded-[2rem] overflow-hidden flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-[#7C3AED]/20 hover:scale-105 transition-all">
                     {data.hod.profile_pic ? (
-                      <img src={`${import.meta.env.VITE_API_URL}/${data.hod.profile_pic}`} className="w-full h-full object-cover" alt="" />
+                      <img src={getImageUrl(data.hod.profile_pic)} className="w-full h-full object-cover" alt="" loading="lazy" />
                     ) : (
                       data.hod.name.charAt(0)
                     )}
@@ -178,7 +187,7 @@ const FacultyDepartment: React.FC = () => {
                 ) : (
                   <div className="w-24 h-24 bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] rounded-[2rem] overflow-hidden flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-[#7C3AED]/20">
                     {data.hod.profile_pic ? (
-                      <img src={`${import.meta.env.VITE_API_URL}/${data.hod.profile_pic}`} className="w-full h-full object-cover" alt="" />
+                      <img src={getImageUrl(data.hod.profile_pic)} className="w-full h-full object-cover" alt="" loading="lazy" />
                     ) : (
                       data.hod.name.charAt(0)
                     )}
@@ -319,7 +328,7 @@ const FacultyDepartment: React.FC = () => {
               >
                 <div className="w-12 h-12 bg-[#7C3AED]/5 dark:bg-violet-950/40 rounded-xl border border-slate-100 dark:border-violet-500/15 overflow-hidden flex items-center justify-center font-black text-[#7C3AED] dark:text-violet-400 group-hover:bg-[#7C3AED] dark:group-hover:bg-violet-600 group-hover:text-white dark:group-hover:text-white transition-all shadow-sm shrink-0 hover:scale-105">
                   {member.profile_pic ? (
-                    <img src={`${import.meta.env.VITE_API_URL}/${member.profile_pic}`} className="w-full h-full object-cover" alt="" />
+                    <img src={getImageUrl(member.profile_pic)} className="w-full h-full object-cover" alt="" loading="lazy" />
                   ) : (
                     member.name.charAt(0)
                   )}
@@ -336,7 +345,7 @@ const FacultyDepartment: React.FC = () => {
               >
                 <div className="w-12 h-12 bg-[#7C3AED]/5 dark:bg-violet-950/40 rounded-xl border border-slate-100 dark:border-violet-500/15 overflow-hidden flex items-center justify-center font-black text-[#7C3AED] dark:text-violet-400 shadow-sm shrink-0">
                   {member.profile_pic ? (
-                    <img src={`${import.meta.env.VITE_API_URL}/${member.profile_pic}`} className="w-full h-full object-cover" alt="" />
+                    <img src={getImageUrl(member.profile_pic)} className="w-full h-full object-cover" alt="" loading="lazy" />
                   ) : (
                     member.name.charAt(0)
                   )}
