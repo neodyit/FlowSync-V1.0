@@ -62,28 +62,79 @@ interface Transaction {
 }
 
 export default function Subscriptions() {
-  const [activeTab, setActiveTab] = useState<'colleges' | 'plans' | 'coupons' | 'transactions'>(() => {
+  const [activeTab, setActiveTab] = useState<'colleges' | 'plans' | 'coupons' | 'transactions' | 'sandbox'>(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    if (tab === 'colleges' || tab === 'plans' || tab === 'coupons' || tab === 'transactions') {
+    if (tab === 'colleges' || tab === 'plans' || tab === 'coupons' || tab === 'transactions' || tab === 'sandbox') {
       return tab;
     }
     return 'colleges';
   });
 
-  const handleTabChange = (tab: 'colleges' | 'plans' | 'coupons' | 'transactions') => {
+  const handleTabChange = (tab: 'colleges' | 'plans' | 'coupons' | 'transactions' | 'sandbox') => {
     setActiveTab(tab);
     const params = new URLSearchParams(window.location.search);
     params.set('tab', tab);
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState(null, '', newUrl);
   };
+
+  // Subscription Page states
   const [metrics, setMetrics] = useState<any>({});
   const [colleges, setColleges] = useState<any[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Sandbox states
+  const [sandboxPlanId, setSandboxPlanId] = useState('');
+  const [sandboxMonths, setSandboxMonths] = useState('1');
+  const [sandboxCouponId, setSandboxCouponId] = useState('');
+  const [customCouponCode, setCustomCouponCode] = useState('');
+  const [appliedCustomCoupon, setAppliedCustomCoupon] = useState<Coupon | null>(null);
+
+  const applyCustomCoupon = () => {
+    if (!customCouponCode) {
+      setAppliedCustomCoupon(null);
+      return;
+    }
+    const found = coupons.find(c => c.code === customCouponCode && c.status === 'active');
+    if (found) {
+      setAppliedCustomCoupon(found);
+      setSandboxCouponId(''); // Deselect standard select dropdown
+    } else {
+      alert('Coupon code is invalid or expired.');
+      setAppliedCustomCoupon(null);
+    }
+  };
+
+  // Calculation formulas for sandbox
+  const selectedPlan = plans.find(p => p.id.toString() === sandboxPlanId);
+  const calcBasePrice = selectedPlan ? parseFloat(selectedPlan.price) : 0;
+  const calcDurationMonths = selectedPlan ? selectedPlan.duration_months : 1;
+  
+  const currentMonths = parseFloat(sandboxMonths) || 1;
+  const calcMultiplier = currentMonths / calcDurationMonths;
+  const calcSubtotal = calcBasePrice * calcMultiplier;
+
+  // Coupon mapping
+  const activeCouponSelect = coupons.find(c => c.id.toString() === sandboxCouponId);
+  const appliedCoupon = appliedCustomCoupon || activeCouponSelect;
+
+  let calcDiscount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.discount_type === 'percentage') {
+      calcDiscount = calcSubtotal * (parseFloat(appliedCoupon.discount_value) / 100);
+    } else {
+      calcDiscount = Math.min(calcSubtotal, parseFloat(appliedCoupon.discount_value));
+    }
+  }
+
+  const calcGatewayPercent = selectedPlan ? parseFloat(selectedPlan.gateway_percentage) : 0;
+  const calcSubtotalAfterDiscount = Math.max(0, calcSubtotal - calcDiscount);
+  const calcGatewayCharge = calcSubtotalAfterDiscount * (calcGatewayPercent / 100);
+  const calcTotal = calcSubtotalAfterDiscount + calcGatewayCharge;
 
   // Search/Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -395,7 +446,7 @@ export default function Subscriptions() {
       </div>
 
       {/* Tabs Menu */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-6">
+      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-6 overflow-x-auto scrollbar-none whitespace-nowrap pb-2">
         <button 
           onClick={() => handleTabChange('colleges')}
           className={`pb-4 text-sm font-black transition-all ${activeTab === 'colleges' ? 'border-b-2 border-[#7C3AED] text-[#7C3AED]' : 'text-slate-400 hover:text-slate-600'}`}
@@ -420,6 +471,12 @@ export default function Subscriptions() {
         >
           Billing Transactions
         </button>
+        <button 
+          onClick={() => handleTabChange('sandbox')}
+          className={`pb-4 text-sm font-black transition-all ${activeTab === 'sandbox' ? 'border-b-2 border-[#7C3AED] text-[#7C3AED]' : 'text-slate-400 hover:text-slate-600'}`}
+        >
+          Subscription Sandbox
+        </button>
       </div>
 
       {/* Content */}
@@ -438,75 +495,77 @@ export default function Subscriptions() {
             </div>
           </div>
           
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-[#1A0F35]/40 text-left text-xs font-black text-slate-400 uppercase">
-                <th className="p-4">Institution Name</th>
-                <th className="p-4">Active Plan</th>
-                <th className="p-4">Expiry Date</th>
-                <th className="p-4">Days Left</th>
-                <th className="p-4">Sub Toggle</th>
-                <th className="p-4">Status</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredColleges.map((c) => (
-                <tr key={c.id} className="border-b dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-violet-950/10 transition-colors text-sm text-slate-600 dark:text-slate-300">
-                  <td className="p-4 font-bold text-slate-800 dark:text-white">{c.name}</td>
-                  <td className="p-4">{c.plan_name}</td>
-                  <td className="p-4">{c.final_expiry_date}</td>
-                  <td className="p-4 font-black">
-                    {c.remaining_days > 9000 ? 'Lifetime' : c.remaining_days}
-                  </td>
-                  <td className="p-4">
-                    <button 
-                      onClick={() => toggleSubscription(c)}
-                      className="text-slate-400 hover:text-[#7C3AED] transition-colors cursor-pointer"
-                      title={c.status === 'suspended' ? 'Resume Subscription' : 'Suspend Subscription'}
-                    >
-                      {c.status === 'suspended' ? (
-                        <ToggleLeft className="w-9 h-9 text-slate-400" />
-                      ) : (
-                        <ToggleRight className="w-9 h-9 text-emerald-500" />
-                      )}
-                    </button>
-                  </td>
-                  <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase ${
-                      c.status === 'active' ? 'bg-emerald-100 text-emerald-800' :
-                      c.status === 'trial' ? 'bg-amber-100 text-amber-800' :
-                      c.status === 'free' ? 'bg-indigo-100 text-indigo-800' :
-                      c.status === 'lifetime' ? 'bg-violet-100 text-violet-800' :
-                      'bg-rose-100 text-rose-800'
-                    }`}>
-                      {c.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right space-x-2">
-                    <button 
-                      onClick={() => { setSelectedCollege(c); setShowAssignModal(true); }}
-                      className="px-3 py-1.5 bg-[#7C3AED] hover:bg-violet-750 text-white rounded-lg text-xs font-bold"
-                    >
-                      Assign Plan
-                    </button>
-                    <button 
-                      onClick={() => handleOverrideStatus(c.id, 'trial')}
-                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold"
-                    >
-                      Assign Trial
-                    </button>
-                    <button 
-                      onClick={() => handleOverrideStatus(c.id, 'lifetime')}
-                      className="px-3 py-1.5 border border-[#7C3AED]/20 dark:border-violet-500/20 text-[#7C3AED] hover:bg-violet-50 dark:hover:bg-violet-950/20 rounded-lg text-xs font-bold"
-                    >
-                      Lifetime
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse min-w-[900px]">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-[#1A0F35]/40 text-left text-xs font-black text-slate-400 uppercase">
+                  <th className="p-4">Institution Name</th>
+                  <th className="p-4">Active Plan</th>
+                  <th className="p-4">Expiry Date</th>
+                  <th className="p-4">Days Left</th>
+                  <th className="p-4">Sub Toggle</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredColleges.map((c) => (
+                  <tr key={c.id} className="border-b dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-violet-950/10 transition-colors text-sm text-slate-600 dark:text-slate-300">
+                    <td className="p-4 font-bold text-slate-880 dark:text-white">{c.name}</td>
+                    <td className="p-4">{c.plan_name}</td>
+                    <td className="p-4">{c.final_expiry_date}</td>
+                    <td className="p-4 font-black">
+                      {c.remaining_days > 9000 ? 'Lifetime' : c.remaining_days}
+                    </td>
+                    <td className="p-4">
+                      <button 
+                        onClick={() => toggleSubscription(c)}
+                        className="text-slate-400 hover:text-[#7C3AED] transition-colors cursor-pointer"
+                        title={c.status === 'suspended' ? 'Resume Subscription' : 'Suspend Subscription'}
+                      >
+                        {c.status === 'suspended' ? (
+                          <ToggleLeft className="w-9 h-9 text-slate-400" />
+                        ) : (
+                          <ToggleRight className="w-9 h-9 text-emerald-500" />
+                        )}
+                      </button>
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase ${
+                        c.status === 'active' ? 'bg-emerald-100 text-emerald-800' :
+                        c.status === 'trial' ? 'bg-amber-100 text-amber-800' :
+                        c.status === 'free' ? 'bg-indigo-100 text-indigo-800' :
+                        c.status === 'lifetime' ? 'bg-violet-100 text-violet-800' :
+                        'bg-rose-100 text-rose-800'
+                      }`}>
+                        {c.status}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right space-x-2">
+                      <button 
+                        onClick={() => { setSelectedCollege(c); setShowAssignModal(true); }}
+                        className="px-3 py-1.5 bg-[#7C3AED] hover:bg-violet-750 text-white rounded-lg text-xs font-bold"
+                      >
+                        Assign Plan
+                      </button>
+                      <button 
+                        onClick={() => handleOverrideStatus(c.id, 'trial')}
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold"
+                      >
+                        Assign Trial
+                      </button>
+                      <button 
+                        onClick={() => handleOverrideStatus(c.id, 'lifetime')}
+                        className="px-3 py-1.5 border border-[#7C3AED]/20 dark:border-violet-500/20 text-[#7C3AED] hover:bg-violet-50 dark:hover:bg-violet-950/20 rounded-lg text-xs font-bold"
+                      >
+                        Lifetime
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -610,40 +669,178 @@ export default function Subscriptions() {
 
       {activeTab === 'transactions' && (
         <div className="bg-white dark:bg-[#110A24] rounded-2xl border border-slate-100 dark:border-violet-500/10 shadow-sm overflow-hidden">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-[#1A0F35]/40 text-left text-xs font-black text-slate-400 uppercase">
-                <th className="p-4">Tx ID / Ref</th>
-                <th className="p-4">College</th>
-                <th className="p-4">Plan Name</th>
-                <th className="p-4">Amount</th>
-                <th className="p-4">Charges</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((tx) => (
-                <tr key={tx.id} className="border-b dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300">
-                  <td className="p-4 font-mono text-xs">{tx.transaction_id || 'manual-' + tx.id}</td>
-                  <td className="p-4 font-bold text-slate-855 dark:text-white">{tx.college_name}</td>
-                  <td className="p-4">{tx.plan_name}</td>
-                  <td className="p-4 font-black">₹{tx.amount}</td>
-                  <td className="p-4">₹{tx.gateway_charge}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
-                      tx.payment_status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
-                      tx.payment_status === 'pending' ? 'bg-amber-100 text-amber-800' :
-                      'bg-rose-100 text-rose-800'
-                    }`}>
-                      {tx.payment_status}
-                    </span>
-                  </td>
-                  <td className="p-4">{new Date(tx.created_at).toLocaleDateString()}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse min-w-[900px]">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-[#1A0F35]/40 text-left text-xs font-black text-slate-400 uppercase">
+                  <th className="p-4">Tx ID / Ref</th>
+                  <th className="p-4">College</th>
+                  <th className="p-4">Plan Name</th>
+                  <th className="p-4">Amount</th>
+                  <th className="p-4">Charges</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {transactions.map((tx) => (
+                  <tr key={tx.id} className="border-b dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300">
+                    <td className="p-4 font-mono text-xs">{tx.transaction_id || 'manual-' + tx.id}</td>
+                    <td className="p-4 font-bold text-slate-855 dark:text-white">{tx.college_name}</td>
+                    <td className="p-4">{tx.plan_name}</td>
+                    <td className="p-4 font-black">₹{tx.amount}</td>
+                    <td className="p-4">₹{tx.gateway_charge}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
+                        tx.payment_status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
+                        tx.payment_status === 'pending' ? 'bg-amber-100 text-amber-800' :
+                        'bg-rose-100 text-rose-800'
+                      }`}>
+                        {tx.payment_status}
+                      </span>
+                    </td>
+                    <td className="p-4">{new Date(tx.created_at).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'sandbox' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in duration-300 text-left">
+          {/* Controls Form */}
+          <div className="lg:col-span-2 bg-white dark:bg-[#110A24] p-6 sm:p-8 rounded-3xl border border-slate-100 dark:border-violet-500/10 shadow-sm space-y-6">
+            <div>
+              <h2 className="text-xl font-black text-slate-800 dark:text-white mb-2">Estimate Pricing</h2>
+              <p className="text-xs text-slate-400">Simulate subscription pricing model by combining plans, duration modifiers, and coupon codes.</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest mb-1.5">Select Base Plan</label>
+                <select 
+                  value={sandboxPlanId}
+                  onChange={(e) => {
+                    const pid = e.target.value;
+                    setSandboxPlanId(pid);
+                    const selected = plans.find(p => p.id.toString() === pid);
+                    if (selected) {
+                      setSandboxMonths(selected.duration_months.toString());
+                    }
+                  }}
+                  className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800 font-bold text-slate-700 dark:text-indigo-200"
+                >
+                  <option value="">Select Plan...</option>
+                  {plans.map(p => (
+                    <option key={p.id} value={p.id.toString()}>{p.name} - ₹{p.price} ({p.duration_months} months)</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest mb-1.5">Quantity (Duration Months)</label>
+                  <input 
+                    type="number"
+                    min="1"
+                    value={sandboxMonths}
+                    onChange={(e) => setSandboxMonths(e.target.value)}
+                    className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800 font-bold text-slate-700 dark:text-indigo-200"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest mb-1.5">Select Promo Coupon</label>
+                  <select 
+                    value={sandboxCouponId}
+                    onChange={(e) => {
+                      setSandboxCouponId(e.target.value);
+                      setAppliedCustomCoupon(null); // Clear custom coupon if standard coupon is selected
+                    }}
+                    className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800 font-bold text-slate-700 dark:text-indigo-200"
+                  >
+                    <option value="">No Coupon</option>
+                    {coupons.map(c => (
+                      <option key={c.id} value={c.id.toString()}>{c.code} ({c.discount_type === 'percentage' ? `${c.discount_value}%` : `₹${c.discount_value}`} Off)</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest mb-1.5">Custom Discount Code (Optional)</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text"
+                    placeholder="ENTER CODE..."
+                    value={customCouponCode}
+                    onChange={(e) => setCustomCouponCode(e.target.value.toUpperCase())}
+                    className="flex-1 p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800 uppercase font-mono font-bold text-slate-755 dark:text-indigo-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={applyCustomCoupon}
+                    className="px-5 py-3 bg-[#7C3AED] hover:bg-violet-750 text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bill Summary Receipt Card */}
+          <div className="bg-white dark:bg-[#110A24] p-6 sm:p-8 rounded-3xl border border-slate-100 dark:border-violet-500/10 shadow-lg relative flex flex-col justify-between overflow-hidden">
+            <div className="space-y-4">
+              <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest pb-3 border-b dark:border-slate-800">Calculation Summary</h3>
+              
+              <div className="space-y-3 text-sm font-medium">
+                <div className="flex justify-between text-slate-500">
+                  <span>Base Plan Price:</span>
+                  <span className="font-bold text-slate-800 dark:text-white">₹{calcBasePrice.toFixed(2)}</span>
+                </div>
+
+                <div className="flex justify-between text-slate-500">
+                  <span>Scaled Duration Multiplier:</span>
+                  <span className="font-bold text-slate-800 dark:text-white">x{calcMultiplier.toFixed(2)}</span>
+                </div>
+
+                <div className="flex justify-between text-slate-500 border-b dark:border-slate-800 pb-2">
+                  <span>Subtotal Price:</span>
+                  <span className="font-bold text-slate-800 dark:text-white">₹{calcSubtotal.toFixed(2)}</span>
+                </div>
+
+                {appliedCoupon && (
+                  <div className="flex justify-between text-emerald-500">
+                    <span className="flex items-center gap-1.5 font-bold">
+                      Discount ({appliedCoupon.code}):
+                    </span>
+                    <span className="font-bold">-₹{calcDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between text-slate-500">
+                  <span>Gateway Charge ({calcGatewayPercent}%):</span>
+                  <span className="font-bold text-slate-800 dark:text-white">₹{calcGatewayCharge.toFixed(2)}</span>
+                </div>
+
+                <div className="h-px border-t border-dashed border-slate-200 dark:border-slate-850 my-4" />
+
+                <div className="flex justify-between text-base font-black">
+                  <span className="text-slate-800 dark:text-white">Total Estimate:</span>
+                  <span className="text-[#7C3AED] dark:text-violet-400 text-lg">₹{calcTotal.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-4 border-t dark:border-slate-800 flex flex-col gap-2">
+              <div className="p-3 bg-violet-50 dark:bg-violet-950/20 text-[#7C3AED] dark:text-violet-400 rounded-2xl text-[10px] font-black uppercase text-center tracking-wider border border-[#7C3AED]/10">
+                Sandbox Simulator Mode
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

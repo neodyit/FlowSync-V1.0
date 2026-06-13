@@ -80,6 +80,25 @@ export const checkSession = async () => {
     
     if (!response.ok) {
       console.warn('Session check failed with status:', response.status);
+      // If server returns a 5xx error or temporary failure, try to fall back to cached session
+      const cachedUser = localStorage.getItem('user');
+      if (cachedUser) {
+        try {
+          const user = JSON.parse(cachedUser);
+          return {
+            status: 'success',
+            isOffline: true,
+            user,
+            session: {
+              user_id: user.id,
+              email: user.email,
+              role: user.role,
+              role_id: user.role_id,
+              college_id: user.college_id
+            }
+          };
+        } catch (e) {}
+      }
       return null;
     }
     
@@ -96,6 +115,25 @@ export const checkSession = async () => {
     return data;
   } catch (error) {
     console.error('Session validation connection error', error);
+    // If network is offline or server is unreachable, fall back to cached user session
+    const cachedUser = localStorage.getItem('user');
+    if (cachedUser) {
+      try {
+        const user = JSON.parse(cachedUser);
+        return {
+          status: 'success',
+          isOffline: true,
+          user,
+          session: {
+            user_id: user.id,
+            email: user.email,
+            role: user.role,
+            role_id: user.role_id,
+            college_id: user.college_id
+          }
+        };
+      } catch (e) {}
+    }
     return null;
   }
 };

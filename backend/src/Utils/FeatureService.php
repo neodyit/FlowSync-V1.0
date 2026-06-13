@@ -40,8 +40,12 @@ class FeatureService {
         $stmt->execute(['cid' => $collegeId, 'fkey' => $featureKey]);
         $row = $stmt->fetch();
 
-        // If not seeded yet, assume enabled by default
-        $val = $row ? ($row['is_enabled'] == 1) : true;
+        // If not seeded yet, assume enabled by default (except for specific opt-in flags)
+        if (!$row && $featureKey === 'grace_period_penalties') {
+            $val = false;
+        } else {
+            $val = $row ? ($row['is_enabled'] == 1) : true;
+        }
         self::$featuresCache[$cacheKey] = $val;
         return $val;
     }

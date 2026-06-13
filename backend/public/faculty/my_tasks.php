@@ -44,64 +44,101 @@ try {
             $stmt->execute(['user_id' => $session['user_id'], 'season_id' => $currentSeasonId]);
             $tasks = $stmt->fetchAll();
 
-            // Fetch attachments (HOD files + Faculty submissions)
-            foreach ($tasks as &$task) {
-                // Use assignment status for UI
-                $task['status'] = $task['my_status'];
-                $task['submitted_at'] = $task['my_submitted_at'];
-                $task['points'] = $task['my_points'];
-                $task['bonus_points'] = $task['my_bonus'];
-                $task['remarks'] = $task['my_remarks'];
+            // Fetch attachments, teammate remarks, team members, and comments in bulk to avoid N+1 queries
+            if (!empty($tasks)) {
+                $taskIds = array_column($tasks, 'id');
+                $placeholders = implode(',', array_fill(0, count($taskIds), '?'));
+
+                // 1. Fetch attachments
                 $attStmt = $db->prepare("
-                    SELECT a.id, a.original_name AS file_name, 
+                    SELECT a.id, a.task_id, a.original_name AS file_name, 
                            CONCAT('tasks_data/', c.short_name, '/task_', a.task_id, '/', a.stored_name) AS file_path, 
                            a.entity_type, a.created_at, a.uploader_id
                     FROM attachments a
                     JOIN colleges c ON a.institution_id = c.id
                     WHERE (a.entity_type = 'Task' OR a.entity_type = 'Task_Submission') 
-                    AND a.task_id = :task_id
+                    AND a.task_id IN ($placeholders)
                 ");
-                $attStmt->execute(['task_id' => $task['id']]);
-                $task['attachments'] = $attStmt->fetchAll();
-                $task['attachment_count'] = count($task['attachments']);
+                $attStmt->execute($taskIds);
+                $attachments = $attStmt->fetchAll();
                 
-                // Fetch numeric fields
-                $task['points'] = (int)($task['points'] ?? 0);
-                $task['bonus_points'] = (int)($task['bonus_points'] ?? 0);
+                $attachmentsByTask = [];
+                foreach ($attachments as $att) {
+                    $attachmentsByTask[$att['task_id']][] = $att;
+                }
 
-                // Fetch teammate public remarks for all shared tasks
+                // 2. Fetch teammate public remarks
                 $teamStmt = $db->prepare("
-                    SELECT ta.public_remarks, u.name as faculty_name, u.profile_pic as faculty_pic, ta.status, ta.progress
+                    SELECT ta.task_id, ta.public_remarks, u.name as faculty_name, u.profile_pic as faculty_pic, ta.status, ta.progress
                     FROM task_assignments ta
                     JOIN users u ON ta.user_id = u.id
-                    WHERE ta.task_id = :task_id AND ta.user_id != :user_id AND ta.public_remarks IS NOT NULL
+                    WHERE ta.task_id IN ($placeholders) AND ta.user_id != ? AND ta.public_remarks IS NOT NULL
                 ");
-                $teamStmt->execute(['task_id' => $task['id'], 'user_id' => $session['user_id']]);
-                $task['teammate_remarks'] = $teamStmt->fetchAll();
+                $teamParams = array_merge($taskIds, [$session['user_id']]);
+                $teamStmt->execute($teamParams);
+                $teammates = $teamStmt->fetchAll();
 
-                // Fetch all team members assigned to this task
+                $teammatesByTask = [];
+                foreach ($teammates as $t) {
+                    $teammatesByTask[$t['task_id']][] = $t;
+                }
+
+                // 3. Fetch all team members assigned to these tasks
                 $teamMembersStmt = $db->prepare("
-                    SELECT ta.user_id, ta.status, ta.progress,
+                    SELECT ta.task_id, ta.user_id, ta.status, ta.progress,
                            u.name as faculty_name, u.profile_pic as faculty_pic, u.email as faculty_email, u.designation, u.is_public,
                            d.name as department_name
                     FROM task_assignments ta
                     JOIN users u ON ta.user_id = u.id
                     LEFT JOIN departments d ON EXISTS(SELECT 1 FROM faculty_departments fd WHERE fd.user_id = u.id AND fd.department_id = d.id)
-                    WHERE ta.task_id = :task_id
+                    WHERE ta.task_id IN ($placeholders)
                 ");
-                $teamMembersStmt->execute(['task_id' => $task['id']]);
-                $task['team_members'] = $teamMembersStmt->fetchAll();
+                $teamMembersStmt->execute($taskIds);
+                $teamMembers = $teamMembersStmt->fetchAll();
 
-                // Fetch comments chain
+                $teamMembersByTask = [];
+                foreach ($teamMembers as $tm) {
+                    $teamMembersByTask[$tm['task_id']][] = $tm;
+                }
+
+                // 4. Fetch comments chain
                 $commentStmt = $db->prepare("
                     SELECT tc.*, u.name as user_name, u.profile_pic as user_pic
                     FROM task_comments tc
                     JOIN users u ON tc.user_id = u.id
-                    WHERE tc.task_id = :task_id
+                    WHERE tc.task_id IN ($placeholders)
                     ORDER BY tc.created_at ASC
                 ");
-                $commentStmt->execute(['task_id' => $task['id']]);
-                $task['comments'] = $commentStmt->fetchAll();
+                $commentStmt->execute($taskIds);
+                $comments = $commentStmt->fetchAll();
+
+                $commentsByTask = [];
+                foreach ($comments as $c) {
+                    $commentsByTask[$c['task_id']][] = $c;
+                }
+
+                // Map to tasks
+                foreach ($tasks as &$task) {
+                    $tid = $task['id'];
+
+                    // Use assignment status for UI
+                    $task['status'] = $task['my_status'];
+                    $task['submitted_at'] = $task['my_submitted_at'];
+                    $task['points'] = $task['my_points'];
+                    $task['bonus_points'] = $task['my_bonus'];
+                    $task['remarks'] = $task['my_remarks'];
+
+                    $task['attachments'] = $attachmentsByTask[$tid] ?? [];
+                    $task['attachment_count'] = count($task['attachments']);
+                    
+                    // Fetch numeric fields
+                    $task['points'] = (int)($task['points'] ?? 0);
+                    $task['bonus_points'] = (int)($task['bonus_points'] ?? 0);
+
+                    $task['teammate_remarks'] = $teammatesByTask[$tid] ?? [];
+                    $task['team_members'] = $teamMembersByTask[$tid] ?? [];
+                    $task['comments'] = $commentsByTask[$tid] ?? [];
+                }
             }
 
             echo json_encode(['status' => 'success', 'data' => $tasks]);

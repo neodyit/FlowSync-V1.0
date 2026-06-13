@@ -36,9 +36,12 @@ try {
             $stmt->execute(['dept_id' => $deptId, 'season_id' => $currentSeasonId]);
             $tasks = $stmt->fetchAll();
 
-            // Fetch assignments and attachments for each task
-            foreach ($tasks as &$task) {
-                // Fetch all assignments for this task
+            // Fetch assignments, attachments, and comments in bulk to avoid N+1 queries
+            if (!empty($tasks)) {
+                $taskIds = array_column($tasks, 'id');
+                $placeholders = implode(',', array_fill(0, count($taskIds), '?'));
+
+                // 1. Fetch assignments
                 $assignStmt = $db->prepare("
                     SELECT ta.*, u.name as faculty_name, u.email as faculty_email, u.profile_pic as faculty_pic, u.designation, u.is_public, u.phone, u.bio,
                            d.name as department_name,
@@ -49,41 +52,59 @@ try {
                     JOIN users u ON ta.user_id = u.id
                     JOIN tasks t ON ta.task_id = t.id
                     LEFT JOIN departments d ON EXISTS(SELECT 1 FROM faculty_departments fd WHERE fd.user_id = u.id AND fd.department_id = d.id)
-                    WHERE ta.task_id = :task_id
+                    WHERE ta.task_id IN ($placeholders)
                 ");
-                $assignStmt->execute(['task_id' => $task['id']]);
-                $task['assignments'] = $assignStmt->fetchAll();
-                
-                // Fetch all attachments
+                $assignStmt->execute($taskIds);
+                $assignments = $assignStmt->fetchAll();
+
+                $assignmentsByTask = [];
+                foreach ($assignments as $assign) {
+                    $assignmentsByTask[$assign['task_id']][] = $assign;
+                }
+
+                // 2. Fetch attachments
                 $attStmt = $db->prepare("
-                    SELECT a.id, a.original_name AS file_name, 
+                    SELECT a.id, a.task_id, a.original_name AS file_name, 
                            CONCAT('tasks_data/', c.short_name, '/task_', a.task_id, '/', a.stored_name) AS file_path, 
                            a.entity_type, a.created_at, CAST(a.uploader_id AS UNSIGNED) as uploader_id 
                     FROM attachments a
                     JOIN colleges c ON a.institution_id = c.id
                     WHERE (a.entity_type = 'Task' OR a.entity_type = 'Task_Submission') 
-                    AND a.task_id = :task_id
+                    AND a.task_id IN ($placeholders)
                 ");
-                $attStmt->execute(['task_id' => $task['id']]);
-                $task['attachments'] = $attStmt->fetchAll(PDO::FETCH_ASSOC);
-                
-                // Ensure uploader_id is int
-                foreach ($task['attachments'] as &$att) {
-                    $att['uploader_id'] = (int)$att['uploader_id'];
-                }
-                
-                $task['attachment_count'] = count($task['attachments']);
+                $attStmt->execute($taskIds);
+                $attachments = $attStmt->fetchAll(PDO::FETCH_ASSOC);
 
-                // Fetch comments chain
+                $attachmentsByTask = [];
+                foreach ($attachments as $att) {
+                    $att['uploader_id'] = (int)$att['uploader_id'];
+                    $attachmentsByTask[$att['task_id']][] = $att;
+                }
+
+                // 3. Fetch comments chain
                 $commentStmt = $db->prepare("
                     SELECT tc.*, u.name as user_name, u.profile_pic as user_pic
                     FROM task_comments tc
                     JOIN users u ON tc.user_id = u.id
-                    WHERE tc.task_id = :task_id
+                    WHERE tc.task_id IN ($placeholders)
                     ORDER BY tc.created_at ASC
                 ");
-                $commentStmt->execute(['task_id' => $task['id']]);
-                $task['comments'] = $commentStmt->fetchAll();
+                $commentStmt->execute($taskIds);
+                $comments = $commentStmt->fetchAll();
+
+                $commentsByTask = [];
+                foreach ($comments as $c) {
+                    $commentsByTask[$c['task_id']][] = $c;
+                }
+
+                // Map to tasks
+                foreach ($tasks as &$task) {
+                    $tid = $task['id'];
+                    $task['assignments'] = $assignmentsByTask[$tid] ?? [];
+                    $task['attachments'] = $attachmentsByTask[$tid] ?? [];
+                    $task['attachment_count'] = count($task['attachments']);
+                    $task['comments'] = $commentsByTask[$tid] ?? [];
+                }
             }
 
             // Include system settings in response so frontend knows if task creation is paused
@@ -328,8 +349,8 @@ try {
 
             $db->beginTransaction();
 
-            // Fetch task to verify ownership
-            $check = $db->prepare("SELECT id, title, assigned_to_id, status, season_id FROM tasks WHERE id = :id AND department_id = :dept_id");
+            // Fetch task to verify ownership (selecting deadline and college_id for automated grace period checks)
+            $check = $db->prepare("SELECT id, title, assigned_to_id, status, season_id, deadline, college_id FROM tasks WHERE id = :id AND department_id = :dept_id");
             $check->execute(['id' => $taskId, 'dept_id' => $deptId]);
             $task = $check->fetch();
             if (!$task) throw new Exception("Task not found or access denied.");
@@ -370,6 +391,29 @@ try {
                     }
                     
                     $newRemarks = $data['remarks'] ?? $assignment['remarks'] ?? '';
+
+                    // Automated late submission penalty check (if feature is enabled for the college)
+                    if ($newStatus === 'Approved' && isset($data['points']) && \FlowSync\Utils\FeatureService::isEnabled($task['college_id'], 'grace_period_penalties')) {
+                        $submittedAt = $assignment['submitted_at'] ?? null;
+                        $deadline = $task['deadline'] ?? null;
+                        if ($submittedAt && $deadline && strtotime($submittedAt) > strtotime($deadline)) {
+                            $diffSeconds = strtotime($submittedAt) - strtotime($deadline);
+                            // 2-hour grace period (7200 seconds)
+                            if ($diffSeconds > 7200) {
+                                $delaySecondsPastGrace = $diffSeconds - 7200;
+                                $delayHours = ceil($delaySecondsPastGrace / 3600);
+                                $penaltyPercentage = min(50, $delayHours * 10); // 10% per hour, capped at 50%
+                                $deductedPoints = (int)round($newPoints * ($penaltyPercentage / 100));
+                                $newPoints = max(0, $newPoints - $deductedPoints);
+                                
+                                // Append penalty detail to HOD remarks
+                                $penaltyText = " [Late Submission Penalty: -$penaltyPercentage% ($delayHours hr(s) past 2h grace period)]";
+                                if (strpos($newRemarks, "Late Submission Penalty") === false) {
+                                    $newRemarks = trim($newRemarks) !== '' ? $newRemarks . $penaltyText : trim($penaltyText);
+                                }
+                            }
+                        }
+                    }
 
                     $progressVal = 0;
                     if ($newStatus === 'Approved') {
