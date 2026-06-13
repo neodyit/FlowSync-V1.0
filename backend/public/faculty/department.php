@@ -30,9 +30,12 @@ try {
     $deptId = $deptInfo['dept_id'];
 
     // 2. Fetch HOD Details
-    $stmt = $db->prepare("SELECT id, name, email, profile_pic, is_public FROM users WHERE id = :hod_id");
-    $stmt->execute(['hod_id' => $deptInfo['hod_id']]);
-    $hod = $stmt->fetch();
+    $hod = null;
+    if (!empty($deptInfo['hod_id'])) {
+        $stmt = $db->prepare("SELECT id, name, email, profile_pic, is_public FROM users WHERE id = :hod_id");
+        $stmt->execute(['hod_id' => $deptInfo['hod_id']]);
+        $hod = $stmt->fetch() ?: null;
+    }
 
     // 3. Calculate Faculty Stats (Points, Bonus, Completed)
     $stmt = $db->prepare("
@@ -82,11 +85,11 @@ try {
             'department' => $deptInfo['dept_name'],
             'college' => $deptInfo['college_name'],
             'hod' => [
-                'id' => $hod['id'] ?? null,
-                'name' => $hod['name'] ?? 'Not Assigned',
-                'email' => $hod['email'] ?? 'N/A',
-                'profile_pic' => $hod['profile_pic'],
-                'is_public' => isset($hod['is_public']) ? (int)$hod['is_public'] : 0
+                'id' => $hod ? ($hod['id'] ?? null) : null,
+                'name' => $hod ? ($hod['name'] ?? 'Not Assigned') : 'Not Assigned',
+                'email' => $hod ? ($hod['email'] ?? 'N/A') : 'N/A',
+                'profile_pic' => $hod ? ($hod['profile_pic'] ?? null) : null,
+                'is_public' => $hod ? (isset($hod['is_public']) ? (int)$hod['is_public'] : 0) : 0
             ],
             'stats' => [
                 'rank' => $rank ?: 'N/A',
