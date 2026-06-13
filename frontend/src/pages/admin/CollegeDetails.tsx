@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Building2, 
@@ -21,11 +21,13 @@ import {
   Unlock,
   Info,
   ChevronDown,
-  User
+  User,
+  Award,
+  Trophy
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import SEO from '@/components/SEO';
-import { cn, formatDate } from '@/lib/utils';
+import { cn, formatDate, getImageUrl } from '@/lib/utils';
 import DateTimePicker from '@/components/ui/DateTimePicker';
 
 interface Department {
@@ -221,7 +223,7 @@ const CollegeDetails: React.FC = () => {
   const { shortName } = useParams<{ shortName: string }>();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'departments' | 'seasons' | 'features' | 'broadcast'>(() => {
+  const [activeTab, setActiveTab] = useState<'departments' | 'seasons' | 'features' | 'broadcast' | 'leaderboard'>(() => {
     const saved = sessionStorage.getItem('college_details_active_tab');
     return (saved as any) || 'departments';
   });
@@ -235,6 +237,14 @@ const CollegeDetails: React.FC = () => {
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [featureFlags, setFeatureFlags] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
+
+  // Leaderboard states
+  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
+  const [leaderboardDepts, setLeaderboardDepts] = useState<any[]>([]);
+  const [leaderboardSeasons, setLeaderboardSeasons] = useState<any[]>([]);
+  const [selectedLeaderboardDept, setSelectedLeaderboardDept] = useState<string>('');
+  const [selectedLeaderboardSeason, setSelectedLeaderboardSeason] = useState<string>('');
+  const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
 
   // Departments Modals/Form
   const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
@@ -296,6 +306,49 @@ const CollegeDetails: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  const fetchLeaderboard = async () => {
+    if (!college) return;
+    setIsLeaderboardLoading(true);
+    try {
+      let url = `${import.meta.env.VITE_API_URL}/admin/leaderboard.php?college_id=${college.id}`;
+      if (selectedLeaderboardDept) {
+        url += `&department_id=${selectedLeaderboardDept}`;
+      }
+      if (selectedLeaderboardSeason) {
+        url += `&season_id=${selectedLeaderboardSeason}`;
+      }
+      const res = await fetch(url, { credentials: 'include' });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setLeaderboardData(data.data || []);
+        setLeaderboardDepts(data.departments || []);
+        const seasonsList = data.seasons || [];
+        setLeaderboardSeasons(seasonsList);
+        
+        if (!selectedLeaderboardSeason) {
+          const defaultSeason = seasonsList.find((s: any) => s.is_default === 1 || s.is_default === '1');
+          if (defaultSeason) {
+            setSelectedLeaderboardSeason(defaultSeason.id.toString());
+          } else if (data.active_season_id) {
+            setSelectedLeaderboardSeason(data.active_season_id.toString());
+          } else if (seasonsList.length > 0) {
+            setSelectedLeaderboardSeason(seasonsList[0].id.toString());
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+    } finally {
+      setIsLeaderboardLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'leaderboard' && college) {
+      fetchLeaderboard();
+    }
+  }, [activeTab, college?.id, selectedLeaderboardDept, selectedLeaderboardSeason]);
 
   useEffect(() => {
     fetchData();
@@ -623,7 +676,8 @@ const CollegeDetails: React.FC = () => {
           { id: 'departments', label: 'Departments', icon: Users },
           { id: 'seasons', label: 'Academic Seasons', icon: Calendar },
           { id: 'features', label: 'Features & Configurations', icon: Settings },
-          { id: 'broadcast', label: 'Broadcast Notices', icon: Bell }
+          { id: 'broadcast', label: 'Broadcast Notices', icon: Bell },
+          { id: 'leaderboard', label: 'Leaderboard', icon: Trophy }
         ] as const).map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -999,6 +1053,142 @@ const CollegeDetails: React.FC = () => {
                 {isBroadcasting ? 'Broadcasting Alert...' : 'Transmit Alert Dialogue'}
               </button>
             </form>
+          </div>
+        )}
+
+        {activeTab === 'leaderboard' && (
+          <div className="space-y-6">
+            {/* Filters */}
+            <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-[24px] p-6 flex flex-col md:flex-row gap-6 items-end relative z-30">
+              <div className="flex-1 w-full">
+                <CustomSelect
+                  label="Filter Department"
+                  value={selectedLeaderboardDept}
+                  onChange={(val) => setSelectedLeaderboardDept(val.toString())}
+                  options={[
+                    { value: '', label: 'All Departments (Top 20)' },
+                    ...leaderboardDepts.map(d => ({ value: d.id, label: d.name + (d.code ? ` (${d.code})` : '') }))
+                  ]}
+                  placeholder="Select Department"
+                  icon={Users}
+                />
+              </div>
+              <div className="flex-1 w-full">
+                <CustomSelect
+                  label="Academic Season"
+                  value={selectedLeaderboardSeason}
+                  onChange={(val) => setSelectedLeaderboardSeason(val.toString())}
+                  options={leaderboardSeasons.map(s => ({
+                    value: s.id,
+                    label: s.name + (s.is_default === 1 ? ' (Default)' : '')
+                  }))}
+                  placeholder="Select Academic Season"
+                  icon={Calendar}
+                />
+              </div>
+            </div>
+
+            {/* Table or Loading / Empty States */}
+            {isLeaderboardLoading ? (
+              <div className="flex flex-col justify-center items-center py-20 gap-4">
+                <div className="w-10 h-10 border-4 border-[#7C3AED]/20 border-t-[#7C3AED] rounded-full animate-spin" />
+                <p className="text-[10px] font-black uppercase text-slate-400 dark:text-violet-400 tracking-widest">Compiling standings...</p>
+              </div>
+            ) : leaderboardData.length === 0 ? (
+              <div className="py-16 bg-white dark:bg-[#1A0F35]/20 rounded-[2.5rem] border border-dashed border-slate-100 dark:border-violet-500/15 text-center">
+                <Trophy className="w-12 h-12 text-slate-300 dark:text-violet-500/30 mx-auto mb-3" />
+                <p className="text-slate-400 dark:text-violet-400/50 font-bold uppercase text-[10px] tracking-widest">No scores recorded yet</p>
+                <p className="text-xs text-slate-300 dark:text-violet-500/20 mt-1">Faculties must earn points by completing approved tasks in this season.</p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-[#1A0F35]/20 backdrop-blur-md border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-[24px] overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-[#7C3AED]/10 dark:border-violet-500/10 bg-slate-50/50 dark:bg-[#110A24]/40">
+                        <th className="px-6 py-4 text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest">Rank</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest">Faculty Member</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest">Department</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest text-center">Tasks Completed</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest text-center">Bonus Points</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-[#4C1D95]/60 dark:text-violet-400/60 uppercase tracking-widest text-right">Total Score</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#7C3AED]/5 dark:divide-violet-500/5">
+                      {leaderboardData.map((row, index) => {
+                        const rank = index + 1;
+                        let rankBadge = null;
+                        let rowBg = "";
+
+                        if (rank === 1) {
+                          rankBadge = <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-500 text-white font-black text-xs shadow-md shadow-amber-500/20"><Trophy className="w-3.5 h-3.5" /></span>;
+                          rowBg = "bg-amber-500/[0.03] dark:bg-amber-500/[0.01]";
+                        } else if (rank === 2) {
+                          rankBadge = <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-400 text-white font-black text-xs shadow-md shadow-slate-400/20"><Award className="w-3.5 h-3.5" /></span>;
+                          rowBg = "bg-slate-400/[0.03] dark:bg-slate-400/[0.01]";
+                        } else if (rank === 3) {
+                          rankBadge = <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-700 text-white font-black text-xs shadow-md shadow-amber-700/20"><Award className="w-3.5 h-3.5" /></span>;
+                          rowBg = "bg-amber-700/[0.03] dark:bg-amber-700/[0.01]";
+                        } else {
+                          rankBadge = <span className="text-slate-400 dark:text-violet-400/60 font-black text-sm pl-2">{rank}</span>;
+                        }
+
+                        return (
+                          <tr key={row.id} className={cn("hover:bg-[#7C3AED]/5 dark:hover:bg-violet-950/20 transition-colors", rowBg)}>
+                            <td className="px-6 py-4 whitespace-nowrap align-middle">
+                              {rankBadge}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap align-middle">
+                              <div className="flex items-center gap-3">
+                                <Link to={`/admin/profile/${row.id}`} className="block shrink-0 hover:scale-105 transition-all">
+                                  {row.profile_pic ? (
+                                    <img
+                                      src={getImageUrl(row.profile_pic)}
+                                      alt={row.name}
+                                      className="w-10 h-10 rounded-xl object-cover border border-[#7C3AED]/10 dark:border-violet-500/25"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(row.name)}`;
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-xl bg-[#7C3AED]/10 dark:bg-violet-950/40 flex items-center justify-center border border-[#7C3AED]/5 dark:border-violet-500/10">
+                                      <User className="w-5 h-5 text-[#7C3AED] dark:text-violet-400" />
+                                    </div>
+                                  )}
+                                </Link>
+                                <div>
+                                  <Link to={`/admin/profile/${row.id}`} className="text-sm font-bold text-gray-900 dark:text-indigo-100 block leading-tight hover:text-[#7C3AED] transition-colors">
+                                    {row.name}
+                                  </Link>
+                                  <span className="text-[10px] text-slate-400 dark:text-violet-400/50 block mt-0.5">{row.email}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap align-middle">
+                              <span className="text-xs font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-wider">
+                                {row.department_name || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap align-middle text-center font-bold text-sm text-gray-900 dark:text-indigo-200">
+                              {row.tasks_completed}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap align-middle text-center font-bold text-sm text-amber-500 dark:text-amber-400">
+                              +{row.bonus_points}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap align-middle text-right">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#7C3AED]/5 dark:bg-violet-500/10 text-[#7C3AED] dark:text-violet-300 rounded-lg text-sm font-black border border-[#7C3AED]/10 dark:border-violet-500/20">
+                                <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                                {row.total_points}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
