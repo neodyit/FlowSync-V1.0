@@ -126,7 +126,7 @@ const Department: React.FC = () => {
             <div className="w-full lg:w-auto flex items-center gap-4 p-4 md:px-6 md:py-3 bg-[#7C3AED]/5 rounded-2xl md:rounded-[2rem] border border-[#7C3AED]/10">
               <Link to={`/hod/profile/${faculty.find(f => f.is_hod)?.id}`} className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-[#7C3AED] overflow-hidden flex items-center justify-center text-white font-black text-xs md:text-sm shadow-lg shadow-[#7C3AED]/20 shrink-0 hover:scale-105 transition-all">
                 {faculty.find(f => f.is_hod)?.profile_pic ? (
-                  <img src={`${import.meta.env.VITE_API_URL}/${faculty.find(f => f.is_hod)?.profile_pic}`} className="w-full h-full object-cover" alt="" />
+                  <img src={`${import.meta.env.VITE_API_URL}/${faculty.find(f => f.is_hod)?.profile_pic}`} className="w-full h-full object-cover" alt="" loading="lazy" />
                 ) : (
                   faculty.find(f => f.is_hod)?.name.charAt(0)
                 )}
@@ -204,7 +204,7 @@ const Department: React.FC = () => {
                       <div className="flex items-center gap-4">
                         <Link to={`/hod/profile/${f.id}`} className="w-12 h-12 rounded-2xl bg-[#7C3AED]/5 overflow-hidden flex items-center justify-center text-[#7C3AED] font-black text-sm hover:scale-105 transition-all duration-300">
                           {f.profile_pic ? (
-                            <img src={`${import.meta.env.VITE_API_URL}/${f.profile_pic}`} className="w-full h-full object-cover" alt="" />
+                            <img src={`${import.meta.env.VITE_API_URL}/${f.profile_pic}`} className="w-full h-full object-cover" alt="" loading="lazy" />
                           ) : (
                             f.name.charAt(0)
                           )}
@@ -274,7 +274,7 @@ const Department: React.FC = () => {
                     <div className="flex items-center gap-3 min-w-0">
                       <Link to={`/hod/profile/${f.id}`} className="w-10 h-10 rounded-xl bg-[#7C3AED]/5 overflow-hidden flex items-center justify-center text-[#7C3AED] font-black text-xs shrink-0 hover:scale-105 transition-all">
                         {f.profile_pic ? (
-                          <img src={`${import.meta.env.VITE_API_URL}/${f.profile_pic}`} className="w-full h-full object-cover" alt="" />
+                          <img src={`${import.meta.env.VITE_API_URL}/${f.profile_pic}`} className="w-full h-full object-cover" alt="" loading="lazy" />
                         ) : (
                           f.name.charAt(0)
                         )}
