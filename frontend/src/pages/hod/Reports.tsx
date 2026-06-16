@@ -450,7 +450,7 @@ const Reports: React.FC = () => {
                                 <div className="flex items-center gap-3">
                                   <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#1A1235] border border-slate-200 dark:border-slate-800">
                                     {faculty.profile_pic ? (
-                                      <img src={`${import.meta.env.VITE_API_URL}/${faculty.profile_pic}`} alt={faculty.name} className="w-full h-full object-cover" />
+                                      <img src={`${import.meta.env.VITE_API_URL}/${faculty.profile_pic}`} alt={faculty.name} className="w-full h-full object-cover" loading="lazy" />
                                     ) : (
                                       <div className="w-full h-full flex items-center justify-center font-black text-slate-400 text-xs">{faculty.name.charAt(0)}</div>
                                     )}
@@ -493,7 +493,7 @@ const Reports: React.FC = () => {
                             <span className="text-[10px] font-black text-slate-400 shrink-0">#{idx + 1}</span>
                             <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#1A1235] border border-slate-200 dark:border-slate-800 shrink-0">
                               {faculty.profile_pic ? (
-                                <img src={`${import.meta.env.VITE_API_URL}/${faculty.profile_pic}`} alt={faculty.name} className="w-full h-full object-cover" />
+                                <img src={`${import.meta.env.VITE_API_URL}/${faculty.profile_pic}`} alt={faculty.name} className="w-full h-full object-cover" loading="lazy" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center font-black text-slate-400 text-xs">{faculty.name.charAt(0)}</div>
                               )}
@@ -638,7 +638,7 @@ const Reports: React.FC = () => {
                     <div key={f.id} className="bg-white dark:bg-[#1E184B] p-8 rounded-[3rem] border border-slate-100 dark:border-transparent shadow-sm dark:shadow-2xl flex flex-col items-center text-center group hover:border-[#7C3AED]/20 transition-all relative overflow-hidden">
                       <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-50 dark:bg-[#1A1235] border border-slate-200 dark:border-slate-800/80 mb-6 group-hover:scale-105 transition-transform duration-300">
                         {f.profile_pic ? (
-                          <img src={`${import.meta.env.VITE_API_URL}/${f.profile_pic}`} alt={f.name} className="w-full h-full object-cover" />
+                          <img src={`${import.meta.env.VITE_API_URL}/${f.profile_pic}`} alt={f.name} className="w-full h-full object-cover" loading="lazy" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center font-black text-slate-400 text-xl">{f.name.charAt(0)}</div>
                         )}
@@ -738,7 +738,7 @@ const Reports: React.FC = () => {
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#1A1235]">
                           {faculty.profile_pic ? (
-                            <img src={`${import.meta.env.VITE_API_URL}/${faculty.profile_pic}`} alt={faculty.name} className="w-full h-full object-cover" />
+                            <img src={`${import.meta.env.VITE_API_URL}/${faculty.profile_pic}`} alt={faculty.name} className="w-full h-full object-cover" loading="lazy" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center font-black text-slate-400">{faculty.name.charAt(0)}</div>
                           )}

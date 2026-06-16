@@ -196,7 +196,7 @@ const HODDashboard: React.FC = () => {
   const showBroadcast = user.features ? (user.features.task_broadcast !== false) : true;
 
   const quickActions = [
-    { name: 'Assign Task', icon: PlusCircle, path: '/hod/tasks', color: 'bg-[#7C3AED]', desc: 'Direct mission assignment' },
+    { name: 'Assign Task', icon: PlusCircle, path: '/hod/tasks/new', color: 'bg-[#7C3AED]', desc: 'Direct mission assignment' },
     showBroadcast && { name: 'Broadcast', icon: Send, path: '/hod/tasks', color: 'bg-blue-600', desc: 'Alert all faculty members' },
     { name: 'Department', icon: Building2, path: '/hod/department', color: 'bg-slate-800', desc: 'View resource allocation' },
     { name: 'Portal Control', icon: ShieldCheck, path: '/hod/settings', color: 'bg-rose-600', desc: 'Security & preferences' },
