@@ -66,6 +66,7 @@ if ($session) {
     
     $features = [];
     $collegeEnabled = 1;
+    $subscriptionStatus = 'active';
     if ($userRow) {
         // Fetch college enabled and auto_accept_tasks
         $stmtCol = $db->prepare("SELECT is_enabled, auto_accept_tasks, allow_task_decline FROM colleges WHERE id = :cid LIMIT 1");
@@ -84,6 +85,24 @@ if ($session) {
         foreach ($rows as $r) {
             $features[$r['feature_key']] = ($r['is_enabled'] == 1);
         }
+
+        // Filter features dynamically based on subscription plan
+        $subService = new \FlowSync\Utils\SubscriptionService();
+        $subStatus = $subService->getSubscriptionStatus($userRow['college_id']);
+        if ($subStatus) {
+            $subscriptionStatus = $subStatus['status'];
+            if (in_array($subStatus['status'], ['active', 'trial']) && !empty($subStatus['plan_id'])) {
+                $plan = $subService->getPlanById($subStatus['plan_id']);
+                if ($plan && isset($plan['features'])) {
+                    $allowedFeatures = $plan['features'];
+                    foreach ($features as $key => $val) {
+                        if (!in_array($key, $allowedFeatures)) {
+                            $features[$key] = false;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     if ($collegeEnabled == 0 && (int)$session['role_id'] !== 1) {
@@ -100,7 +119,8 @@ if ($session) {
         'role_id' => (int)$session['role_id'],
         'college_id' => (int)$session['college_id'],
         'profile_pic' => $uRow['profile_pic'] ?? null,
-        'features' => $features
+        'features' => $features,
+        'subscription_status' => $subscriptionStatus
     ];
 
     echo json_encode([

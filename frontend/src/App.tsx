@@ -69,6 +69,7 @@ import IAReports from './pages/ia/Reports';
 import IAActivity from './pages/ia/Activity';
 import IASettings from './pages/ia/Settings';
 import Billing from './pages/ia/Billing';
+import IALeaderboard from '@/pages/ia/Leaderboard';
 
 // Root Redirect Helper
 const RootRedirect = () => {
@@ -241,6 +242,8 @@ function App() {
                 <Route path="billing" element={<Billing />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="profile/:id" element={<PublicProfile />} />
+                <Route path="feedback" element={<Feedback />} />
+                <Route path="leaderboard" element={<IALeaderboard />} />
               </Route>
             </Route>
 

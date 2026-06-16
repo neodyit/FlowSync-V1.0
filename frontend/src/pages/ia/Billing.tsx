@@ -25,6 +25,7 @@ interface Plan {
   formatted_bonus_text?: string;
   formatted_total_duration?: string;
   description?: string;
+  features?: string[];
 }
 
 interface Transaction {
@@ -43,6 +44,61 @@ declare global {
     Cashfree: any;
   }
 }
+
+const AVAILABLE_FEATURES = [
+  {
+    category: 'Reporting & Analytics',
+    features: [
+      { key: 'reporting_personalized_faculty', label: 'Personalized Faculty Reports' },
+      { key: 'reporting_department', label: 'Departmental Performance Reports' },
+      { key: 'reporting_institution', label: 'Consolidated Institutional Reports' },
+      { key: 'reporting_historical', label: 'Historical Data Archives' },
+      { key: 'reporting_performance_analytics', label: 'Advanced Performance Analytics' }
+    ]
+  },
+  {
+    category: 'Season Management',
+    features: [
+      { key: 'season_management', label: 'Academic Season Creation' },
+      { key: 'season_comparison_reports', label: 'Cross-Season Comparison Reports' },
+      { key: 'season_historical_analytics', label: 'Historical Season Analytics' },
+      { key: 'season_locking', label: 'Season Locking (Freeze Records)' }
+    ]
+  },
+  {
+    category: 'Leaderboards',
+    features: [
+      { key: 'leaderboard_faculty', label: 'Faculty Activity Rankings' },
+      { key: 'leaderboard_department', label: 'Department Leaderboards' },
+      { key: 'leaderboard_institution_rankings', label: 'Institutional Rankings' },
+      { key: 'leaderboard_performance_awards', label: 'Achievement Awards' }
+    ]
+  },
+  {
+    category: 'Task Management',
+    features: [
+      { key: 'task_group', label: 'Task Group Allocations' },
+      { key: 'task_broadcast', label: 'Institution-Wide Task Broadcasts' },
+      { key: 'task_acceptance_workflow', label: 'Task Acceptance Workflow' },
+      { key: 'task_auto_accept', label: 'Forced Auto-Acceptance Mode' },
+      { key: 'task_reminder_system', label: 'Automatic Smart Reminders' },
+      { key: 'task_deadline_tracking', label: 'Deadline Extension Tracking' },
+      { key: 'allow_ia_task_management', label: 'IA Central Task Management' }
+    ]
+  },
+  {
+    category: 'Collaboration & Communications',
+    features: [
+      { key: 'collab_member_visibility', label: 'Faculty Directory Visibility' },
+      { key: 'collab_profile_access', label: 'Detailed Profile Access' },
+      { key: 'collab_tools', label: 'Collaboration Canvas & Tools' },
+      { key: 'notice_popups', label: 'Interactive Notice Popups' },
+      { key: 'notice_banners', label: 'Sticky Billboard Banners' },
+      { key: 'notice_broadcasts', label: 'Priority Notification Alerts' },
+      { key: 'ia_audit_log_visibility', label: 'IA Activity Center (Audit Logs)' }
+    ]
+  }
+];
 
 export default function Billing() {
   const [activeTab, setActiveTab] = useState<'active' | 'plans' | 'history'>(() => {
@@ -451,7 +507,6 @@ export default function Billing() {
 
           </div>
         )}
-
         {/* Tab 2: All Plans */}
         {activeTab === 'plans' && (
           <div>
@@ -476,8 +531,29 @@ export default function Billing() {
                     <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed pt-2">
                       {p.description || 'Access all enterprise college administration tools, notices, statistics, and reports.'}
                     </p>
-                  </div>
 
+                    {/* Features list */}
+                    {p.features && p.features.length > 0 && (
+                      <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                        <span className="text-[10px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-wider block">
+                          Included Features
+                        </span>
+                        <ul className="space-y-2 max-h-[200px] overflow-y-auto pr-1 scrollbar-thin">
+                          {p.features.map((f) => {
+                            const allFlatFeatures = AVAILABLE_FEATURES.flatMap(cat => cat.features);
+                            const featureObj = allFlatFeatures.find(feat => feat.key === f);
+                            return (
+                              <li key={f} className="flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-350">
+                                <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                <span>{featureObj ? featureObj.label : f}</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+ 
                   <button 
                     onClick={() => handleOpenCheckout(p)}
                     className="w-full mt-8 py-3 bg-[#7C3AED] hover:bg-violet-750 text-white rounded-xl font-bold transition-all duration-200 shadow-md shadow-[#7C3AED]/10 flex items-center justify-center gap-1.5 cursor-pointer text-sm"

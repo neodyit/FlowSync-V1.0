@@ -102,10 +102,13 @@ export default function FacultyLayout() {
       });
       const result = await response.json();
       if (result.status === 'success') {
+        const raw = localStorage.getItem('user');
+        const currentUserObj = raw ? JSON.parse(raw) : user;
         const updatedUser = {
-          ...user,
+          ...currentUserObj,
           name: result.data.name,
-          profile_pic: result.data.profile_pic
+          profile_pic: result.data.profile_pic,
+          subscription_status: result.data.subscription_status
         };
         setUser(updatedUser);
         localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -182,6 +185,9 @@ export default function FacultyLayout() {
         if (raw) {
           const userObj = JSON.parse(raw);
           userObj.features = sessionData.features;
+          if (sessionData.user && sessionData.user.subscription_status) {
+            userObj.subscription_status = sessionData.user.subscription_status;
+          }
           localStorage.setItem('user', JSON.stringify(userObj));
           setUser(userObj);
         }
@@ -748,6 +754,7 @@ export default function FacultyLayout() {
           </div>
 
           <div className="flex items-center gap-5">
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -940,7 +947,7 @@ export default function FacultyLayout() {
                     Made with <span className="text-rose-500 animate-pulse mx-1">❤️</span> by
                     <span className="ml-1.5 space-x-1">
                       <a href="/profile/1" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Mayank Tiwari</a>,
-                      <a  rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Saurabh Upadhyay</a>
+                      {/* <a  rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Saurabh Upadhyay</a> */}
                     </span>
                   </p>
 

@@ -34,11 +34,23 @@ try {
             $stmt->execute(['id' => $collegeId]);
             $features = $stmt->fetchAll();
 
+            // 4. Fetch subscription features list
+            $allowedFeatures = null;
+            $subService = new \FlowSync\Utils\SubscriptionService();
+            $subStatus = $subService->getSubscriptionStatus($collegeId);
+            if ($subStatus && in_array($subStatus['status'], ['active', 'trial']) && !empty($subStatus['plan_id'])) {
+                $plan = $subService->getPlanById($subStatus['plan_id']);
+                if ($plan && isset($plan['features'])) {
+                    $allowedFeatures = $plan['features'];
+                }
+            }
+
             echo json_encode([
                 'status' => 'success',
                 'college' => $college,
                 'departments' => $departments,
-                'features' => $features
+                'features' => $features,
+                'allowed_features' => $allowedFeatures
             ]);
             break;
 

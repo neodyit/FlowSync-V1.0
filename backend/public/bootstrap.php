@@ -75,28 +75,14 @@ if ($session && (int)$session['role_id'] !== 1) {
                 $status = $subStatus['status'];
                 $remainingDays = $subStatus['remaining_days'];
                 
-                // 1. Suspension or Expiration past grace period -> Read-Only Mode
-                if ($status === 'suspended' || $remainingDays < -7) {
+                // 1. Suspension or Expiration -> Read-Only Mode
+                if ($status === 'suspended' || $status === 'expired' || $remainingDays < 0) {
                     http_response_code(403);
                     echo json_encode([
                         'status' => 'error',
                         'message' => 'Subscription Blocked: Your institution has entered Read-Only Mode. Please contact your administrator or renew your subscription.'
                     ]);
                     exit;
-                }
-                
-                // 2. Expiry within 7-day grace period
-                if ($remainingDays < 0 && $remainingDays >= -7) {
-                    $restrictedFiles = ['tasks.php', 'users.php', 'departments.php', 'notices.php', 'push_notices.php', 'push_notification.php', 'reminders.php'];
-                    
-                    if (in_array($scriptName, $restrictedFiles)) {
-                        http_response_code(403);
-                        echo json_encode([
-                            'status' => 'error',
-                            'message' => 'Subscription Grace Period: This action is restricted. Please renew your subscription to resume operations.'
-                        ]);
-                        exit;
-                    }
                 }
             }
         }

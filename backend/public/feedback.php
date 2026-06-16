@@ -12,6 +12,8 @@ try {
         exit;
     }
 
+
+
     $db = Database::getInstance()->getConnection();
     $userId = $session['user_id'];
 

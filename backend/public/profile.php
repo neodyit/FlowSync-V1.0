@@ -225,6 +225,11 @@ if ($method === 'GET') {
     // Parse achievements
     $user['achievements'] = $user['achievements'] ? json_decode($user['achievements'], true) : [];
 
+    // Fetch subscription status
+    $subService = new \FlowSync\Utils\SubscriptionService();
+    $subStatus = $subService->getSubscriptionStatus($user['college_id']);
+    $user['subscription_status'] = $subStatus ? $subStatus['status'] : 'active';
+
     echo json_encode(['status' => 'success', 'data' => $user]);
 
 } else if ($method === 'POST' || $method === 'PUT') {
