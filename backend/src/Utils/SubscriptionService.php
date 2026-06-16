@@ -46,6 +46,8 @@ class SubscriptionService
         $plan['formatted_total_duration'] = $formattedTotal;
         $plan['total_days'] = ($durationMonths * 30) + $bonusDays;
         
+        $plan['features'] = !empty($plan['features']) ? (json_decode($plan['features'], true) ?: []) : [];
+        
         return $plan;
     }
 
@@ -78,8 +80,8 @@ class SubscriptionService
         }
 
         $stmt = $this->db->prepare("
-            INSERT INTO subscription_plans (name, price, duration_months, bonus_days, gateway_percentage, description, status)
-            VALUES (:name, :price, :duration_months, :bonus_days, :gateway_percentage, :description, :status)
+            INSERT INTO subscription_plans (name, price, duration_months, bonus_days, gateway_percentage, description, status, features)
+            VALUES (:name, :price, :duration_months, :bonus_days, :gateway_percentage, :description, :status, :features)
         ");
         $stmt->execute([
             'name' => $data['name'],
@@ -88,7 +90,8 @@ class SubscriptionService
             'bonus_days' => $data['bonus_days'] ?? 0,
             'gateway_percentage' => $data['gateway_percentage'] ?? 0.00,
             'description' => $data['description'] ?? null,
-            'status' => $data['status'] ?? 'active'
+            'status' => $data['status'] ?? 'active',
+            'features' => isset($data['features']) ? json_encode($data['features']) : null
         ]);
 
         return $this->db->lastInsertId();
@@ -109,7 +112,8 @@ class SubscriptionService
                 bonus_days = :bonus_days,
                 gateway_percentage = :gateway_percentage,
                 description = :description,
-                status = :status
+                status = :status,
+                features = :features
             WHERE id = :id
         ");
         $stmt->execute([
@@ -120,7 +124,8 @@ class SubscriptionService
             'bonus_days' => isset($data['bonus_days']) ? $data['bonus_days'] : $plan['bonus_days'],
             'gateway_percentage' => isset($data['gateway_percentage']) ? $data['gateway_percentage'] : $plan['gateway_percentage'],
             'description' => isset($data['description']) ? $data['description'] : $plan['description'],
-            'status' => $data['status'] ?? $plan['status']
+            'status' => $data['status'] ?? $plan['status'],
+            'features' => isset($data['features']) ? json_encode($data['features']) : (isset($plan['features']) ? json_encode($plan['features']) : null)
         ]);
 
         return true;

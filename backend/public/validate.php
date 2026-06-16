@@ -84,6 +84,21 @@ if ($session) {
         foreach ($rows as $r) {
             $features[$r['feature_key']] = ($r['is_enabled'] == 1);
         }
+
+        // Filter features dynamically based on subscription plan
+        $subService = new \FlowSync\Utils\SubscriptionService();
+        $subStatus = $subService->getSubscriptionStatus($userRow['college_id']);
+        if ($subStatus && in_array($subStatus['status'], ['active', 'trial']) && !empty($subStatus['plan_id'])) {
+            $plan = $subService->getPlanById($subStatus['plan_id']);
+            if ($plan && isset($plan['features'])) {
+                $allowedFeatures = $plan['features'];
+                foreach ($features as $key => $val) {
+                    if (!in_array($key, $allowedFeatures)) {
+                        $features[$key] = false;
+                    }
+                }
+            }
+        }
     }
 
     if ($collegeEnabled == 0 && (int)$session['role_id'] !== 1) {

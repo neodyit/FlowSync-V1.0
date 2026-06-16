@@ -28,6 +28,7 @@ interface Plan {
   status: 'active' | 'inactive';
   formatted_bonus_text?: string;
   formatted_total_duration?: string;
+  features?: string[];
 }
 
 interface CollegeSubStatus {
@@ -139,17 +140,82 @@ export default function Subscriptions() {
   // Search/Filters
   const [searchTerm, setSearchTerm] = useState('');
   
+const AVAILABLE_FEATURES = [
+  {
+    category: 'Reporting & Analytics',
+    features: [
+      { key: 'reporting_personalized_faculty', label: 'Personalized Faculty Reports' },
+      { key: 'reporting_department', label: 'Departmental Performance Reports' },
+      { key: 'reporting_institution', label: 'Institutional Consolidated Reports' },
+      { key: 'reporting_historical', label: 'Historical Data Archives' },
+      { key: 'reporting_performance_analytics', label: 'Advanced Performance Analytics' }
+    ]
+  },
+  {
+    category: 'Season Management',
+    features: [
+      { key: 'season_management', label: 'Academic Season Creation' },
+      { key: 'season_comparison_reports', label: 'Cross-Season Comparison Reports' },
+      { key: 'season_historical_analytics', label: 'Historical Season Analytics' },
+      { key: 'season_locking', label: 'Season Locking (Freeze Records)' }
+    ]
+  },
+  {
+    category: 'Leaderboards',
+    features: [
+      { key: 'leaderboard_faculty', label: 'Faculty Activity Rankings' },
+      { key: 'leaderboard_department', label: 'Department Leaderboards' },
+      { key: 'leaderboard_institution_rankings', label: 'Institutional Rankings' },
+      { key: 'leaderboard_performance_awards', label: 'Achievement Awards' }
+    ]
+  },
+  {
+    category: 'Task Management',
+    features: [
+      { key: 'task_group', label: 'Task Group Allocations' },
+      { key: 'task_broadcast', label: 'Institution-Wide Task Broadcasts' },
+      { key: 'task_acceptance_workflow', label: 'Task Acceptance Workflow' },
+      { key: 'task_auto_accept', label: 'Forced Auto-Acceptance Mode' },
+      { key: 'task_reminder_system', label: 'Automatic Smart Reminders' },
+      { key: 'task_deadline_tracking', label: 'Deadline Extension Tracking' },
+      { key: 'allow_ia_task_management', label: 'IA Central Task Management' }
+    ]
+  },
+  {
+    category: 'Collaboration & Communications',
+    features: [
+      { key: 'collab_member_visibility', label: 'Faculty Directory Visibility' },
+      { key: 'collab_profile_access', label: 'Detailed Profile Access' },
+      { key: 'collab_tools', label: 'Collaboration Canvas & Tools' },
+      { key: 'notice_popups', label: 'Interactive Notice Popups' },
+      { key: 'notice_banners', label: 'Sticky Billboard Banners' },
+      { key: 'notice_broadcasts', label: 'Priority Notification Alerts' },
+      { key: 'ia_audit_log_visibility', label: 'IA Activity Center (Audit Logs)' }
+    ]
+  }
+];
+
   // Modals / Actions
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
-  const [planForm, setPlanForm] = useState({
+  const [planForm, setPlanForm] = useState<{
+    name: string;
+    price: string;
+    duration_months: string;
+    bonus_days: string;
+    gateway_percentage: string;
+    description: string;
+    status: string;
+    features: string[];
+  }>({
     name: '',
     price: '',
     duration_months: '',
     bonus_days: '',
     gateway_percentage: '0.00',
     description: '',
-    status: 'active'
+    status: 'active',
+    features: []
   });
 
   const [showCouponModal, setShowCouponModal] = useState(false);
@@ -568,18 +634,17 @@ export default function Subscriptions() {
           </div>
         </div>
       )}
-
       {activeTab === 'plans' && (
         <div className="space-y-6">
           <div className="flex justify-end">
             <button 
-              onClick={() => { setEditingPlan(null); setPlanForm({ name: '', price: '', duration_months: '', bonus_days: '', gateway_percentage: '0.00', description: '', status: 'active' }); setShowPlanModal(true); }}
+              onClick={() => { setEditingPlan(null); setPlanForm({ name: '', price: '', duration_months: '', bonus_days: '', gateway_percentage: '0.00', description: '', status: 'active', features: [] }); setShowPlanModal(true); }}
               className="flex items-center gap-2 px-4 py-2.5 bg-[#7C3AED] hover:bg-violet-750 text-white rounded-xl text-sm font-bold shadow-md cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Create Custom Plan
             </button>
           </div>
-
+ 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {plans.map((p) => (
               <div key={p.id} className="bg-white dark:bg-[#110A24] rounded-2xl border border-slate-100 dark:border-violet-500/10 shadow-sm p-6 relative flex flex-col justify-between">
@@ -592,12 +657,36 @@ export default function Subscriptions() {
                   </div>
                   <h4 className="text-3xl font-black text-[#7C3AED] mb-2">₹{p.price}</h4>
                   <p className="text-xs text-slate-400 mb-4">{p.formatted_total_duration}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-3 mb-6">{p.description || 'No description provided.'}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-3 mb-4">{p.description || 'No description provided.'}</p>
+                  
+                  {p.features && p.features.length > 0 && (
+                    <div className="mb-6">
+                      <span className="text-[10px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-wider block mb-1.5">
+                        Features ({p.features.length} Unlocked)
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {p.features.slice(0, 3).map((f) => {
+                          const allFlatFeatures = AVAILABLE_FEATURES.flatMap(cat => cat.features);
+                          const featureObj = allFlatFeatures.find(feat => feat.key === f);
+                          return (
+                            <span key={f} className="text-[9px] bg-[#EDE9FE]/50 dark:bg-violet-950/40 text-[#4C1D95] dark:text-violet-300 px-2 py-1 rounded-md font-bold truncate max-w-[150px]">
+                              {featureObj ? featureObj.label : f}
+                            </span>
+                          );
+                        })}
+                        {p.features.length > 3 && (
+                          <span className="text-[9px] bg-slate-100 dark:bg-violet-950/40 text-[#7C3AED] dark:text-violet-450 px-2 py-1 rounded-md font-black">
+                            +{p.features.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex gap-2 border-t dark:border-slate-800 pt-4 mt-auto">
                   <button 
-                    onClick={() => { setEditingPlan(p); setPlanForm({ name: p.name, price: p.price, duration_months: p.duration_months.toString(), bonus_days: p.bonus_days.toString(), gateway_percentage: p.gateway_percentage, description: p.description, status: p.status }); setShowPlanModal(true); }}
+                    onClick={() => { setEditingPlan(p); setPlanForm({ name: p.name, price: p.price, duration_months: p.duration_months.toString(), bonus_days: p.bonus_days.toString(), gateway_percentage: p.gateway_percentage, description: p.description, status: p.status, features: p.features || [] }); setShowPlanModal(true); }}
                     className="flex-1 flex justify-center items-center gap-2 py-2 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-violet-950/20 rounded-xl text-xs font-bold"
                   >
                     <Edit3 className="w-3.5 h-3.5" /> Edit
@@ -846,83 +935,123 @@ export default function Subscriptions() {
 
       {/* Plan modal */}
       {showPlanModal && (
-        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm flex items-center justify-center z-[300]">
-          <div className="bg-white dark:bg-[#110A24] p-8 rounded-3xl w-full max-w-md border border-slate-100 dark:border-violet-500/20 shadow-2xl space-y-6">
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm flex items-center justify-center z-[300] p-4">
+          <div className="bg-white dark:bg-[#110A24] p-8 rounded-3xl w-full max-w-3xl border border-slate-100 dark:border-violet-500/20 shadow-2xl space-y-6">
             <h2 className="text-2xl font-black text-slate-800 dark:text-white">
               {editingPlan ? 'Modify Pricing Plan' : 'Create Pricing Plan'}
             </h2>
-            <form onSubmit={handlePlanSubmit} className="space-y-4 text-sm">
-              <div>
-                <label className="block font-black text-slate-500 uppercase text-xs mb-1.5">Plan Name</label>
-                <input 
-                  type="text" 
-                  value={planForm.name}
-                  onChange={(e) => setPlanForm({...planForm, name: e.target.value})}
-                  className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-black text-slate-500 uppercase text-xs mb-1.5">Price (₹)</label>
-                  <input 
-                    type="number" 
-                    value={planForm.price}
-                    onChange={(e) => setPlanForm({...planForm, price: e.target.value})}
-                    className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800"
-                    required
-                  />
+            <form onSubmit={handlePlanSubmit} className="space-y-6 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto pr-2">
+                {/* Left Column: Basic Details */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block font-black text-slate-500 uppercase text-xs mb-1.5">Plan Name</label>
+                    <input 
+                      type="text" 
+                      value={planForm.name}
+                      onChange={(e) => setPlanForm({...planForm, name: e.target.value})}
+                      className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-black text-slate-500 uppercase text-xs mb-1.5">Price (₹)</label>
+                      <input 
+                        type="number" 
+                        value={planForm.price}
+                        onChange={(e) => setPlanForm({...planForm, price: e.target.value})}
+                        className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-black text-slate-500 uppercase text-xs mb-1.5">Duration (Months)</label>
+                      <input 
+                        type="number" 
+                        value={planForm.duration_months}
+                        onChange={(e) => setPlanForm({...planForm, duration_months: e.target.value})}
+                        className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-black text-slate-500 uppercase text-xs mb-1.5">Bonus Days</label>
+                      <input 
+                        type="number" 
+                        value={planForm.bonus_days}
+                        onChange={(e) => setPlanForm({...planForm, bonus_days: e.target.value})}
+                        className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-black text-slate-500 uppercase text-xs mb-1.5">Gateway Charge (%)</label>
+                      <input 
+                        type="text" 
+                        value={planForm.gateway_percentage}
+                        onChange={(e) => setPlanForm({...planForm, gateway_percentage: e.target.value})}
+                        className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block font-black text-slate-500 uppercase text-xs mb-1.5">Description</label>
+                    <textarea 
+                      value={planForm.description}
+                      onChange={(e) => setPlanForm({...planForm, description: e.target.value})}
+                      className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800 h-28"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block font-black text-slate-500 uppercase text-xs mb-1.5">Duration (Months)</label>
-                  <input 
-                    type="number" 
-                    value={planForm.duration_months}
-                    onChange={(e) => setPlanForm({...planForm, duration_months: e.target.value})}
-                    className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800"
-                    required
-                  />
+
+                {/* Right Column: Feature List */}
+                <div className="space-y-4 border-t md:border-t-0 md:border-l md:pl-6 dark:border-slate-800">
+                  <h3 className="font-black text-slate-700 dark:text-indigo-200 uppercase text-xs tracking-wider mb-2">Feature Entitlements</h3>
+                  <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1 scrollbar-thin">
+                    {AVAILABLE_FEATURES.map((cat) => (
+                      <div key={cat.category} className="space-y-2">
+                        <span className="text-[10px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest block border-b dark:border-slate-800 pb-1">
+                          {cat.category}
+                        </span>
+                        <div className="space-y-1.5">
+                          {cat.features.map((feat) => {
+                            const isChecked = planForm.features.includes(feat.key);
+                            return (
+                              <label key={feat.key} className="flex items-start gap-2.5 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-violet-950/20 cursor-pointer select-none">
+                                <input 
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    const nextFeatures = e.target.checked 
+                                      ? [...planForm.features, feat.key]
+                                      : planForm.features.filter(k => k !== feat.key);
+                                    setPlanForm({...planForm, features: nextFeatures});
+                                  }}
+                                  className="mt-0.5 rounded border-slate-350 dark:border-slate-700 text-[#7C3AED] focus:ring-violet-400"
+                                />
+                                <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{feat.label}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-black text-slate-500 uppercase text-xs mb-1.5">Bonus Days</label>
-                  <input 
-                    type="number" 
-                    value={planForm.bonus_days}
-                    onChange={(e) => setPlanForm({...planForm, bonus_days: e.target.value})}
-                    className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800"
-                  />
-                </div>
-                <div>
-                  <label className="block font-black text-slate-500 uppercase text-xs mb-1.5">Gateway Charge (%)</label>
-                  <input 
-                    type="text" 
-                    value={planForm.gateway_percentage}
-                    onChange={(e) => setPlanForm({...planForm, gateway_percentage: e.target.value})}
-                    className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block font-black text-slate-500 uppercase text-xs mb-1.5">Description</label>
-                <textarea 
-                  value={planForm.description}
-                  onChange={(e) => setPlanForm({...planForm, description: e.target.value})}
-                  className="w-full p-3 border rounded-xl dark:bg-[#1A0F35]/25 dark:border-slate-800 h-24"
-                />
-              </div>
-              <div className="flex gap-4 pt-4">
+              <div className="flex gap-4 pt-4 border-t dark:border-slate-800">
                 <button 
                   type="button" 
                   onClick={() => setShowPlanModal(false)}
-                  className="flex-1 py-3 border rounded-xl text-slate-500 hover:bg-slate-50 font-bold"
+                  className="flex-1 py-3 border rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-violet-950/15 font-bold cursor-pointer transition-all"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="flex-1 py-3 bg-[#7C3AED] hover:bg-violet-750 text-white rounded-xl font-bold"
+                  className="flex-1 py-3 bg-[#7C3AED] hover:bg-violet-750 text-white rounded-xl font-bold cursor-pointer transition-all"
                 >
                   Save Plan
                 </button>
