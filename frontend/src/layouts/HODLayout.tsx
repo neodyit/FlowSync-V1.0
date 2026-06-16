@@ -105,10 +105,13 @@ export default function HODLayout() {
       });
       const result = await response.json();
       if (result.status === 'success') {
+        const raw = localStorage.getItem('user');
+        const currentUserObj = raw ? JSON.parse(raw) : user;
         const updatedUser = {
-          ...user,
+          ...currentUserObj,
           name: result.data.name,
-          profile_pic: result.data.profile_pic
+          profile_pic: result.data.profile_pic,
+          subscription_status: result.data.subscription_status
         };
         setUser(updatedUser);
         localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -199,6 +202,9 @@ export default function HODLayout() {
         if (raw) {
           const userObj = JSON.parse(raw);
           userObj.features = sessionData.features;
+          if (sessionData.user && sessionData.user.subscription_status) {
+            userObj.subscription_status = sessionData.user.subscription_status;
+          }
           localStorage.setItem('user', JSON.stringify(userObj));
           setUser(userObj);
         }
@@ -570,6 +576,7 @@ export default function HODLayout() {
           </div>
 
           <div className="flex items-center gap-5">
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}

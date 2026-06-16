@@ -134,6 +134,7 @@ export default function IASettings() {
   // College & Features State
   const [college, setCollege] = useState<CollegeConfig | null>(null);
   const [featureFlags, setFeatureFlags] = useState<Record<string, boolean>>({});
+  const [allowedFeatures, setAllowedFeatures] = useState<string[] | null>(null);
 
   // Security State
   const [passwords, setPasswords] = useState({
@@ -189,6 +190,7 @@ export default function IASettings() {
           flags[f.feature_key] = (f.is_enabled === 1);
         });
         setFeatureFlags(flags);
+        setAllowedFeatures(data.allowed_features || null);
       }
     } catch (error) {
       console.error('Failed to fetch college configurations:', error);
@@ -593,24 +595,57 @@ export default function IASettings() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {group.features.map((feature) => {
                             const isEnabled = featureFlags[feature.key] !== false; // Default true
+                            const isAllowed = allowedFeatures === null || allowedFeatures.includes(feature.key);
                             return (
                               <div 
                                 key={feature.key}
-                                onClick={() => handleToggleFeature(feature.key, !isEnabled)}
+                                onClick={() => {
+                                  if (!isAllowed) {
+                                    Swal.fire({
+                                      title: 'Feature Locked',
+                                      text: 'This feature is not included in your current subscription plan. Please upgrade to unlock it.',
+                                      icon: 'warning',
+                                      confirmButtonText: 'View Plans',
+                                      showCancelButton: true,
+                                      confirmButtonColor: '#7C3AED'
+                                    }).then((result) => {
+                                      if (result.isConfirmed) {
+                                        window.location.href = '/ia/billing';
+                                      }
+                                    });
+                                    return;
+                                  }
+                                  handleToggleFeature(feature.key, !isEnabled);
+                                }}
                                 className={cn(
-                                  "flex items-start gap-4 bg-slate-50 dark:bg-[#181131]/30 px-5 py-4 rounded-2xl border cursor-pointer hover:bg-slate-100/50 dark:hover:bg-[#181131]/50 transition-all select-none",
-                                  isEnabled ? "border-transparent" : "border-slate-200 dark:border-violet-500/10 opacity-60"
+                                  "flex items-start gap-4 bg-slate-50 dark:bg-[#181131]/30 px-5 py-4 rounded-2xl border cursor-pointer hover:bg-slate-100/50 dark:hover:bg-[#181131]/50 transition-all select-none relative overflow-hidden",
+                                  !isAllowed 
+                                    ? "border-amber-500/20 bg-slate-100/50 dark:bg-[#181131]/10 opacity-70"
+                                    : isEnabled 
+                                      ? "border-transparent" 
+                                      : "border-slate-200 dark:border-violet-500/10 opacity-60"
                                 )}
                               >
+                                {!isAllowed && (
+                                  <div className="absolute top-2 right-2 bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md flex items-center gap-1 border border-amber-500/30">
+                                    <Lock className="w-2.5 h-2.5" /> PRO
+                                  </div>
+                                )}
                                 <div className={cn(
                                   "w-5 h-5 rounded-lg border flex items-center justify-center transition-all shrink-0 mt-0.5",
-                                  isEnabled 
-                                    ? "bg-[#7C3AED] border-[#7C3AED] dark:bg-violet-600 dark:border-violet-600 text-white" 
-                                    : "border-slate-300 dark:border-violet-500/20 bg-white dark:bg-[#110A24]"
+                                  !isAllowed
+                                    ? "border-amber-500/30 bg-amber-500/10 text-amber-500"
+                                    : isEnabled 
+                                      ? "bg-[#7C3AED] border-[#7C3AED] dark:bg-violet-600 dark:border-violet-600 text-white" 
+                                      : "border-slate-300 dark:border-violet-500/20 bg-white dark:bg-[#110A24]"
                                 )}>
-                                  {isEnabled && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                  {!isAllowed ? (
+                                    <Lock className="w-3.5 h-3.5" />
+                                  ) : (
+                                    isEnabled && <CheckCircle2 className="w-3.5 h-3.5" />
+                                  )}
                                 </div>
-                                <div className="space-y-1">
+                                <div className="space-y-1 pr-6">
                                   <span className="text-xs font-black text-[#1E1B4B] dark:text-indigo-100 block leading-tight">{feature.label}</span>
                                   <span className="text-[10px] text-slate-400 dark:text-indigo-200/30 font-bold block leading-snug">{feature.desc}</span>
                                 </div>
