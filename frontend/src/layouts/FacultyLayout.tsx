@@ -947,7 +947,7 @@ export default function FacultyLayout() {
                     Made with <span className="text-rose-500 animate-pulse mx-1">❤️</span> by
                     <span className="ml-1.5 space-x-1">
                       <a href="/profile/1" target="_blank" rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Mayank Tiwari</a>,
-                      <a  rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Saurabh Upadhyay</a>
+                      {/* <a  rel="noopener noreferrer" className="text-[#7C3AED] dark:text-indigo-400 hover:text-[#6D28D9] dark:hover:text-indigo-300 transition-colors">Saurabh Upadhyay</a> */}
                     </span>
                   </p>
 

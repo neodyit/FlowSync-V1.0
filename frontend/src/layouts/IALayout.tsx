@@ -183,9 +183,11 @@ export default function IALayout() {
     { name: 'Tasks', icon: CheckSquare, path: '/ia/tasks' },
     { name: 'Notices', icon: Bell, path: '/ia/notices' },
     { name: 'Activity Center', icon: History, path: '/ia/activity', featureKey: 'ia_audit_log_visibility' },
+    { name: 'Leaderboard', icon: Trophy, path: '/ia/leaderboard' },
     ...(subStatus && subStatus.status !== 'suspended' ? [
       { name: 'Billing & Subscription', icon: CreditCard, path: '/ia/billing' }
     ] : []),
+    { name: 'Feedback', icon: MessageSquare, path: '/ia/feedback' },
     { name: 'Settings', icon: Settings, path: '/ia/settings' },
   ].filter(item => !item.featureKey || currentUser.features?.[item.featureKey] !== false);
 

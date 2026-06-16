@@ -126,8 +126,8 @@ const Feedback: React.FC = () => {
             <div className="mt-6 pt-6 border-t border-white/10">
               <p className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-3">Dev & Maintenance Team</p>
               <div className="space-y-2">
-                <p className="text-xs font-bold">Mayank Tiwari - CSE 1st year</p>
-                <p className="text-xs font-bold">Saurabh Upadhyay - CSE 2nd year</p>
+                <p className="text-xs font-bold">Mayank Tiwari - CSE 1st Year</p>
+                {/* <p className="text-xs font-bold">Saurabh Upadhyay - CSE 2nd year</p> */}
               </div>
             </div>
           </div>
