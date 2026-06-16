@@ -41,10 +41,10 @@ if ($session) {
     $stmtUser->execute(['uid' => $session['user_id']]);
     $uRow = $stmtUser->fetch();
 
-    // Update user's last active timestamp (except for Super Admin user_id = 1) if it's older than 5 minutes (300s)
+    // Update user's last active timestamp (except for Super Admin user_id = 1) if it's older than 3 minutes (180s)
     if ((int)$session['user_id'] !== 1) {
         $lastActive = $uRow['last_active_at'] ?? null;
-        if (!$lastActive || (time() - strtotime($lastActive)) > 300) {
+        if (!$lastActive || (time() - strtotime($lastActive)) > 180) {
             $stmtActive = $db->prepare("UPDATE users SET last_active_at = NOW() WHERE id = :uid");
             $stmtActive->execute(['uid' => $session['user_id']]);
         }

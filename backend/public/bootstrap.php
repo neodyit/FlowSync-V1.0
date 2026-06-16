@@ -38,6 +38,19 @@ header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
 try {
     $auth = new \FlowSync\Auth\AuthService();
     $session = $auth->validateSession();
+    
+    // Update user's last active timestamp (except for Super Admin user_id = 1) if it's older than 3 minutes (180s)
+    if ($session && (int)$session['user_id'] !== 1) {
+        $db = \FlowSync\Config\Database::getInstance()->getConnection();
+        $stmtUser = $db->prepare("SELECT last_active_at FROM users WHERE id = :uid LIMIT 1");
+        $stmtUser->execute(['uid' => $session['user_id']]);
+        $lastActive = $stmtUser->fetchColumn();
+        
+        if (!$lastActive || (time() - strtotime($lastActive)) > 180) {
+            $stmtActive = $db->prepare("UPDATE users SET last_active_at = NOW() WHERE id = :uid");
+            $stmtActive->execute(['uid' => $session['user_id']]);
+        }
+    }
 } catch (\Throwable $e) {
     http_response_code(500);
     echo json_encode(['status' => 'error', 'message' => 'Server initialization error.']);
