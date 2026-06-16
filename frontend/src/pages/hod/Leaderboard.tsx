@@ -246,7 +246,7 @@ const HODLeaderboard: React.FC = () => {
                   )}
                 >
                   <div className="w-6 flex items-center justify-center font-black text-xs text-[#1E184B] dark:text-indigo-100 shrink-0">
-                    {idx + 1}
+                    #{idx + 1}
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-[#110A24] overflow-hidden flex items-center justify-center font-black text-xs text-[#1E184B] shrink-0">
                     {performer.profile_pic ? (
