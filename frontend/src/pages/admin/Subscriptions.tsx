@@ -672,7 +672,7 @@ const AVAILABLE_FEATURES = [
                           Features ({planFeatures.length} Unlocked)
                         </span>
                         <div className="flex flex-wrap gap-1">
-                          {planFeatures.slice(0, 3).map((f) => {
+                          {planFeatures.slice(0, 3).map(function (f: string) {
                             const allFlatFeatures = AVAILABLE_FEATURES.flatMap(cat => cat.features);
                             const featureObj = allFlatFeatures.find(feat => feat.key === f);
                             return (
