@@ -19,11 +19,14 @@ import {
   Cpu,
   CornerDownRight,
   Shield,
-  Activity
+  Activity,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, formatDate } from '@/lib/utils';
 import SEO from '@/components/SEO';
+import Swal from 'sweetalert2';
+import { DataTable, type Column } from '@/components/ui/DataTable';
 
 interface AuditLog {
   id: number;
@@ -52,6 +55,7 @@ const AuditLogs: React.FC = () => {
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
   const [copied, setCopied] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // Debounce search input to prevent excessive API requests
   useEffect(() => {
@@ -106,6 +110,57 @@ const AuditLogs: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleDelete = async (idsToDelete: number[]) => {
+    const isMultiple = idsToDelete.length > 1;
+    const confirmResult = await Swal.fire({
+      title: isMultiple ? 'Delete Selected Logs?' : 'Delete Audit Log?',
+      text: isMultiple 
+        ? `Are you sure you want to permanently delete these ${idsToDelete.length} audit logs? This action is irreversible.`
+        : 'Are you sure you want to permanently delete this audit log? This action is irreversible.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EF4444',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: 'Yes, delete',
+      cancelButtonText: 'Cancel',
+      background: document.documentElement.classList.contains('dark') ? '#110A24' : '#FFF',
+      color: document.documentElement.classList.contains('dark') ? '#F3F4F6' : '#1F2937',
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/audit_logs.php`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ ids: idsToDelete })
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        Swal.fire({
+          title: 'Deleted!',
+          text: data.message || 'Audit log(s) deleted successfully.',
+          icon: 'success',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+        setSelectedIds(prev => prev.filter(id => !idsToDelete.includes(id)));
+        if (selectedLog && idsToDelete.includes(selectedLog.id)) {
+          setSelectedLog(null);
+        }
+        fetchLogs();
+      } else {
+        Swal.fire('Error', data.message || 'Failed to delete logs.', 'error');
+      }
+    } catch (error) {
+      console.error('Failed to delete logs:', error);
+      Swal.fire('Error', 'An unexpected error occurred.', 'error');
+    }
+  };
+
   const filteredLogs = logs.filter(log => {
     const matchesSearch = 
       (log.user_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -130,6 +185,184 @@ const AuditLogs: React.FC = () => {
     
     return matchesSearch && matchesAction && matchesTimeFrame;
   });
+
+  const columns: Column<AuditLog>[] = [
+    {
+      header: 'Timestamp',
+      key: 'created_at',
+      sortable: true,
+      render: (log) => (
+        <span className="text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">
+          {formatDate(log.created_at)}
+        </span>
+      ),
+    },
+    {
+      header: 'Operator',
+      key: 'user_name',
+      sortable: true,
+      render: (log) => (
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#7C3AED]/5 dark:bg-violet-950/40 flex items-center justify-center text-[#7C3AED] dark:text-violet-400 group-hover:bg-[#7C3AED] group-hover:text-white dark:group-hover:text-white transition-all duration-300">
+            <User className="w-4.5 h-4.5" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">{log.user_name || 'System / Guest'}</span>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-violet-400/60">{log.user_email || 'anonymous-origin'}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Action Protocol',
+      key: 'action',
+      sortable: true,
+      render: (log) => (
+        <div className={cn(
+          "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider",
+          getActionColor(log.action)
+        )}>
+          {log.action === 'API_HIT' && <Zap className="w-3 h-3" />}
+          {log.action}
+        </div>
+      ),
+    },
+    {
+      header: 'Target Resource',
+      key: 'resource',
+      sortable: true,
+      render: (log) => (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-2 py-0.5 bg-slate-100 dark:bg-violet-950/40 rounded text-[9px] font-black text-slate-500 dark:text-violet-300 uppercase tracking-widest border border-slate-200 dark:border-violet-500/20">
+              {log.resource || 'ENDPOINT'}
+            </span>
+            <span className="text-xs font-bold text-[#1E1B4B] dark:text-indigo-100">{log.resource_id ? `#${log.resource_id}` : log.request_uri}</span>
+          </div>
+          {log.details && (
+            <span className="text-[10px] font-medium text-slate-400 dark:text-violet-400/80 truncate max-w-[200px]">
+              {log.details}
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: 'Origin (IP)',
+      key: 'ip_address',
+      sortable: true,
+      render: (log) => (
+        <div className="flex items-center gap-2 text-slate-400 dark:text-violet-400/60">
+          <Globe className="w-3.5 h-3.5 opacity-50" />
+          <span className="text-xs font-mono font-medium">{log.ip_address || '0.0.0.0'}</span>
+        </div>
+      ),
+    },
+    {
+      header: 'Action',
+      key: 'actions',
+      sortable: false,
+      headerClassName: 'text-right pr-8',
+      cellClassName: 'text-right pr-8',
+      render: (log) => (
+        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+          <button 
+            onClick={() => setSelectedLog(log)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-[#7C3AED]/10 dark:bg-[#110A24] dark:hover:bg-[#7C3AED]/20 border border-slate-100 dark:border-violet-500/20 rounded-xl text-xs font-bold text-[#7C3AED] dark:text-violet-400 transition-colors cursor-pointer"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Inspect
+          </button>
+          <button 
+            onClick={() => handleDelete([log.id])}
+            className="flex items-center justify-center p-2 bg-slate-50 hover:bg-rose-500/10 dark:bg-[#110A24] dark:hover:bg-rose-500/20 border border-slate-100 dark:border-violet-500/20 rounded-xl text-rose-500 hover:text-rose-600 transition-colors cursor-pointer"
+            title="Delete audit log"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
+    }
+  ];
+
+  const mobileCardRender = (log: AuditLog, isSelected: boolean, onToggleSelect: () => void) => (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      onClick={() => setSelectedLog(log)}
+      whileTap={{ scale: 0.98 }}
+      className="p-4 sm:p-5 flex flex-col gap-4 bg-white dark:bg-[#110A24]/60 backdrop-blur-md rounded-3xl border border-[#7C3AED]/10 dark:border-violet-500/10 hover:border-[#7C3AED]/30 shadow-md active:bg-[#7C3AED]/5 dark:active:bg-[#7C3AED]/10 transition-all cursor-pointer text-left"
+    >
+      {/* Header Row: Badge & Date */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={onToggleSelect}
+            className="w-4.5 h-4.5 rounded border-[#7C3AED]/20 text-[#7C3AED] focus:ring-[#7C3AED]/20 cursor-pointer accent-[#7C3AED]"
+          />
+          <div className={cn(
+            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider",
+            getActionColor(log.action)
+          )}>
+            {log.action === 'API_HIT' && <Zap className="w-2.5 h-2.5" />}
+            {log.action}
+          </div>
+        </div>
+        <span className="text-[10px] font-bold text-slate-400 dark:text-violet-400/50 uppercase tracking-widest flex items-center gap-1">
+          <Calendar className="w-3 h-3 text-slate-300 dark:text-violet-400/40" />
+          {formatDate(log.created_at)}
+        </span>
+      </div>
+
+      {/* Operator Block */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-[#7C3AED]/5 dark:bg-violet-950/40 flex items-center justify-center text-[#7C3AED] dark:text-violet-400 border border-[#7C3AED]/10">
+          <User className="w-5 h-5" />
+        </div>
+        <div className="flex flex-col min-w-0">
+          <span className="text-xs sm:text-sm font-black text-[#1E1B4B] dark:text-indigo-100 truncate">
+            {log.user_name || 'System / Guest'}
+          </span>
+          <span className="text-[10px] font-bold text-slate-400 dark:text-violet-400/60 truncate">
+            {log.user_email || 'anonymous-origin'}
+          </span>
+        </div>
+      </div>
+
+      {/* Target Resource Summary */}
+      <div className="bg-slate-50 dark:bg-violet-950/10 rounded-2xl p-3 sm:p-4 border border-slate-100 dark:border-violet-500/10 space-y-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="px-2 py-0.5 bg-white dark:bg-[#110A24] rounded text-[8px] font-black text-slate-500 dark:text-violet-300 uppercase tracking-widest border border-slate-200 dark:border-violet-500/20">
+            {log.resource || 'ENDPOINT'}
+          </span>
+          <span className="text-xs font-bold text-[#1E1B4B] dark:text-indigo-100 break-all">
+            {log.resource_id ? `#${log.resource_id}` : log.request_uri}
+          </span>
+        </div>
+        {log.details && (
+          <p className="text-[10px] font-medium text-slate-400 dark:text-violet-400/80 leading-relaxed border-t border-slate-100 dark:border-violet-500/10 pt-2 line-clamp-2">
+            {log.details}
+          </p>
+        )}
+      </div>
+
+      {/* Footer Meta Details */}
+      <div className="flex items-center justify-between pt-1 border-t border-slate-50 dark:border-violet-500/10 mt-1">
+        <div className="flex items-center gap-1.5 text-slate-400 dark:text-violet-400/60">
+          <Globe className="w-3.5 h-3.5 opacity-50" />
+          <span className="text-[10px] font-mono font-bold">{log.ip_address || '0.0.0.0'}</span>
+        </div>
+        
+        <span className="text-[10px] font-black text-[#7C3AED] dark:text-violet-400 flex items-center gap-1">
+          Tap to inspect
+          <ChevronRight className="w-3 h-3" />
+        </span>
+      </div>
+    </motion.div>
+  );
 
   const getActionColor = (action: string) => {
     if (action.includes('CREATE')) return 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-500/10';
@@ -264,190 +497,46 @@ const AuditLogs: React.FC = () => {
         </div>
       </div>
 
-      {/* Logs Table / List Container */}
-      <div className="bg-transparent md:bg-white md:dark:bg-[#1A0F35]/20 md:backdrop-blur-md md:rounded-[2.5rem] md:border md:border-[#7C3AED]/10 md:dark:border-violet-500/20 md:shadow-xl md:overflow-hidden">
-        
-        {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50 dark:bg-violet-950/20 border-b border-slate-100 dark:border-violet-500/20">
-                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 dark:text-violet-400/80 uppercase tracking-[0.2em]">Timestamp</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 dark:text-violet-400/80 uppercase tracking-[0.2em]">Operator</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 dark:text-violet-400/80 uppercase tracking-[0.2em]">Action Protocol</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 dark:text-violet-400/80 uppercase tracking-[0.2em]">Target Resource</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 dark:text-violet-400/80 uppercase tracking-[0.2em]">Origin (IP)</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[#4C1D95]/40 dark:text-violet-400/80 uppercase tracking-[0.2em]">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-violet-500/10">
-              <AnimatePresence mode="popLayout">
-                {filteredLogs.map((log) => (
-                  <motion.tr 
-                    key={log.id}
-                    layout
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={() => setSelectedLog(log)}
-                    className="group hover:bg-slate-50/80 dark:hover:bg-violet-950/30 transition-colors border-b border-slate-50 dark:border-violet-500/10 cursor-pointer"
-                  >
-                    <td className="px-8 py-6">
-                      <span className="text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">
-                        {formatDate(log.created_at)}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#7C3AED]/5 dark:bg-violet-950/40 flex items-center justify-center text-[#7C3AED] dark:text-violet-400 group-hover:bg-[#7C3AED] group-hover:text-white dark:group-hover:text-white transition-all duration-300">
-                          <User className="w-4 h-4" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-[#1E1B4B] dark:text-indigo-100">{log.user_name || 'System / Guest'}</span>
-                          <span className="text-[10px] font-bold text-slate-400 dark:text-violet-400/60">{log.user_email || 'anonymous-origin'}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className={cn(
-                        "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider",
-                        getActionColor(log.action)
-                      )}>
-                        {log.action === 'API_HIT' && <Zap className="w-3 h-3" />}
-                        {log.action}
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 bg-slate-100 dark:bg-violet-950/40 rounded text-[9px] font-black text-slate-500 dark:text-violet-300 uppercase tracking-widest border border-slate-200 dark:border-violet-500/20">
-                            {log.resource || 'ENDPOINT'}
-                          </span>
-                          <span className="text-xs font-bold text-[#1E1B4B] dark:text-indigo-100">{log.resource_id ? `#${log.resource_id}` : log.request_uri}</span>
-                        </div>
-                        {log.details && (
-                          <span className="text-[10px] font-medium text-slate-400 dark:text-violet-400/80 truncate max-w-[200px]">
-                            {log.details}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-2 text-slate-400 dark:text-violet-400/60">
-                        <Globe className="w-3.5 h-3.5 opacity-50" />
-                        <span className="text-xs font-mono font-medium">{log.ip_address || '0.0.0.0'}</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <button className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-[#7C3AED]/10 dark:bg-[#110A24] dark:hover:bg-[#7C3AED]/20 border border-slate-100 dark:border-violet-500/20 rounded-xl text-xs font-bold text-[#7C3AED] dark:text-violet-400 transition-colors">
-                        <Eye className="w-3.5 h-3.5" />
-                        Inspect
-                      </button>
-                    </td>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Premium Mobile Card List View */}
-        <div className="block md:hidden space-y-4">
-          <AnimatePresence mode="popLayout">
-            {filteredLogs.map((log, idx) => (
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ delay: Math.min(idx * 0.02, 0.2) }}
-                key={log.id}
-                onClick={() => setSelectedLog(log)}
-                whileTap={{ scale: 0.98 }}
-                className="p-4 sm:p-5 flex flex-col gap-4 bg-white dark:bg-[#110A24]/60 backdrop-blur-md rounded-3xl border border-[#7C3AED]/10 dark:border-violet-500/10 hover:border-[#7C3AED]/30 shadow-md active:bg-[#7C3AED]/5 dark:active:bg-[#7C3AED]/10 transition-all cursor-pointer"
+      {/* Bulk Delete Bar */}
+      <AnimatePresence>
+        {selectedIds.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, y: -10 }}
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -10 }}
+            className="flex flex-col sm:flex-row items-center justify-between p-4 bg-rose-500/10 dark:bg-rose-950/20 border border-rose-500/20 rounded-2xl gap-3 overflow-hidden relative z-[30]"
+          >
+            <span className="text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400">
+              {selectedIds.length} audit log{selectedIds.length > 1 ? 's' : ''} selected
+            </span>
+            <div className="flex gap-2 w-full sm:w-auto justify-end">
+              <button
+                onClick={() => setSelectedIds([])}
+                className="px-4 py-2 border border-slate-200 dark:border-violet-500/20 text-slate-500 dark:text-violet-400 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-violet-950/40 transition-colors cursor-pointer"
               >
-                {/* Header Row: Badge & Date */}
-                <div className="flex items-center justify-between gap-3">
-                  <div className={cn(
-                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider",
-                    getActionColor(log.action)
-                  )}>
-                    {log.action === 'API_HIT' && <Zap className="w-2.5 h-2.5" />}
-                    {log.action}
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-violet-400/50 uppercase tracking-widest flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-slate-300 dark:text-violet-400/40" />
-                    {formatDate(log.created_at)}
-                  </span>
-                </div>
-
-                {/* Operator Block */}
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-[#7C3AED]/5 dark:bg-violet-950/40 flex items-center justify-center text-[#7C3AED] dark:text-violet-400 border border-[#7C3AED]/10">
-                    <User className="w-5 h-5" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs sm:text-sm font-black text-[#1E1B4B] dark:text-indigo-100 truncate">
-                      {log.user_name || 'System / Guest'}
-                    </span>
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-violet-400/60 truncate">
-                      {log.user_email || 'anonymous-origin'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Target Resource Summary */}
-                <div className="bg-slate-50 dark:bg-violet-950/10 rounded-2xl p-3 sm:p-4 border border-slate-100 dark:border-violet-500/10 space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2 py-0.5 bg-white dark:bg-[#110A24] rounded text-[8px] font-black text-slate-500 dark:text-violet-300 uppercase tracking-widest border border-slate-200 dark:border-violet-500/20">
-                      {log.resource || 'ENDPOINT'}
-                    </span>
-                    <span className="text-xs font-bold text-[#1E1B4B] dark:text-indigo-100 break-all">
-                      {log.resource_id ? `#${log.resource_id}` : log.request_uri}
-                    </span>
-                  </div>
-                  {log.details && (
-                    <p className="text-[10px] font-medium text-slate-400 dark:text-violet-400/80 leading-relaxed border-t border-slate-100 dark:border-violet-500/10 pt-2 line-clamp-2">
-                      {log.details}
-                    </p>
-                  )}
-                </div>
-
-                {/* Footer Meta Details */}
-                <div className="flex items-center justify-between pt-1 border-t border-slate-50 dark:border-violet-500/10 mt-1">
-                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-violet-400/60">
-                    <Globe className="w-3.5 h-3.5 opacity-50" />
-                    <span className="text-[10px] font-mono font-bold">{log.ip_address || '0.0.0.0'}</span>
-                  </div>
-                  
-                  <span className="text-[10px] font-black text-[#7C3AED] dark:text-violet-400 flex items-center gap-1">
-                    Tap to inspect
-                    <ChevronRight className="w-3 h-3" />
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-        
-        {!isLoading && filteredLogs.length === 0 && (
-          <div className="text-center py-20 space-y-4 bg-white dark:bg-[#110A24]/40 rounded-[2.5rem] border border-[#7C3AED]/10 dark:border-violet-500/20">
-            <div className="w-20 h-20 bg-slate-50 dark:bg-violet-950/20 rounded-full flex items-center justify-center mx-auto">
-              <Terminal className="w-10 h-10 text-slate-200 dark:text-violet-500/20" />
+                Clear Selection
+              </button>
+              <button
+                onClick={() => handleDelete(selectedIds)}
+                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-md hover:shadow-rose-600/20 active:scale-95 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete Selected
+              </button>
             </div>
-            <h3 className="text-xl font-black text-[#1E1B4B] dark:text-indigo-100">No audit records found</h3>
-            <p className="text-sm font-bold text-slate-400 dark:text-violet-400/60 max-w-xs mx-auto">
-              No system interactions matched your current search and filter criteria.
-            </p>
-          </div>
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-20 gap-4 bg-white dark:bg-[#110A24]/40 rounded-[2.5rem] border border-[#7C3AED]/10 dark:border-violet-500/20">
-            <div className="w-12 h-12 border-4 border-[#7C3AED]/20 border-t-[#7C3AED] rounded-full animate-spin" />
-            <p className="text-[#4C1D95]/60 dark:text-violet-400/60 font-black text-xs uppercase tracking-widest">Analyzing Immutable Logs...</p>
-          </div>
-        )}
-      </div>
+      <DataTable
+        data={filteredLogs}
+        columns={columns}
+        selectedIds={selectedIds}
+        onSelectedIdsChange={setSelectedIds}
+        getId={(log) => log.id}
+        isLoading={isLoading}
+        mobileCardRender={mobileCardRender}
+      />
 
       {/* Premium Detail Drawer / Modal */}
       <AnimatePresence>
@@ -497,12 +586,21 @@ const AuditLogs: React.FC = () => {
                     Protocol Inspection
                   </h3>
                 </div>
-                <button 
-                  onClick={() => setSelectedLog(null)}
-                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-violet-950/40 text-slate-400 dark:text-violet-400/60 rounded-full transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleDelete([selectedLog.id])}
+                    className="p-1.5 hover:bg-rose-500/10 text-rose-500 rounded-full transition-colors cursor-pointer"
+                    title="Delete this log"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => setSelectedLog(null)}
+                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-violet-950/40 text-slate-400 dark:text-violet-400/60 rounded-full transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               {/* Scrollable details view */}
