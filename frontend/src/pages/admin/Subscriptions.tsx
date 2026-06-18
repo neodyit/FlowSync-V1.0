@@ -192,6 +192,13 @@ const AVAILABLE_FEATURES = [
       { key: 'notice_broadcasts', label: 'Priority Notification Alerts' },
       { key: 'ia_audit_log_visibility', label: 'IA Activity Center (Audit Logs)' }
     ]
+  },
+  {
+    category: 'Audit & Security',
+    features: [
+      { key: 'profile_completion', label: 'Profile Completion Requirement' },
+      { key: 'profile_completion_strict', label: 'Strict Profile Completion' }
+    ]
   }
 ];
 

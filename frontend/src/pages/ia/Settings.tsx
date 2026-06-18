@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { 
-  Settings as SettingsIcon, 
-  Shield, 
-  Bell, 
-  Building2, 
-  Smartphone, 
-  Globe, 
-  Lock, 
-  Eye, 
-  EyeOff, 
+import {
+  Settings as SettingsIcon,
+  Shield,
+  Bell,
+  Building2,
+  Smartphone,
+  Globe,
+  Lock,
+  Eye,
+  EyeOff,
   Loader2,
   Trash2,
   Moon,
@@ -102,6 +102,14 @@ const FEATURE_METADATA: FeatureGroup[] = [
       { key: 'notice_banners', label: 'Banner Notifications', desc: 'Displays alerts on topbars.' },
       { key: 'notice_broadcasts', label: 'Institution Broadcasts', desc: 'Enables institution-wide text alerts.' }
     ]
+  },
+  {
+    category: 'Audit & Security Features',
+    features: [
+      { key: 'ia_audit_log_visibility', label: 'Audit Log Center', desc: 'Allow IA access to Activity Center logs.' },
+      { key: 'profile_completion', label: 'Profile Completion Requirement', desc: 'Prompt users with incomplete profiles to complete their setup.' },
+      { key: 'profile_completion_strict', label: 'Strict Profile Completion', desc: 'Enforce mandatory profile completion, blocking portal access.' }
+    ]
   }
 ];
 
@@ -114,7 +122,7 @@ export default function IASettings() {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Settings State
   const [settings, setSettings] = useState({
     notification_settings: {
@@ -240,14 +248,14 @@ export default function IASettings() {
       const data = await response.json();
       if (data.status === 'success') {
         setCollege(prev => prev ? { ...prev, [field]: val } : null);
-        Swal.fire({ 
-          title: 'Config Synchronized', 
-          text: 'Institution configurations updated successfully.', 
-          icon: 'success', 
-          toast: true, 
-          position: 'top-end', 
-          showConfirmButton: false, 
-          timer: 3000 
+        Swal.fire({
+          title: 'Config Synchronized',
+          text: 'Institution configurations updated successfully.',
+          icon: 'success',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
         });
       }
     } catch (e) {
@@ -268,14 +276,14 @@ export default function IASettings() {
       const data = await response.json();
       if (data.status === 'success') {
         setFeatureFlags(prev => ({ ...prev, [key]: isEnabled }));
-        Swal.fire({ 
-          title: 'Feature Synced', 
-          text: `${key.replace(/_/g, ' ')} flag updated`, 
-          icon: 'success', 
-          toast: true, 
-          position: 'top-end', 
-          showConfirmButton: false, 
-          timer: 2500 
+        Swal.fire({
+          title: 'Feature Synced',
+          text: `${key.replace(/_/g, ' ')} flag updated`,
+          icon: 'success',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 2500
         });
       }
     } catch (e) {
@@ -383,7 +391,7 @@ export default function IASettings() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 pb-20">
       <SEO title="Portal Settings" description="Manage institutional preferences and security." />
-      
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black text-[#1E1B4B] dark:text-indigo-50 tracking-tight">Portal Settings</h1>
@@ -402,8 +410,8 @@ export default function IASettings() {
                 onClick={() => setActiveTab(tab)}
                 className={cn(
                   "px-4 md:px-6 py-2.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer",
-                  activeTab === tab 
-                    ? "bg-white dark:bg-[#110A24] text-[#7C3AED] dark:text-violet-400 shadow-md border border-[#7C3AED]/10 dark:border-violet-500/20" 
+                  activeTab === tab
+                    ? "bg-white dark:bg-[#110A24] text-[#7C3AED] dark:text-violet-400 shadow-md border border-[#7C3AED]/10 dark:border-violet-500/20"
                     : "text-[#4C1D95]/40 dark:text-indigo-200/40 hover:text-[#7C3AED]"
                 )}
               >
@@ -422,7 +430,7 @@ export default function IASettings() {
             <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
               <Building2 className="w-32 h-32 text-[#7C3AED]" />
             </div>
-            
+
             <div className="relative z-10">
               <div className="w-20 h-20 rounded-3xl bg-[#7C3AED]/5 border border-[#7C3AED]/10 dark:border-violet-500/20 overflow-hidden flex items-center justify-center mb-6 shadow-inner">
                 {settings.profile_pic ? (
@@ -433,7 +441,7 @@ export default function IASettings() {
               </div>
               <h3 className="text-xl font-black text-[#1E1B4B] dark:text-indigo-50">{user.name}</h3>
               <p className="text-xs font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest mt-1">Institution Admin</p>
-              
+
               <div className="mt-8 pt-8 border-t border-slate-100 dark:border-violet-500/10 space-y-2 text-xs">
                 <div className="flex justify-between items-center text-slate-400 dark:text-indigo-200/40">
                   <span>Assigned College</span>
@@ -483,8 +491,8 @@ export default function IASettings() {
                               onClick={() => setTheme(t)}
                               className={cn(
                                 "p-6 rounded-3xl border text-left transition-all relative overflow-hidden group cursor-pointer",
-                                isSelected 
-                                  ? "bg-white dark:bg-[#160E35] border-[#7C3AED] dark:border-violet-500/30 shadow-md" 
+                                isSelected
+                                  ? "bg-white dark:bg-[#160E35] border-[#7C3AED] dark:border-violet-500/30 shadow-md"
                                   : "bg-slate-50 dark:bg-[#1A1235]/30 border-slate-100 dark:border-slate-800/40 hover:border-[#7C3AED]/30"
                               )}
                             >
@@ -512,7 +520,7 @@ export default function IASettings() {
                     </div>
 
                     <div className="pt-6 flex justify-end border-t border-slate-100 dark:border-violet-500/10">
-                      <button 
+                      <button
                         onClick={() => handleUpdateSettings({})}
                         disabled={isSubmitting}
                         className="px-10 py-4 bg-[#7C3AED] dark:bg-violet-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
@@ -545,7 +553,7 @@ export default function IASettings() {
                         <span className="text-[11px] font-black text-[#1E1B4B] dark:text-indigo-100 uppercase tracking-widest block">Auto-Accept Tasks</span>
                         <span className="text-[9px] text-slate-400 dark:text-indigo-200/40 font-bold block mt-0.5">Assigned tasks are auto-accepted (skips workflow)</span>
                       </div>
-                      <button 
+                      <button
                         onClick={() => handleUpdateCollegeSetting('auto_accept_tasks', college.auto_accept_tasks == 1 ? 0 : 1)}
                         className={cn(
                           "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border",
@@ -564,7 +572,7 @@ export default function IASettings() {
                         <span className="text-[11px] font-black text-[#1E1B4B] dark:text-indigo-100 uppercase tracking-widest block">Allow Task Decline</span>
                         <span className="text-[9px] text-slate-400 dark:text-indigo-200/40 font-bold block mt-0.5">Faculty users can decline assigned tasks</span>
                       </div>
-                      <button 
+                      <button
                         onClick={() => handleUpdateCollegeSetting('allow_task_decline', college.allow_task_decline == 1 ? 0 : 1)}
                         className={cn(
                           "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border",
@@ -597,7 +605,7 @@ export default function IASettings() {
                             const isEnabled = featureFlags[feature.key] !== false; // Default true
                             const isAllowed = allowedFeatures === null || allowedFeatures.includes(feature.key);
                             return (
-                              <div 
+                              <div
                                 key={feature.key}
                                 onClick={() => {
                                   if (!isAllowed) {
@@ -619,10 +627,10 @@ export default function IASettings() {
                                 }}
                                 className={cn(
                                   "flex items-start gap-4 bg-slate-50 dark:bg-[#181131]/30 px-5 py-4 rounded-2xl border cursor-pointer hover:bg-slate-100/50 dark:hover:bg-[#181131]/50 transition-all select-none relative overflow-hidden",
-                                  !isAllowed 
+                                  !isAllowed
                                     ? "border-amber-500/20 bg-slate-100/50 dark:bg-[#181131]/10 opacity-70"
-                                    : isEnabled 
-                                      ? "border-transparent" 
+                                    : isEnabled
+                                      ? "border-transparent"
                                       : "border-slate-200 dark:border-violet-500/10 opacity-60"
                                 )}
                               >
@@ -635,8 +643,8 @@ export default function IASettings() {
                                   "w-5 h-5 rounded-lg border flex items-center justify-center transition-all shrink-0 mt-0.5",
                                   !isAllowed
                                     ? "border-amber-500/30 bg-amber-500/10 text-amber-500"
-                                    : isEnabled 
-                                      ? "bg-[#7C3AED] border-[#7C3AED] dark:bg-violet-600 dark:border-violet-600 text-white" 
+                                    : isEnabled
+                                      ? "bg-[#7C3AED] border-[#7C3AED] dark:bg-violet-600 dark:border-violet-600 text-white"
                                       : "border-slate-300 dark:border-violet-500/20 bg-white dark:bg-[#110A24]"
                                 )}>
                                   {!isAllowed ? (
@@ -691,7 +699,7 @@ export default function IASettings() {
                             <p className="text-xs font-bold text-slate-400 dark:text-indigo-200/40">Receive alerts via {key.split('_')[0]}</p>
                           </div>
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             const newSettings = { ...settings.notification_settings, [key]: !value };
                             handleUpdateSettings({ notification_settings: newSettings });
@@ -717,24 +725,24 @@ export default function IASettings() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-400 dark:text-indigo-200/40 uppercase tracking-widest ml-1">Start Time</label>
-                          <input 
-                            type="time" 
+                          <input
+                            type="time"
                             value={settings.quiet_hours_start || ''}
-                            onChange={(e) => setSettings({...settings, quiet_hours_start: e.target.value})}
+                            onChange={(e) => setSettings({ ...settings, quiet_hours_start: e.target.value })}
                             className="w-full px-6 py-4 bg-white dark:bg-[#110A24] border border-slate-100 dark:border-violet-500/10 rounded-2xl text-sm font-black outline-none focus:border-[#7C3AED]"
                           />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-400 dark:text-indigo-200/40 uppercase tracking-widest ml-1">End Time</label>
-                          <input 
-                            type="time" 
+                          <input
+                            type="time"
                             value={settings.quiet_hours_end || ''}
-                            onChange={(e) => setSettings({...settings, quiet_hours_end: e.target.value})}
+                            onChange={(e) => setSettings({ ...settings, quiet_hours_end: e.target.value })}
                             className="w-full px-6 py-4 bg-white dark:bg-[#110A24] border border-slate-100 dark:border-violet-500/10 rounded-2xl text-sm font-black outline-none focus:border-[#7C3AED]"
                           />
                         </div>
                       </div>
-                      <button 
+                      <button
                         onClick={() => handleUpdateSettings({
                           quiet_hours_start: settings.quiet_hours_start,
                           quiet_hours_end: settings.quiet_hours_end
@@ -774,15 +782,15 @@ export default function IASettings() {
                       <label className="text-[10px] font-black text-[#1E1B4B] dark:text-indigo-50 uppercase tracking-widest ml-1">Current Password</label>
                       <div className="relative">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7C3AED]" />
-                        <input 
+                        <input
                           type={showPass ? "text" : "password"}
                           value={passwords.current}
-                          onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+                          onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
                           className="w-full pl-12 pr-12 py-4 bg-slate-50 dark:bg-[#181131] border border-slate-100 dark:border-violet-500/10 rounded-2xl text-sm font-bold focus:bg-white focus:border-[#7C3AED] transition-all outline-none text-[#1E1B4B] dark:text-indigo-50"
                           placeholder="••••••••"
                         />
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => setShowPass(!showPass)}
                           className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-[#7C3AED]"
                         >
@@ -796,10 +804,10 @@ export default function IASettings() {
                         <label className="text-[10px] font-black text-[#1E1B4B] dark:text-indigo-50 uppercase tracking-widest ml-1">New Password</label>
                         <div className="relative">
                           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7C3AED]" />
-                          <input 
+                          <input
                             type={showPass ? "text" : "password"}
                             value={passwords.new}
-                            onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+                            onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
                             className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-[#181131] border border-slate-100 dark:border-violet-500/10 rounded-2xl text-sm font-bold focus:bg-white focus:border-[#7C3AED] transition-all outline-none text-[#1E1B4B] dark:text-indigo-50"
                             placeholder="Minimum 8 characters"
                           />
@@ -812,21 +820,21 @@ export default function IASettings() {
                           <span className="text-slate-400">Access Strength</span>
                           <span className={cn(
                             getPasswordStrength() <= 25 ? "text-rose-500" :
-                            getPasswordStrength() <= 50 ? "text-amber-500" :
-                            getPasswordStrength() <= 75 ? "text-blue-500" : "text-emerald-500"
+                              getPasswordStrength() <= 50 ? "text-amber-500" :
+                                getPasswordStrength() <= 75 ? "text-blue-500" : "text-emerald-500"
                           )}>
                             {getPasswordStrength() <= 25 ? "Weak" :
-                             getPasswordStrength() <= 50 ? "Fair" :
-                             getPasswordStrength() <= 75 ? "Good" : "Very Strong"}
+                              getPasswordStrength() <= 50 ? "Fair" :
+                                getPasswordStrength() <= 75 ? "Good" : "Very Strong"}
                           </span>
                         </div>
                         <div className="h-1.5 w-full bg-slate-100 dark:bg-[#1a1334] rounded-full overflow-hidden flex gap-1">
                           {[25, 50, 75, 100].map((step) => (
-                            <div 
+                            <div
                               key={step}
                               className={cn(
                                 "h-full flex-1 transition-all duration-500",
-                                getPasswordStrength() >= step 
+                                getPasswordStrength() >= step
                                   ? (step <= 25 ? "bg-rose-500" : step <= 50 ? "bg-amber-500" : step <= 75 ? "bg-blue-500" : "bg-emerald-500")
                                   : "bg-transparent"
                               )}
@@ -837,17 +845,17 @@ export default function IASettings() {
 
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-[#1E1B4B] dark:text-indigo-50 uppercase tracking-widest ml-1">Confirm New Password</label>
-                        <input 
+                        <input
                           type={showPass ? "text" : "password"}
                           value={passwords.confirm}
-                          onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+                          onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
                           className="w-full px-6 py-4 bg-slate-50 dark:bg-[#181131] border border-slate-100 dark:border-violet-500/10 rounded-2xl text-sm font-bold focus:bg-white focus:border-[#7C3AED] transition-all outline-none text-[#1E1B4B] dark:text-indigo-50"
                           placeholder="Repeat new password"
                         />
                       </div>
                     </div>
 
-                    <button 
+                    <button
                       type="submit"
                       disabled={isSubmitting || !passwords.new || passwords.new !== passwords.confirm}
                       className="w-full py-4 bg-[#1E184B] dark:bg-violet-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
@@ -870,7 +878,7 @@ export default function IASettings() {
                       </div>
                     </div>
                     {sessions.length > 1 && (
-                      <button 
+                      <button
                         onClick={handleClearAllSessions}
                         className="w-full sm:w-auto px-6 py-3 bg-rose-50 dark:bg-rose-950/20 text-rose-500 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-rose-150 hover:bg-rose-500 hover:text-white transition-all text-center flex items-center justify-center shrink-0 cursor-pointer"
                       >
@@ -904,7 +912,7 @@ export default function IASettings() {
                         </div>
                         {session.token_id !== currentToken && (
                           <div className="w-full sm:w-auto flex justify-end shrink-0 border-t border-slate-200/40 sm:border-t-0 pt-3 sm:pt-0">
-                            <button 
+                            <button
                               onClick={() => handleTerminateSession(session.id)}
                               className="w-full sm:w-auto px-4 py-2.5 sm:p-3 bg-white dark:bg-[#110A24] hover:bg-rose-50 dark:hover:bg-rose-950/20 text-slate-400 hover:text-rose-500 rounded-xl border border-slate-200 dark:border-violet-500/10 hover:border-rose-200 transition-all shadow-sm flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider cursor-pointer"
                             >
