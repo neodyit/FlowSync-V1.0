@@ -97,6 +97,13 @@ const AVAILABLE_FEATURES = [
       { key: 'notice_broadcasts', label: 'Priority Notification Alerts' },
       { key: 'ia_audit_log_visibility', label: 'IA Activity Center (Audit Logs)' }
     ]
+  },
+  {
+    category: 'Audit & Security',
+    features: [
+      { key: 'profile_completion', label: 'Profile Completion Requirement' },
+      { key: 'profile_completion_strict', label: 'Strict Profile Completion' }
+    ]
   }
 ];
 
@@ -507,65 +514,110 @@ export default function Billing() {
 
           </div>
         )}
+
         {/* Tab 2: All Plans */}
         {activeTab === 'plans' && (
           <div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {plans.map((p) => (
-                <div key={p.id} className="bg-white dark:bg-[#110A24] border border-slate-100 dark:border-violet-500/10 rounded-2xl shadow-sm p-6 flex flex-col justify-between hover:scale-[1.02] transition-transform duration-200 relative group overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#7C3AED]/5 rounded-bl-full transform translate-x-4 -translate-y-4 transition-transform duration-300 group-hover:scale-125" />
-                  
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-start">
-                      <h4 className="text-lg font-black text-slate-800 dark:text-white font-display">{p.name}</h4>
-                      {p.formatted_bonus_text && (
-                        <span className="px-2 py-0.5 bg-violet-100 text-[#7C3AED] dark:bg-violet-950/40 dark:text-violet-400 text-[10px] font-black rounded uppercase tracking-wider">
-                          {p.formatted_bonus_text}
-                        </span>
+            <style>{`
+              .custom-thin-scrollbar::-webkit-scrollbar {
+                width: 6px;
+              }
+              .custom-thin-scrollbar::-webkit-scrollbar-track {
+                background: transparent;
+              }
+              .custom-thin-scrollbar::-webkit-scrollbar-thumb {
+                background: rgba(124, 58, 237, 0.25);
+                border-radius: 99px;
+              }
+              .custom-thin-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: rgba(124, 58, 237, 0.45);
+              }
+            `}</style>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+              {plans.map((p) => {
+                const isActivePlan = (subStatus && subStatus.plan_id === p.id) || (subStatus && subStatus.plan_name === p.name);
+                return (
+                  <div 
+                    key={p.id} 
+                    className={`bg-white dark:bg-[#110A24] border rounded-[2rem] p-6 sm:p-8 flex flex-col justify-between hover:scale-[1.02] hover:shadow-xl transition-all duration-300 relative group overflow-hidden ${
+                      isActivePlan 
+                        ? "border-emerald-500/40 dark:border-emerald-500/30 ring-4 ring-emerald-500/5 shadow-lg shadow-emerald-500/5 bg-gradient-to-b from-emerald-500/[0.02] to-transparent" 
+                        : "border-slate-100 dark:border-violet-500/10 hover:border-[#7C3AED]/30 dark:hover:border-violet-500/30 shadow-sm"
+                    }`}
+                  >
+                    {isActivePlan && (
+                      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 to-teal-400" />
+                    )}
+                    
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-[#7C3AED]/5 rounded-bl-full transform translate-x-4 -translate-y-4 transition-transform duration-300 group-hover:scale-125 pointer-events-none" />
+                    
+                    <div className="space-y-5 text-left">
+                      <div className="flex justify-between items-start gap-4">
+                        <h4 className="text-xl font-black text-slate-800 dark:text-white font-display leading-tight">{p.name}</h4>
+                        {isActivePlan ? (
+                          <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-black rounded-full uppercase tracking-wider flex items-center gap-1 shrink-0 shadow-sm shadow-emerald-500/5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Active
+                          </span>
+                        ) : p.formatted_bonus_text ? (
+                          <span className="px-2.5 py-1 bg-[#7C3AED]/10 text-[#7C3AED] dark:bg-violet-950/60 dark:text-violet-400 text-[9px] font-black rounded-full border border-[#7C3AED]/15 dark:border-violet-500/20 uppercase tracking-widest shrink-0">
+                            {p.formatted_bonus_text}
+                          </span>
+                        ) : null}
+                      </div>
+                      
+                      <div className="pb-4 border-b border-slate-100 dark:border-slate-800/60">
+                        <h3 className="text-4xl font-black text-[#7C3AED] dark:text-violet-400 font-display">₹{p.price}</h3>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">{p.formatted_total_duration}</p>
+                      </div>
+
+                      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-semibold">
+                        {p.description || 'Access all enterprise college administration tools, notices, statistics, and reports.'}
+                      </p>
+
+                      {/* Features list */}
+                      {p.features && p.features.length > 0 && (
+                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                          <span className="text-[10px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest block">
+                            Included Features
+                          </span>
+                          <ul className="space-y-3.5 max-h-[220px] overflow-y-auto pr-1.5 custom-thin-scrollbar text-left">
+                            {p.features.map((f) => {
+                              const allFlatFeatures = AVAILABLE_FEATURES.flatMap(cat => cat.features);
+                              const featureObj = allFlatFeatures.find(feat => feat.key === f);
+                              return (
+                                <li key={f} className="flex items-start gap-3 text-xs text-slate-600 dark:text-indigo-200/75 font-semibold leading-normal">
+                                  <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                  <span>{featureObj ? featureObj.label : f}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
                       )}
                     </div>
-                    <div>
-                      <h3 className="text-3xl font-black text-[#7C3AED] dark:text-violet-400 font-display">₹{p.price}</h3>
-                      <p className="text-xs text-slate-400 mt-1">{p.formatted_total_duration}</p>
-                    </div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed pt-2">
-                      {p.description || 'Access all enterprise college administration tools, notices, statistics, and reports.'}
-                    </p>
-
-                    {/* Features list */}
-                    {p.features && p.features.length > 0 && (
-                      <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                        <span className="text-[10px] font-black text-[#7C3AED] dark:text-violet-400 uppercase tracking-wider block">
-                          Included Features
-                        </span>
-                        <ul className="space-y-2 max-h-[200px] overflow-y-auto pr-1 scrollbar-thin">
-                          {p.features.map((f) => {
-                            const allFlatFeatures = AVAILABLE_FEATURES.flatMap(cat => cat.features);
-                            const featureObj = allFlatFeatures.find(feat => feat.key === f);
-                            return (
-                              <li key={f} className="flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-350">
-                                <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                                <span>{featureObj ? featureObj.label : f}</span>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
+   
+                    {isActivePlan ? (
+                      <button 
+                        disabled
+                        className="w-full mt-8 py-4 bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-500/35 dark:border-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed shadow-inner"
+                      >
+                        Current Active Plan <Check className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handleOpenCheckout(p)}
+                        className="w-full mt-8 py-4 bg-[#7C3AED] hover:bg-violet-750 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-200 shadow-lg shadow-[#7C3AED]/15 hover:shadow-violet-750/30 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                      >
+                        Activate License Plan <ChevronRight className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
- 
-                  <button 
-                    onClick={() => handleOpenCheckout(p)}
-                    className="w-full mt-8 py-3 bg-[#7C3AED] hover:bg-violet-750 text-white rounded-xl font-bold transition-all duration-200 shadow-md shadow-[#7C3AED]/10 flex items-center justify-center gap-1.5 cursor-pointer text-sm"
-                  >
-                    Activate License Plan <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
-
         {/* Tab 3: History */}
         {activeTab === 'history' && (
           <div className="bg-white dark:bg-[#110A24] rounded-2xl border border-slate-100 dark:border-violet-500/10 shadow-sm overflow-hidden">
