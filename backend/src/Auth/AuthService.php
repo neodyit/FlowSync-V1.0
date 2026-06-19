@@ -235,6 +235,26 @@ class AuthService {
             return false;
         }
 
+        // Validate User Agent to prevent session hijacking / cookie copying
+        // (We do not strictly check IP address to avoid logging out users when switching networks or waking from sleep)
+        $currentUserAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        $dbUserAgent = $dbSession['user_agent'] ?? '';
+
+        if ($dbUserAgent !== $currentUserAgent) {
+            // Clear local cookie for the current client, but do not delete the session from DB
+            // so the legitimate user on Browser A remains logged in.
+            $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+                        (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+            setcookie($cookieName, '', [
+                'expires' => time() - 3600,
+                'path' => '/',
+                'httponly' => true,
+                'secure' => $isSecure,
+                'samesite' => $isSecure ? 'None' : 'Lax'
+            ]);
+            return false;
+        }
+
         // Check if department is disabled
         if ($dbSession['role_id'] == 2) {
             $stmtDept = $this->db->prepare("SELECT is_enabled FROM departments WHERE hod_id = :uid LIMIT 1");
