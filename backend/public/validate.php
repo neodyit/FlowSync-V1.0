@@ -131,5 +131,16 @@ if ($session) {
     ]);
 } else {
     http_response_code(401);
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+    $cookieName = getenv('COOKIE_NAME') ?: 'flowsync_session';
+    $hasCookie = isset($_COOKIE[$cookieName]) ? 'yes' : 'no';
+    echo json_encode([
+        'status' => 'error', 
+        'message' => 'Unauthorized',
+        'debug' => [
+            'has_cookie' => $hasCookie,
+            'cookie_val' => $_COOKIE[$cookieName] ?? null,
+            'user_agent_server' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+            'ip_server' => $_SERVER['REMOTE_ADDR'] ?? '',
+        ]
+    ]);
 }
