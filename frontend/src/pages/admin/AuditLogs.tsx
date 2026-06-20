@@ -27,6 +27,7 @@ import { cn, formatDate } from '@/lib/utils';
 import SEO from '@/components/SEO';
 import Swal from 'sweetalert2';
 import { DataTable, type Column } from '@/components/ui/DataTable';
+import { getAppName } from '../../utils/config';
 
 interface AuditLog {
   id: number;
@@ -45,6 +46,7 @@ interface AuditLog {
 }
 
 const AuditLogs: React.FC = () => {
+  const appName = getAppName();
   const [searchParams] = useSearchParams();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [stats, setStats] = useState({ total: 0, deletes: 0, logins: 0, hits: 0 });
@@ -375,7 +377,7 @@ const AuditLogs: React.FC = () => {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8">
-      <SEO title="Audit Protocols" description="Comprehensive immutable ledger of all system interactions and administrative changes within FlowSync." />
+      <SEO title="Audit Protocols" description={`Comprehensive immutable ledger of all system interactions and administrative changes within ${appName}.`} />
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">

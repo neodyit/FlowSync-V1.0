@@ -1,9 +1,11 @@
 import React from 'react';
 import { Compass, Home, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getAppName } from '../../utils/config';
 
 const NotFound: React.FC = () => {
   const navigate = useNavigate();
+  const appName = getAppName();
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans transition-colors duration-300">
@@ -56,7 +58,7 @@ const NotFound: React.FC = () => {
 
       {/* Footer Info */}
       <div className="mt-12 text-center relative z-10">
-        <p className="text-xs font-bold text-[var(--text-main)]/40 uppercase tracking-widest mb-2">FlowSync Navigation Core</p>
+        <p className="text-xs font-bold text-[var(--text-main)]/40 uppercase tracking-widest mb-2">{appName} Navigation Core</p>
         <div className="flex items-center justify-center gap-2 text-[10px] text-[var(--accent)]/60">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
           <span>Invalid Address Handled Gracefully</span>

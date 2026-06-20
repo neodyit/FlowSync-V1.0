@@ -1,5 +1,5 @@
-const CACHE_NAME = 'flowsync-v1';
-const DYNAMIC_CACHE_NAME = 'flowsync-dynamic-v1';
+const CACHE_NAME = 'neosync-v1';
+const DYNAMIC_CACHE_NAME = 'neosync-dynamic-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

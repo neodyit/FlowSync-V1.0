@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { setAppName } from './utils/config';
 import Login from './pages/Login';
 import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -106,7 +107,10 @@ function App() {
         if (!response.ok) return;
         const data = await response.json();
         const serverVersion = data.version;
-        const localVersion = localStorage.getItem('flowsync_version');
+        if (data.name) {
+          setAppName(data.name);
+        }
+        const localVersion = localStorage.getItem('neosync_version');
 
         if (localVersion && localVersion !== serverVersion) {
           console.log(`Version mismatch detected! Local: ${localVersion}, Server: ${serverVersion}. Clearing cache and reloading...`);
@@ -118,12 +122,12 @@ function App() {
           }
 
           // Update local version reference
-          localStorage.setItem('flowsync_version', serverVersion);
+          localStorage.setItem('neosync_version', serverVersion);
 
           // Force reload
           window.location.reload();
         } else if (!localVersion) {
-          localStorage.setItem('flowsync_version', serverVersion);
+          localStorage.setItem('neosync_version', serverVersion);
         }
       } catch (err) {
         console.error('Failed to verify version:', err);

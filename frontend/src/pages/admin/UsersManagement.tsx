@@ -30,6 +30,7 @@ import withReactContent from 'sweetalert2-react-content';
 import { ProfileCard } from '@/components/ui/info-card';
 import { cn, getImageUrl } from '@/lib/utils';
 import SEO from '@/components/SEO';
+import { getAppName } from '../../utils/config';
 
 const MySwal = withReactContent(Swal);
 
@@ -150,6 +151,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 };
 
 const UsersManagement: React.FC = () => {
+  const appName = getAppName();
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [colleges, setColleges] = useState<College[]>([]);
@@ -429,7 +431,7 @@ const UsersManagement: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
-      <SEO title="User Management" description="Manage institutional accounts, roles, and access permissions within FlowSync." />
+      <SEO title="User Management" description={`Manage institutional accounts, roles, and access permissions within ${appName}.`} />
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>

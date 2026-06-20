@@ -15,8 +15,10 @@ import {
 import { useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import { clearLocalData } from '../utils/auth';
+import { getAppName } from '../utils/config';
 
 const Login: React.FC = () => {
+  const appName = getAppName();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -105,7 +107,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[#0B091B] font-sans selection:bg-[#7C3AED]/20 py-8 px-4 md:py-12 relative overflow-y-auto">
-      <SEO title="Secure Workspace Login" description="Access the FlowSync institutional portal to manage academic workflows and departmental synchronization." />
+      <SEO title="Secure Workspace Login" description={`Access the ${appName} institutional portal to manage academic workflows and departmental synchronization.`} />
       
       {/* Premium Background Mesh Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -128,10 +130,10 @@ const Login: React.FC = () => {
           <div className="relative z-10">
             <div className="flex items-center gap-3.5 mb-14">
               <div className="w-11 h-11 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/10 shadow-inner hover:scale-105 transition-all cursor-pointer">
-                <img src="/logo.png" alt="FlowSync Logo" className="w-6 h-6 object-contain filter brightness-110" />
+                <img src="/logo.png" alt={`${appName} Logo`} className="w-6 h-6 object-contain filter brightness-110" />
               </div>
               <span className="text-lg font-black tracking-tight text-white flex items-center gap-1.5">
-                FlowSync
+                {appName}
                 <span className="text-[9px] bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">{version}</span>
               </span>
             </div>
@@ -183,10 +185,10 @@ const Login: React.FC = () => {
           {/* Mobile/Small Screen Branding (Shown only on small screens) */}
           <div className="md:hidden flex items-center gap-3.5 mb-8">
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 overflow-hidden">
-              <img src="/logo.png" alt="FlowSync Logo" className="w-5 h-5 object-contain" />
+              <img src="/logo.png" alt={`${appName} Logo`} className="w-5 h-5 object-contain" />
             </div>
             <span className="text-xl font-black tracking-tight text-white flex items-center gap-1.5">
-              FlowSync
+              {appName}
               <span className="text-[9px] bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">{version}</span>
             </span>
           </div>
@@ -295,7 +297,7 @@ const Login: React.FC = () => {
             {/* Bottom Credits */}
             <div className="mt-8 md:mt-12 text-center">
               <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1.5">
-                FlowSync Institutional Core • © 2026
+                {appName} Institutional Core • © 2026
               </p>
               <p className="text-[8px] font-black text-slate-400/40 uppercase tracking-wider flex items-center justify-center gap-1">
                 Engineered by 

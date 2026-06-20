@@ -16,6 +16,7 @@ import {
 import { motion } from 'framer-motion';
 import { cn } from "@/lib/utils";
 import SEO from '@/components/SEO';
+import { getAppName } from '../../utils/config';
 
 interface Achievement {
   id: string;
@@ -44,6 +45,7 @@ interface UserProfile {
 }
 
 const PublicProfile = () => {
+  const appName = getAppName();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -102,7 +104,7 @@ const PublicProfile = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20">
-      <SEO title={`${profile.name} | FlowSync Profile`} description={`Professional profile of ${profile.name} on FlowSync.`} />
+      <SEO title={`${profile.name} | ${appName} Profile`} description={`Professional profile of ${profile.name} on ${appName}.`} />
 
       <button 
         onClick={() => navigate(-1)}

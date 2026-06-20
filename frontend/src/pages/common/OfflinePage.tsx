@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { WifiOff, RefreshCw, Signal, Globe } from 'lucide-react';
+import { getAppName } from '../../utils/config';
 
 const OfflinePage: React.FC = () => {
   const [isChecking, setIsChecking] = useState(false);
   const [checkResult, setCheckResult] = useState<'offline' | 'online' | null>(null);
+  const appName = getAppName();
 
   const handleRetry = async () => {
     setIsChecking(true);
@@ -55,7 +57,7 @@ const OfflinePage: React.FC = () => {
 
         <h1 className="text-3xl font-black text-[var(--text-main)] mb-3 tracking-tight">Offline Mode</h1>
         <p className="text-sm text-[var(--text-muted)] dark:text-violet-300/80 mb-8 font-medium leading-relaxed max-w-xs">
-          Your internet connection is currently down. FlowSync will resume synchronization automatically when connectivity is restored.
+          Your internet connection is currently down. {appName} will resume synchronization automatically when connectivity is restored.
         </p>
 
         {/* Status indicator panel */}
@@ -94,7 +96,7 @@ const OfflinePage: React.FC = () => {
 
       {/* Footer Info */}
       <div className="mt-12 text-center relative z-10">
-        <p className="text-xs font-bold text-[var(--text-main)]/40 uppercase tracking-widest mb-2">FlowSync Core Engine</p>
+        <p className="text-xs font-bold text-[var(--text-main)]/40 uppercase tracking-widest mb-2">{appName} Core Engine</p>
         <div className="flex items-center justify-center gap-2 text-[10px] text-[var(--accent)]/80">
           <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${checkResult === 'online' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
           <span>Offline Interceptor Active</span>

@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import { cn, formatDate } from '@/lib/utils';
+import { getAppName } from '../../utils/config';
 
 interface HODStats {
   total_faculty: number;
@@ -111,6 +112,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
 const HODDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const appName = getAppName();
   const [stats, setStats] = useState<HODStats>({
     total_faculty: 0,
     active_tasks: 0,
@@ -204,7 +206,7 @@ const HODDashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      <SEO title="HOD Strategic Dashboard" description="Departmental overview and strategic controls for FlowSync." />
+      <SEO title="HOD Strategic Dashboard" description={`Departmental overview and strategic controls for ${appName}.`} />
       
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

@@ -1,6 +1,6 @@
 {
-  "name": "FlowSync - Departmental Command Center",
-  "short_name": "FlowSync",
+  "name": "NeoSync - Departmental Command Center",
+  "short_name": "NeoSync",
   "description": "Premium departmental task management and mission intelligence system.",
   "start_url": "/",
   "display": "standalone",
