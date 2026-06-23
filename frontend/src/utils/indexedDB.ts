@@ -1,6 +1,6 @@
 // frontend/src/utils/indexedDB.ts
 
-const DB_NAME = 'FlowSyncEngagementDB';
+const DB_NAME = 'NeoSyncEngagementDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'engagement_sessions';
 

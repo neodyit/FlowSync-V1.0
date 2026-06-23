@@ -9,8 +9,10 @@ import {
   Bug
 } from 'lucide-react';
 import SEO from '@/components/SEO';
+import { getAppName } from '../../utils/config';
 
 const Feedback: React.FC = () => {
+  const appName = getAppName();
   const [type, setType] = useState<'feedback' | 'issue'>('feedback');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
@@ -58,7 +60,7 @@ const Feedback: React.FC = () => {
         </motion.div>
         <h2 className="text-2xl font-black text-[#1E184B] mb-2">Submission Received</h2>
         <p className="text-slate-500 max-w-md mx-auto mb-8 font-medium">
-          Thank you for helping us improve FlowSync. Our technical team will review your report shortly.
+          Thank you for helping us improve {appName}. Our technical team will review your report shortly.
         </p>
         <button 
           onClick={() => setIsSubmitted(false)}
@@ -72,7 +74,7 @@ const Feedback: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto py-8">
-      <SEO title="Report & Feedback" description="Submit issues or provide feedback to improve FlowSync." />
+      <SEO title="Report & Feedback" description={`Submit issues or provide feedback to improve ${appName}.`} />
       
       <div className="mb-10">
         <h1 className="text-3xl font-black text-[#1E184B] tracking-tight">Report an Issue or Feedback</h1>

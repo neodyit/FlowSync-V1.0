@@ -47,6 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         $update_stmt = $db->prepare("UPDATE users SET password_hash = :password WHERE id = :user_id");
         
         if ($update_stmt->execute(['password' => $hashed_password, 'user_id' => $userId])) {
+            $logger = new \FlowSync\Utils\AuditLogger();
+            $logger->log($userId, 'UPDATE_PASSWORD', 'USER', $userId, []);
             echo json_encode(['status' => 'success', 'message' => 'Password updated successfully']);
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Failed to update password']);

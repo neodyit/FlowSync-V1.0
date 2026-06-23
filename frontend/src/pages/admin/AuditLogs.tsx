@@ -27,6 +27,7 @@ import { cn, formatDate } from '@/lib/utils';
 import SEO from '@/components/SEO';
 import Swal from 'sweetalert2';
 import { DataTable, type Column } from '@/components/ui/DataTable';
+import { getAppName } from '../../utils/config';
 
 interface AuditLog {
   id: number;
@@ -45,9 +46,11 @@ interface AuditLog {
 }
 
 const AuditLogs: React.FC = () => {
+  const appName = getAppName();
   const [searchParams] = useSearchParams();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [stats, setStats] = useState({ total: 0, deletes: 0, logins: 0, hits: 0 });
+  const [filteredTotal, setFilteredTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filterAction, setFilterAction] = useState('all');
@@ -56,6 +59,10 @@ const AuditLogs: React.FC = () => {
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
   const [copied, setCopied] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
   // Debounce search input to prevent excessive API requests
   useEffect(() => {
@@ -64,6 +71,11 @@ const AuditLogs: React.FC = () => {
     }, 400);
     return () => clearTimeout(handler);
   }, [searchQuery]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, filterAction, timeFrame]);
 
   const fetchLogs = async () => {
     setIsLoading(true);
@@ -75,6 +87,10 @@ const AuditLogs: React.FC = () => {
       
       const userIdParam = searchParams.get('user_id');
       if (userIdParam) params.append('user_id', userIdParam);
+      
+      // Pagination parameters
+      params.append('page', currentPage.toString());
+      params.append('limit', pageSize.toString());
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/audit_logs.php?${params.toString()}`, {
         credentials: 'include'
@@ -82,6 +98,9 @@ const AuditLogs: React.FC = () => {
       const data = await response.json();
       if (data.status === 'success') {
         setLogs(data.data);
+        if (data.filtered_total !== undefined) {
+          setFilteredTotal(data.filtered_total);
+        }
         if (data.stats) {
           setStats(data.stats);
         }
@@ -95,7 +114,7 @@ const AuditLogs: React.FC = () => {
 
   useEffect(() => {
     fetchLogs();
-  }, [debouncedSearch, filterAction, timeFrame, searchParams]);
+  }, [debouncedSearch, filterAction, timeFrame, searchParams, currentPage, pageSize]);
 
   useEffect(() => {
     const searchVal = searchParams.get('search');
@@ -375,7 +394,7 @@ const AuditLogs: React.FC = () => {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8">
-      <SEO title="Audit Protocols" description="Comprehensive immutable ledger of all system interactions and administrative changes within FlowSync." />
+      <SEO title="Audit Protocols" description={`Comprehensive immutable ledger of all system interactions and administrative changes within ${appName}.`} />
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
@@ -536,6 +555,12 @@ const AuditLogs: React.FC = () => {
         getId={(log) => log.id}
         isLoading={isLoading}
         mobileCardRender={mobileCardRender}
+        serverSide={true}
+        totalItems={filteredTotal}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
       />
 
       {/* Premium Detail Drawer / Modal */}

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { getAppName } from '../utils/config';
 
 interface SEOProps {
   title: string;
@@ -7,8 +8,9 @@ interface SEOProps {
 
 const SEO: React.FC<SEOProps> = ({ title, description }) => {
   useEffect(() => {
+    const appName = getAppName();
     // Update Document Title
-    document.title = `${title} | FlowSync`;
+    document.title = `${title} | ${appName}`;
 
     // Update Meta Author
     let metaAuthor = document.querySelector('meta[name="author"]');
@@ -27,7 +29,7 @@ const SEO: React.FC<SEOProps> = ({ title, description }) => {
       document.head.appendChild(metaDescription);
     }
     
-    const defaultDesc = "FlowSync - The premium departmental synchronization and task management system designed to orchestrate academic workflows.";
+    const defaultDesc = `${appName} - The premium departmental synchronization and task management system designed to orchestrate academic workflows.`;
     let finalDesc = description || defaultDesc;
     
     // Ensure "Created and Managed by Neody IT" is present in the description
@@ -56,7 +58,7 @@ const SEO: React.FC<SEOProps> = ({ title, description }) => {
       ogTitle.setAttribute('property', 'og:title');
       document.head.appendChild(ogTitle);
     }
-    ogTitle.setAttribute('content', `${title} | FlowSync`);
+    ogTitle.setAttribute('content', `${title} | ${appName}`);
 
   }, [title, description]);
 

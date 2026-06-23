@@ -41,21 +41,24 @@ try {
     $stmt = $db->prepare("
         SELECT 
             COUNT(*) as total_tasks,
-            SUM(CASE WHEN status IN ('Completed', 'Approved') THEN 1 ELSE 0 END) as completed_tasks,
-            SUM(COALESCE(points, 0)) as total_points,
-            SUM(COALESCE(bonus_points, 0)) as total_bonus
+            SUM(CASE WHEN status IN ('Completed', 'Approved') THEN 1 ELSE 0 END) as completed_tasks
         FROM tasks
         WHERE assigned_to_id = :user_id AND department_id = :dept_id
     ");
     $stmt->execute(['user_id' => $userId, 'dept_id' => $deptId]);
     $stats = $stmt->fetch();
 
+    $stmt = $db->prepare("SELECT SUM(total_points) FROM leaderboard_points WHERE user_id = :user_id");
+    $stmt->execute(['user_id' => $userId]);
+    $totalPoints = $stmt->fetchColumn() ?: 0;
+
     // 4. Calculate Department Rank (based on points + bonus)
     $stmt = $db->prepare("
-        SELECT assigned_to_id as user_id, (SUM(COALESCE(points, 0)) + SUM(COALESCE(bonus_points, 0))) as total_score
-        FROM tasks
-        WHERE department_id = :dept_id AND assigned_to_id IS NOT NULL
-        GROUP BY assigned_to_id
+        SELECT lp.user_id, SUM(lp.total_points) as total_score
+        FROM leaderboard_points lp
+        JOIN faculty_departments fd ON lp.user_id = fd.user_id
+        WHERE fd.department_id = :dept_id
+        GROUP BY lp.user_id
         ORDER BY total_score DESC
     ");
     $stmt->execute(['dept_id' => $deptId]);
@@ -93,8 +96,8 @@ try {
             ],
             'stats' => [
                 'rank' => $rank ?: 'N/A',
-                'points' => (int)($stats['total_points'] ?? 0),
-                'bonus' => (int)($stats['total_bonus'] ?? 0),
+                'points' => (int)$totalPoints,
+                'bonus' => 0, // Simplified or query if needed
                 'completed' => (int)($stats['completed_tasks'] ?? 0),
                 'total' => (int)($stats['total_tasks'] ?? 0)
             ],

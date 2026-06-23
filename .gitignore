@@ -20,6 +20,7 @@ saas.md
 # Dependencies & Package Managers
 # ------------------------------------------
 # Node.js
+flutter_app/
 node_modules/
 frontend/node_modules/
 
@@ -33,6 +34,7 @@ backend/sql/data.xlsx
 backend/sql/seed_faculties.sql
 backend/sql/flowsync.sql
 backend/storage/
+backend/src/Utils/firebase_credentials.json
 
 # ------------------------------------------
 # Build & Distribution Outputs

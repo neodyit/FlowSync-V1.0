@@ -30,8 +30,10 @@ import { cn, formatDate } from "@/lib/utils";
 import Swal from 'sweetalert2';
 import { useTheme } from '../components/ThemeProvider';
 import { AnimatePresence, motion } from 'framer-motion';
+import { getAppName } from '../utils/config';
 
 export default function FacultyLayout() {
+  const appName = getAppName();
   const { theme, toggleTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -306,7 +308,7 @@ export default function FacultyLayout() {
           if (latestNotif) {
             // Show premium brand-themed toast notification inside the app (perfect secure/insecure local HTTP fallback)
             Swal.fire({
-              title: 'FlowSync Alert',
+              title: `${appName} Alert`,
               text: latestNotif.message,
               icon: 'info',
               toast: true,
@@ -325,7 +327,7 @@ export default function FacultyLayout() {
 
             // Show native desktop notification if allowed and granted (HTTPS secure context required)
             if (showDesktopNotification && 'Notification' in window && Notification.permission === 'granted') {
-              new Notification("FlowSync Alert", {
+              new Notification(`${appName} Alert`, {
                 body: latestNotif.message,
                 icon: '/logo.png'
               });
@@ -674,10 +676,10 @@ export default function FacultyLayout() {
           <div className="p-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white border border-[#7C3AED]/15 rounded-xl flex items-center justify-center shadow-md overflow-hidden">
-                <img src="/logo.png" alt="FlowSync" className="w-8 h-8 object-contain" />
+                <img src="/logo.png" alt={appName} className="w-8 h-8 object-contain" />
               </div>
               <span className="text-xl font-black tracking-tight text-[#1E184B] dark:text-indigo-100 font-display">
-                FlowSync <span className="text-xs font-bold text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest block -mt-1 opacity-60">Faculty Portal</span>
+                {appName} <span className="text-xs font-bold text-[#7C3AED] dark:text-violet-400 uppercase tracking-widest block -mt-1 opacity-60">Faculty Portal</span>
               </span>
             </div>
             <button className="lg:hidden p-2 text-[#1E184B] dark:text-indigo-100" onClick={() => setIsSidebarOpen(false)}>
@@ -938,7 +940,7 @@ export default function FacultyLayout() {
                 {/* Branding Mark */}
                 <div className="flex items-center gap-3 opacity-25 grayscale brightness-0 mb-2 dark:opacity-60 dark:grayscale-0 dark:brightness-100 text-[#1E184B] dark:text-indigo-300">
                   <LayoutGrid className="w-5 h-5" />
-                  <span className="text-sm font-black tracking-[0.3em] uppercase">FlowSync</span>
+                  <span className="text-sm font-black tracking-[0.3em] uppercase">{appName}</span>
                 </div>
 
                 {/* Credits Section */}
@@ -1024,7 +1026,7 @@ export default function FacultyLayout() {
                   </p>
                 </div>
                 <p className="text-slate-500 dark:text-indigo-200/70 text-xs sm:text-sm font-semibold max-w-lg mt-1">
-                  Welcome to FlowSync! To maintain security, transparency, and the highest standards of professional collaboration on our platform, you are required to complete your onboarding profile setup before accessing the dashboard.
+                  Welcome to {appName}! To maintain security, transparency, and the highest standards of professional collaboration on our platform, you are required to complete your onboarding profile setup before accessing the dashboard.
                 </p>
               </div>
 
@@ -1066,7 +1068,7 @@ export default function FacultyLayout() {
                   </div>
                   <div>
                     <h4 className="text-xs font-black text-[#7C3AED] dark:text-[#A78BFA] uppercase tracking-wider">Update Password</h4>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Change the default <span className="font-mono bg-violet-100 dark:bg-violet-950 px-1 py-0.5 rounded text-rose-500 dark:text-rose-400">flowsync</span> password to secure your account.</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Change the default <span className="font-mono bg-violet-100 dark:bg-violet-950 px-1 py-0.5 rounded text-rose-500 dark:text-rose-400">{appName.toLowerCase()}</span> password to secure your account.</p>
                   </div>
                 </div>
               </div>
@@ -1076,7 +1078,7 @@ export default function FacultyLayout() {
                 <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                 <div className="text-xs font-semibold text-amber-800 dark:text-amber-300 leading-relaxed">
                   <span className="font-extrabold uppercase tracking-wide block mb-0.5">Platform Requirement Details:</span>
-                  FlowSync manages department workflows, tasks, timelines, performance rankings, and compliance reports. A verified and secure profile ensures proper authorization, audit trails, and uninterrupted notification delivery.
+                  {appName} manages department workflows, tasks, timelines, performance rankings, and compliance reports. A verified and secure profile ensures proper authorization, audit trails, and uninterrupted notification delivery.
                 </div>
               </div>
 

@@ -41,16 +41,10 @@ try {
 
         $db->beginTransaction();
 
-        $insertStmt = $db->prepare("
-            INSERT INTO notifications (user_id, message, type)
-            VALUES (:user_id, :message, 'System Announcement')
-        ");
+        $notifService = new NotificationService();
 
         foreach ($users as $userId) {
-            $insertStmt->execute([
-                'user_id' => $userId,
-                'message' => $message
-            ]);
+            $notifService->send($userId, 'System Announcement', $message, null, $session['user_id'] ?? null);
         }
 
         $db->commit();

@@ -92,12 +92,25 @@ try {
                         INSERT INTO notifications (user_id, type, title, message, is_read, is_actioned)
                         VALUES (:user_id, 'POPUP', :title, :message, 0, 0)
                     ");
+                    
+                    require_once __DIR__ . '/../../src/Utils/FCMSender.php';
+                    $fcmSender = new \FlowSync\FCMSender();
+                    $tokenStmt = $db->prepare("SELECT fcm_token FROM users WHERE id = :uid");
+
                     foreach ($users as $uid) {
                         $insertStmt->execute([
                             'user_id' => $uid,
                             'title' => $title,
                             'message' => $message
                         ]);
+                        
+                        $tokenStmt->execute(['uid' => $uid]);
+                        $token = $tokenStmt->fetchColumn();
+                        if (!empty($token)) {
+                            try {
+                                $fcmSender->sendPushNotification($token, $title, $message, ['type' => 'POPUP']);
+                            } catch (\Exception $e) {}
+                        }
                     }
                     $db->commit();
                 }

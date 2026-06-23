@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Swal from 'sweetalert2';
 import { cn } from "@/lib/utils";
 import SEO from '@/components/SEO';
+import { getAppName } from '../../utils/config';
 
 interface Achievement {
   id: string;
@@ -53,6 +54,7 @@ interface UserProfile {
 }
 
 const Profile = () => {
+  const appName = getAppName();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const targetId = searchParams.get('id');
@@ -590,9 +592,9 @@ const Profile = () => {
           ) : (
             <div className="bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] rounded-[2.5rem] p-8 text-white shadow-xl shadow-[#7C3AED]/20">
               <Sparkles className="w-8 h-8 text-amber-300 mb-4" />
-              <h3 className="text-xl font-black mb-2">FlowSync Professional</h3>
+              <h3 className="text-xl font-black mb-2">{appName} Professional</h3>
               <p className="text-white/80 text-xs font-medium leading-relaxed">
-                This professional is an active contributor to FlowSync's mission objectives and institutional excellence.
+                This professional is an active contributor to {appName}'s mission objectives and institutional excellence.
               </p>
             </div>
           )}

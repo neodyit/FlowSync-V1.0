@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import { cn, formatDate } from '@/lib/utils';
+import { getAppName } from '../../utils/config';
 
 interface FacultyStats {
   total_points: number;
@@ -112,6 +113,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
 const FacultyDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const appName = getAppName();
   const [stats, setStats] = useState<FacultyStats>({
     total_points: 0,
     month_points: 0,
@@ -202,7 +204,7 @@ const FacultyDashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      <SEO title="Faculty Mission Control" description="Personalized mission tracking and merit overview for FlowSync Faculty." />
+      <SEO title="Faculty Mission Control" description={`Personalized mission tracking and merit overview for ${appName} Faculty.`} />
       
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

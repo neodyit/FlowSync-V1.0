@@ -21,6 +21,7 @@ import {
 import Swal from 'sweetalert2';
 import { cn } from '@/lib/utils';
 import SEO from '@/components/SEO';
+import { getAppName } from '../../utils/config';
 
 interface SystemSettings {
   maintenance_mode: string;
@@ -63,6 +64,7 @@ const ControlsPage: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubTab, setActiveSubTab] = useState<'bans' | 'attempts'>('bans');
+  const appName = getAppName();
 
   useEffect(() => {
     fetchInitialData();
@@ -285,7 +287,7 @@ const ControlsPage: React.FC = () => {
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-10 animate-in fade-in duration-500">
-      <SEO title="System Controls" description="Global application controls, security lockout settings, and administrative toggles." />
+      <SEO title="System Controls" description={`Global application controls, security lockout settings, and administrative toggles for ${appName}.`} />
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
@@ -338,7 +340,7 @@ const ControlsPage: React.FC = () => {
               <div>
                 <h3 className="font-black text-[#1E184B] dark:text-indigo-100 flex items-center gap-2 text-sm sm:text-base">
                   Maintenance Mode
-                  {settings.maintenance_mode === 'true' && <span className="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-450 text-[8px] font-black uppercase tracking-widest">Active</span>}
+                  {settings.maintenance_mode === 'true' && <span className="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-455 text-[8px] font-black uppercase tracking-widest">Active</span>}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-violet-400/60 font-bold mt-1 leading-relaxed">Locks out HODs and Faculty. Only Admins can establish database sessions. Use during major migrations.</p>
               </div>
@@ -446,7 +448,7 @@ const ControlsPage: React.FC = () => {
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-[#1E184B] dark:text-indigo-100">FlowSync Access Firewall</h2>
+                <h2 className="text-xl font-black text-[#1E184B] dark:text-indigo-100">{appName} Access Firewall</h2>
                 <p className="text-xs font-bold text-slate-400 dark:text-violet-400/60">Configure brute-force lockouts, review detailed audits, and purge databases.</p>
               </div>
             </div>

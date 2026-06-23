@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, MapPin, Building2, ExternalLink, Trash2, Edit2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '@/components/SEO';
+import { getAppName } from '../../utils/config';
 
 interface College {
   id: number;
@@ -19,6 +20,7 @@ const InstitutionManagement: React.FC = () => {
   const [editingCollege, setEditingCollege] = useState<College | null>(null);
   const [formData, setFormData] = useState({ name: '', short_name: '', address: '' });
   const navigate = useNavigate();
+  const appName = getAppName();
 
   const fetchColleges = async () => {
     try {
@@ -101,7 +103,7 @@ const InstitutionManagement: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl mx-auto">
-      <SEO title="Institution Management" description="Manage colleges and departmental hierarchies within the FlowSync ecosystem." />
+      <SEO title="Institution Management" description={`Manage colleges and departmental hierarchies within the ${appName} ecosystem.`} />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-[#1E1B4B] dark:text-indigo-100">Institution Management</h1>

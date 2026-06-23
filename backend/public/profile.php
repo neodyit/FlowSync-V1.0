@@ -277,9 +277,15 @@ if ($method === 'GET') {
         }
     }
 
+    // Fetch old data for audit log
+    $stmtOld = $db->prepare("SELECT * FROM users WHERE id = :id");
+    $stmtOld->execute(['id' => $userId]);
+    $oldUser = $stmtOld->fetch(PDO::FETCH_ASSOC);
+
     // Standard field updates
     $updates = [];
     $params = ['id' => $userId];
+    $changes = [];
 
     $allowedFields = ['name', 'phone', 'bio', 'achievements', 'is_public', 'designation'];
     
@@ -289,6 +295,13 @@ if ($method === 'GET') {
             if ($field === 'achievements') $val = json_encode($val);
             if ($field === 'is_public') $val = $val ? 1 : 0;
             
+            if ($oldUser && $oldUser[$field] != $val) {
+                $changes[$field] = [
+                    'old' => $oldUser[$field],
+                    'new' => $val
+                ];
+            }
+
             $updates[] = "$field = :$field";
             $params[$field] = $val;
         }
@@ -304,7 +317,7 @@ if ($method === 'GET') {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
 
-    $logger->log($userId, 'UPDATE', 'USER', $userId, ['fields' => array_keys($data)]);
+    $logger->log($userId, 'UPDATE_PROFILE', 'USER', $userId, ['changes' => $changes]);
 
     echo json_encode(['status' => 'success', 'message' => 'Profile updated successfully.']);
 }

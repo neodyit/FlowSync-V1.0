@@ -18,6 +18,15 @@ try {
     $pushNoticeId = $data['push_notice_id'] ?? null;
     $userIds = $data['user_ids'] ?? [];
 
+    // Ensure logs directory exists
+    $logDir = __DIR__ . '/../../logs';
+    if (!is_dir($logDir)) {
+        mkdir($logDir, 0777, true);
+    }
+    $logFile = $logDir . '/ping.log';
+    $logData = date('[Y-m-d H:i:s] ') . "Request: push_notice_id=$pushNoticeId, user_ids=" . json_encode($userIds) . "\n";
+    file_put_contents($logFile, $logData, FILE_APPEND);
+
     if (!$pushNoticeId || empty($userIds)) {
         throw new Exception("Push notice ID and user IDs are required.");
     }
@@ -31,19 +40,26 @@ try {
         throw new Exception("Unauthorized to modify this notice.");
     }
 
-    // To ensure the ping triggers the popup on the faculty side (which caches the last seen notification ID),
-    // we delete the existing pending notifications and re-insert them to generate new IDs.
-    
-    $inQuery = implode(',', array_fill(0, count($userIds), '?'));
-    
     // Get the details of the original notifications
+    $inQuery = implode(',', array_fill(0, count($userIds), '?'));
     $selectStmt = $db->prepare("
         SELECT * FROM notifications 
         WHERE push_notice_id = ? AND user_id IN ($inQuery)
     ");
     $params = array_merge([$pushNoticeId], $userIds);
+    
     $selectStmt->execute($params);
     $oldNotifs = $selectStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    file_put_contents($logFile, "Found " . count($oldNotifs) . " notifications to resend: " . json_encode($oldNotifs) . "\n", FILE_APPEND);
+
+    if (empty($oldNotifs)) {
+        // If not found, let's see if there are any notifications with this push_notice_id at all
+        $checkStmt = $db->prepare("SELECT id, user_id, is_read FROM notifications WHERE push_notice_id = ?");
+        $checkStmt->execute([$pushNoticeId]);
+        $allNotifs = $checkStmt->fetchAll(PDO::FETCH_ASSOC);
+        file_put_contents($logFile, "Fallback Check (all notifications for notice $pushNoticeId): " . json_encode($allNotifs) . "\n", FILE_APPEND);
+    }
 
     // Delete them
     $deleteStmt = $db->prepare("
@@ -73,6 +89,8 @@ try {
 
     $db->commit();
 
+    file_put_contents($logFile, "Transaction committed successfully.\n\n", FILE_APPEND);
+
     echo json_encode([
         'status' => 'success',
         'message' => 'Successfully pinged pending users.'
@@ -82,6 +100,9 @@ try {
     if (isset($db) && $db->inTransaction()) {
         $db->rollBack();
     }
+    $logDir = __DIR__ . '/../../logs';
+    $logFile = $logDir . '/ping.log';
+    file_put_contents($logFile, "Error: " . $e->getMessage() . "\n\n", FILE_APPEND);
     http_response_code(500);
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }

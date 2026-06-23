@@ -19,6 +19,14 @@ interface DataTableProps<T> {
   getId: (item: T) => number;
   isLoading?: boolean;
   mobileCardRender?: (item: T, isSelected: boolean, onToggleSelect: () => void) => React.ReactNode;
+  
+  // Server-side pagination
+  serverSide?: boolean;
+  totalItems?: number;
+  currentPage?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
 }
 
 export function DataTable<T>({
@@ -29,14 +37,36 @@ export function DataTable<T>({
   getId,
   isLoading = false,
   mobileCardRender,
+  serverSide = false,
+  totalItems: externalTotalItems,
+  currentPage: externalPage,
+  pageSize: externalPageSize,
+  onPageChange,
+  onPageSizeChange
 }: DataTableProps<T>) {
   // Sort state
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  // Local Pagination state
+  const [localPage, setLocalPage] = useState(1);
+  const [localPageSize, setLocalPageSize] = useState(10);
+
+  const activePage = serverSide && externalPage !== undefined ? externalPage : localPage;
+  const activePageSize = serverSide && externalPageSize !== undefined ? externalPageSize : localPageSize;
+
+  const handlePageChange = (page: number) => {
+    if (serverSide && onPageChange) onPageChange(page);
+    else setLocalPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    if (serverSide && onPageSizeChange) onPageSizeChange(size);
+    else {
+      setLocalPageSize(size);
+      setLocalPage(1);
+    }
+  };
 
   // Sorting logic
   const sortedData = useMemo(() => {
@@ -62,16 +92,17 @@ export function DataTable<T>({
   }, [data, sortKey, sortDirection, columns]);
 
   // Pagination logic
-  const totalItems = sortedData.length;
-  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const totalItems = serverSide && externalTotalItems !== undefined ? externalTotalItems : sortedData.length;
+  const totalPages = Math.ceil(totalItems / activePageSize) || 1;
   
   // Safe page index adjust
-  const currentPageSafe = Math.min(currentPage, totalPages);
+  const currentPageSafe = Math.min(activePage, totalPages);
   
   const paginatedData = useMemo(() => {
-    const start = (currentPageSafe - 1) * pageSize;
-    return sortedData.slice(start, start + pageSize);
-  }, [sortedData, currentPageSafe, pageSize]);
+    if (serverSide) return data;
+    const start = (currentPageSafe - 1) * activePageSize;
+    return sortedData.slice(start, start + activePageSize);
+  }, [sortedData, data, currentPageSafe, activePageSize, serverSide]);
 
   // Selection states
   const filteredIds = useMemo(() => data.map(getId), [data, getId]);
@@ -253,10 +284,9 @@ export function DataTable<T>({
             <div className="flex items-center gap-3 text-xs sm:text-sm font-bold text-slate-500 dark:text-violet-400/80">
               <span>Show</span>
               <select
-                value={pageSize}
+                value={activePageSize}
                 onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(1);
+                  handlePageSizeChange(Number(e.target.value));
                 }}
                 className="px-2 py-1.5 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-xl outline-none focus:border-[#7C3AED] dark:focus:border-violet-400 transition-colors text-xs font-bold text-[#1E1B4B] dark:text-indigo-100 cursor-pointer"
               >
@@ -268,14 +298,14 @@ export function DataTable<T>({
               </select>
               <span>records</span>
               <span className="text-[10px] font-black uppercase text-slate-400 dark:text-violet-400/40 ml-2">
-                (Showing {(currentPageSafe - 1) * pageSize + 1} to {Math.min(currentPageSafe * pageSize, totalItems)} of {totalItems})
+                (Showing {(currentPageSafe - 1) * activePageSize + 1} to {Math.min(currentPageSafe * activePageSize, totalItems)} of {totalItems})
               </span>
             </div>
 
             <div className="flex items-center gap-1">
               <button
                 disabled={currentPageSafe === 1}
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => handlePageChange(Math.max(currentPageSafe - 1, 1))}
                 className="p-2 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-xl text-[#7C3AED] dark:text-violet-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-violet-950/40 transition-all active:scale-95 cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -293,7 +323,7 @@ export function DataTable<T>({
                 return (
                   <button
                     key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
+                    onClick={() => handlePageChange(pageNum)}
                     className={cn(
                       "w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer",
                       currentPageSafe === pageNum
@@ -308,7 +338,7 @@ export function DataTable<T>({
 
               <button
                 disabled={currentPageSafe === totalPages}
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() => handlePageChange(Math.min(currentPageSafe + 1, totalPages))}
                 className="p-2 bg-white dark:bg-[#110A24] border border-[#7C3AED]/10 dark:border-violet-500/20 rounded-xl text-[#7C3AED] dark:text-violet-400 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-violet-950/40 transition-all active:scale-95 cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />

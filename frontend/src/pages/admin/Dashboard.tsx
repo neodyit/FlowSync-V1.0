@@ -21,6 +21,7 @@ import { motion } from 'framer-motion';
 import { cn, formatDate } from '@/lib/utils';
 import SEO from '@/components/SEO';
 import { useNavigate } from 'react-router-dom';
+import { getAppName } from '../../utils/config';
 
 interface DashboardStats {
   colleges: number;
@@ -42,6 +43,7 @@ const AdminDashboard: React.FC = () => {
   const [recentLogs, setRecentLogs] = useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const appName = getAppName();
 
   const fetchData = async () => {
     try {
@@ -107,7 +109,7 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="p-6 md:p-8 max-w-[1600px] mx-auto space-y-10">
-      <SEO title="System Overview" description="FlowSync Administrative Control Center" />
+      <SEO title="System Overview" description={`${appName} Administrative Control Center`} />
       
       {/* Header section with Premium Greeting */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">

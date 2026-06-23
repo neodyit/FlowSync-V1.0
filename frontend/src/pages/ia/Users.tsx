@@ -22,6 +22,7 @@ import withReactContent from 'sweetalert2-react-content';
 import { ProfileCard } from '@/components/ui/info-card';
 import { getImageUrl } from '@/lib/utils';
 import SEO from '@/components/SEO';
+import { getAppName } from '../../utils/config';
 
 const MySwal = withReactContent(Swal);
 
@@ -136,6 +137,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 };
 
 export default function IAUsers() {
+  const appName = getAppName();
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -287,7 +289,7 @@ export default function IAUsers() {
   const handleDeleteUser = async (id: number) => {
     const result = await MySwal.fire({
       title: 'Are you sure?',
-      text: "This user profile will be removed completely from FlowSync.",
+      text: `This user profile will be removed completely from ${appName}.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#7C3AED',

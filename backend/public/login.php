@@ -15,8 +15,6 @@ spl_autoload_register(function ($class) {
     if (file_exists($file)) require $file;
 });
 
-// Load .env manually if needed or just use getenv from system
-// For now, I'll define a simple loader
 function loadEnv($path) {
     if (!file_exists($path)) return;
     $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);

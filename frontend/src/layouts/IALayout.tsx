@@ -28,6 +28,7 @@ import { checkSession, clearLocalData } from '../utils/auth';
 import { useTheme } from '../components/ThemeProvider';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { getAppName } from '../utils/config';
 
 interface CustomSelectProps {
   value: string | number;
@@ -103,6 +104,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 };
 
 export default function IALayout() {
+  const appName = getAppName();
   const { theme, toggleTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -265,10 +267,10 @@ export default function IALayout() {
           <div className="p-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white dark:bg-[#110A24] border border-[#7C3AED]/15 dark:border-violet-500/20 rounded-xl flex items-center justify-center shadow-md overflow-hidden">
-                <img src="/logo.png" alt="FlowSync" className="w-8 h-8 object-contain" />
+                <img src="/logo.png" alt={appName} className="w-8 h-8 object-contain" />
               </div>
               <span className="text-xl font-black tracking-tight text-[#1E184B] dark:text-indigo-100 font-display">
-                FlowSync <span className="text-xs text-[#7C3AED] dark:text-violet-400">IA</span>
+                {appName} <span className="text-xs text-[#7C3AED] dark:text-violet-400">IA</span>
               </span>
             </div>
             <button className="lg:hidden p-2 text-[#4C1D95] dark:text-violet-400" onClick={() => setIsSidebarOpen(false)}>
@@ -469,7 +471,7 @@ export default function IALayout() {
               <div className="flex flex-col items-center gap-6">
                 <div className="flex items-center gap-3 opacity-25 grayscale brightness-0 mb-2 dark:opacity-60 dark:grayscale-0 dark:brightness-100 text-[#1E184B] dark:text-indigo-300">
                   <LayoutGrid className="w-5 h-5" />
-                  <span className="text-sm font-black tracking-[0.3em] uppercase">FlowSync</span>
+                  <span className="text-sm font-black tracking-[0.3em] uppercase">{appName}</span>
                 </div>
                 <p className="text-[11px] font-black text-[#1E184B]/60 dark:text-indigo-200/60 uppercase tracking-[0.15em]">
                   Institution Admin Dashboard Protocol

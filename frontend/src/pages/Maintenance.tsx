@@ -2,9 +2,11 @@ import React from 'react';
 import { Settings, ShieldAlert, Clock, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { clearAuthAndRefresh } from '../utils/auth';
+import { getAppName } from '../utils/config';
 
 const Maintenance: React.FC = () => {
   const navigate = useNavigate();
+  const appName = getAppName();
 
   const handleLogout = () => {
     clearAuthAndRefresh();
@@ -45,7 +47,7 @@ const Maintenance: React.FC = () => {
 
         <h1 className="text-3xl font-black text-[#1E1B4B] mb-3 tracking-tight">System Update</h1>
         <p className="text-sm text-[#4C1D95]/70 mb-8 font-medium leading-relaxed">
-          FlowSync is currently undergoing scheduled maintenance to upgrade our infrastructure. We'll be back online shortly.
+          {appName} is currently undergoing scheduled maintenance to upgrade our infrastructure. We'll be back online shortly.
         </p>
 
         <div className="w-full bg-[#F5F3FF] border border-[#7C3AED]/10 rounded-2xl p-4 flex items-center gap-4 mb-8">
@@ -69,7 +71,7 @@ const Maintenance: React.FC = () => {
 
       {/* Footer Info */}
       <div className="mt-12 text-center relative z-10">
-        <p className="text-xs font-bold text-[#1E1B4B]/40 uppercase tracking-widest mb-2">FlowSync Core Engine</p>
+        <p className="text-xs font-bold text-[#1E1B4B]/40 uppercase tracking-widest mb-2">{appName} Core Engine</p>
         <div className="flex items-center justify-center gap-2 text-[10px] text-[#7C3AED]/60">
           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
           <span>Maintenance Protocol Active</span>

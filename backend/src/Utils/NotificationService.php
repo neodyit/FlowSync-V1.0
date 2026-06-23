@@ -19,7 +19,7 @@ class NotificationService {
         try {
             // 1. Fetch user's settings and email
             $stmt = $this->db->prepare("
-                SELECT email, name, notification_settings 
+                SELECT email, name, notification_settings, fcm_token, quiet_hours_start, quiet_hours_end 
                 FROM users 
                 WHERE id = :user_id LIMIT 1
             ");
@@ -38,6 +38,58 @@ class NotificationService {
                 'task_id' => $taskId,
                 'trigger_id' => $triggerUserId
             ]);
+
+            $fcmToken = $recipient['fcm_token'] ?? null;
+            $shouldSendPush = false;
+            
+            if ($fcmToken && $recipient) {
+                $shouldSendPush = true;
+                $settings = json_decode($recipient['notification_settings'] ?? '{}', true);
+                
+                // 1. Check if Push Alerts are disabled
+                if (isset($settings['push_alerts']) && $settings['push_alerts'] == false) {
+                    $shouldSendPush = false;
+                }
+                
+                // 2. Check Quiet Hours
+                if ($shouldSendPush && !empty($recipient['quiet_hours_start']) && !empty($recipient['quiet_hours_end'])) {
+                    $now = time();
+                    // Parse times based on today's date
+                    $startStr = date("Y-m-d ") . $recipient['quiet_hours_start'];
+                    $endStr = date("Y-m-d ") . $recipient['quiet_hours_end'];
+                    $start = strtotime($startStr);
+                    $end = strtotime($endStr);
+                    
+                    if ($start !== false && $end !== false) {
+                        if ($start > $end) {
+                            // Wraps around midnight
+                            if ($now >= $start || $now <= $end) {
+                                $shouldSendPush = false;
+                            }
+                        } else {
+                            // Normal day range
+                            if ($now >= $start && $now <= $end) {
+                                $shouldSendPush = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ($shouldSendPush) {
+                try {
+                    require_once __DIR__ . '/FCMSender.php';
+                    $fcmSender = new \FlowSync\FCMSender();
+                    $fcmSender->sendPushNotification($fcmToken, "FlowSync Update", $message, [
+                        'task_id' => (string)$taskId,
+                        'type' => $type
+                    ]);
+                } catch (\Exception $e) {
+                    error_log("FCM Sender error: " . $e->getMessage());
+                } catch (\Error $e) {
+                    error_log("FCM Sender fatal error: " . $e->getMessage());
+                }
+            }
 
             // 3. If recipient exists, simulate dynamic SMTP dispatching based on preferences
             if ($recipient) {
