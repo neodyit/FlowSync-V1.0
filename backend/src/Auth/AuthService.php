@@ -4,12 +4,68 @@ namespace FlowSync\Auth;
 
 use FlowSync\Config\Database;
 use PDO;
+use Exception;
 
 class AuthService {
     private $db;
 
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
+    }
+
+    private function getJwtSecret() {
+        $secret = getenv('JWT_SECRET');
+        if (!$secret || empty(trim($secret))) {
+            $env = getenv('APP_ENV') ?: 'development';
+            if ($env === 'production') {
+                throw new Exception("Critical Configuration Error: JWT_SECRET is not set.");
+            }
+            return 'flowsync_neodyit_2026';
+        }
+        return $secret;
+    }
+
+    private function logAttempt($ip, $fp, $email, $isSuccessful) {
+        $logAttempt = $this->db->prepare("
+            INSERT INTO login_attempts (ip_address, device_fingerprint, email, is_successful) 
+            VALUES (:ip, :fp, :email, :success)
+        ");
+        $logAttempt->execute([
+            'ip' => $ip, 
+            'fp' => $fp, 
+            'email' => $email,
+            'success' => $isSuccessful ? 1 : 0
+        ]);
+    }
+
+    private function isDepartmentActive($roleId, $userId) {
+        if ($roleId == 2) {
+            $stmtDept = $this->db->prepare("SELECT is_enabled FROM departments WHERE hod_id = :uid LIMIT 1");
+            $stmtDept->execute(['uid' => $userId]);
+            $deptStatus = $stmtDept->fetch();
+            if ($deptStatus && $deptStatus['is_enabled'] == 0) {
+                return false;
+            }
+        } elseif ($roleId == 3) {
+            $stmtDept = $this->db->prepare("
+                SELECT d.is_enabled 
+                FROM faculty_departments fd 
+                JOIN departments d ON fd.department_id = d.id 
+                WHERE fd.user_id = :uid
+            ");
+            $stmtDept->execute(['uid' => $userId]);
+            $depts = $stmtDept->fetchAll(PDO::FETCH_COLUMN);
+            if (count($depts) > 0) {
+                $allDisabled = true;
+                foreach ($depts as $enabled) {
+                    if ($enabled == 1) { $allDisabled = false; break; }
+                }
+                if ($allDisabled) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public function login($email, $password, $fingerprint = '') {
@@ -37,12 +93,11 @@ class AuthService {
             $user = $stmt->fetch();
 
             if (!$user) {
+                // Prevent timing attack: perform a dummy password hash check
+                password_verify($password, '$2y$10$dummyhashformitigatingtimingattacks12345678901234567890');
+
                 // Log failed attempt (user not found or inactive)
-                $logAttempt = $this->db->prepare("
-                    INSERT INTO login_attempts (ip_address, device_fingerprint, email, is_successful) 
-                    VALUES (:ip, :fp, :email, 0)
-                ");
-                $logAttempt->execute(['ip' => $ipAddress, 'fp' => $fingerprint, 'email' => $email]);
+                $this->logAttempt($ipAddress, $fingerprint, $email, false);
 
                 // Evaluate brute force limit
                 $this->checkBruteForceThreshold($ipAddress, $fingerprint);
@@ -55,31 +110,8 @@ class AuthService {
             }
 
             // Check if department is disabled
-            if ($user['role_id'] == 2) {
-                $stmtDept = $this->db->prepare("SELECT is_enabled FROM departments WHERE hod_id = :uid LIMIT 1");
-                $stmtDept->execute(['uid' => $user['id']]);
-                $deptStatus = $stmtDept->fetch();
-                if ($deptStatus && $deptStatus['is_enabled'] == 0) {
-                    return ['status' => 'error', 'message' => 'Access blocked: Your department has been deactivated.'];
-                }
-            } elseif ($user['role_id'] == 3) {
-                $stmtDept = $this->db->prepare("
-                    SELECT d.is_enabled 
-                    FROM faculty_departments fd 
-                    JOIN departments d ON fd.department_id = d.id 
-                    WHERE fd.user_id = :uid
-                ");
-                $stmtDept->execute(['uid' => $user['id']]);
-                $depts = $stmtDept->fetchAll(PDO::FETCH_COLUMN);
-                if (count($depts) > 0) {
-                    $allDisabled = true;
-                    foreach ($depts as $enabled) {
-                        if ($enabled == 1) { $allDisabled = false; break; }
-                    }
-                    if ($allDisabled) {
-                        return ['status' => 'error', 'message' => 'Access blocked: Your department has been deactivated.'];
-                    }
-                }
+            if (!$this->isDepartmentActive($user['role_id'], $user['id'])) {
+                return ['status' => 'error', 'message' => 'Access blocked: Your department has been deactivated.'];
             }
 
             if (password_verify($password, $user['password_hash'])) {
@@ -110,7 +142,7 @@ class AuthService {
                     'exp'        => $expiryTime
                 ];
 
-                JWT::setSecret(getenv('JWT_SECRET') ?: 'flowsync_neodyit_2026');
+                JWT::setSecret($this->getJwtSecret());
                 $token = JWT::encode($payload);
 
                 $cookieName = getenv('COOKIE_NAME') ?: 'flowsync_session';
@@ -129,11 +161,7 @@ class AuthService {
                 );
 
                 // Log successful attempt
-                $logAttempt = $this->db->prepare("
-                    INSERT INTO login_attempts (ip_address, device_fingerprint, email, is_successful) 
-                    VALUES (:ip, :fp, :email, 1)
-                ");
-                $logAttempt->execute(['ip' => $ipAddress, 'fp' => $fingerprint, 'email' => $email]);
+                $this->logAttempt($ipAddress, $fingerprint, $email, true);
 
                 $logger = new \FlowSync\Utils\AuditLogger();
                 $logger->log($user['id'], 'LOGIN', 'USER', $user['id'], ['email' => $user['email']]);
@@ -165,18 +193,15 @@ class AuthService {
             }
 
             // FAILED ATTEMPT (incorrect password)
-            $logAttempt = $this->db->prepare("
-                INSERT INTO login_attempts (ip_address, device_fingerprint, email, is_successful) 
-                VALUES (:ip, :fp, :email, 0)
-            ");
-            $logAttempt->execute(['ip' => $ipAddress, 'fp' => $fingerprint, 'email' => $email]);
+            $this->logAttempt($ipAddress, $fingerprint, $email, false);
 
             // Check brute force limit and return remaining attempts count
             $remaining = $this->checkBruteForceThreshold($ipAddress, $fingerprint);
 
             return ['status' => 'error', 'message' => "Invalid password. (Attempts remaining: $remaining)"];
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
+            error_log("Login error: " . $e->getMessage());
+            return ['status' => 'error', 'message' => 'An internal server error occurred.'];
         }
     }
 
@@ -209,8 +234,13 @@ class AuthService {
         $cookieName = getenv('COOKIE_NAME') ?: 'flowsync_session';
         if (!isset($_COOKIE[$cookieName])) return false;
 
-        JWT::setSecret(getenv('JWT_SECRET') ?: 'flowsync_neodyit_2026');
-        $payload = JWT::decode($_COOKIE[$cookieName]);
+        try {
+            JWT::setSecret($this->getJwtSecret());
+            $payload = JWT::decode($_COOKIE[$cookieName]);
+        } catch (\Exception $e) {
+            $this->logout();
+            return false;
+        }
 
         if (!$payload || !isset($payload['jti'])) {
             $this->logout();
@@ -255,33 +285,9 @@ class AuthService {
         }
 
         // Check if department is disabled
-        if ($dbSession['role_id'] == 2) {
-            $stmtDept = $this->db->prepare("SELECT is_enabled FROM departments WHERE hod_id = :uid LIMIT 1");
-            $stmtDept->execute(['uid' => $dbSession['user_real_id']]);
-            $deptStatus = $stmtDept->fetch();
-            if ($deptStatus && $deptStatus['is_enabled'] == 0) {
-                $this->logout();
-                return false;
-            }
-        } elseif ($dbSession['role_id'] == 3) {
-            $stmtDept = $this->db->prepare("
-                SELECT d.is_enabled 
-                FROM faculty_departments fd 
-                JOIN departments d ON fd.department_id = d.id 
-                WHERE fd.user_id = :uid
-            ");
-            $stmtDept->execute(['uid' => $dbSession['user_real_id']]);
-            $depts = $stmtDept->fetchAll(PDO::FETCH_COLUMN);
-            if (count($depts) > 0) {
-                $allDisabled = true;
-                foreach ($depts as $enabled) {
-                    if ($enabled == 1) { $allDisabled = false; break; }
-                }
-                if ($allDisabled) {
-                    $this->logout();
-                    return false;
-                }
-            }
+        if (!$this->isDepartmentActive($dbSession['role_id'], $dbSession['user_real_id'])) {
+            $this->logout();
+            return false;
         }
 
         return $payload;
@@ -292,12 +298,16 @@ class AuthService {
         $payload = null;
 
         if (isset($_COOKIE[$cookieName])) {
-            JWT::setSecret(getenv('JWT_SECRET') ?: 'flowsync_neodyit_2026');
-            $payload = JWT::decode($_COOKIE[$cookieName]);
-            
-            if ($payload && isset($payload['jti'])) {
-                $stmt = $this->db->prepare("DELETE FROM sessions WHERE token_id = :jti");
-                $stmt->execute(['jti' => $payload['jti']]);
+            try {
+                JWT::setSecret($this->getJwtSecret());
+                $payload = JWT::decode($_COOKIE[$cookieName]);
+                
+                if ($payload && isset($payload['jti'])) {
+                    $stmt = $this->db->prepare("DELETE FROM sessions WHERE token_id = :jti");
+                    $stmt->execute(['jti' => $payload['jti']]);
+                }
+            } catch (\Exception $e) {
+                // Ignore decoding errors on logout
             }
         }
         
