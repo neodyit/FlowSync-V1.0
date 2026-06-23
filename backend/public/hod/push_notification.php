@@ -56,7 +56,7 @@ try {
         if (strpos($mime, 'video/') === 0 || strpos($mime, 'zip') !== false) {
             throw new Exception("Attachment has a blocked format (video or zip).");
         }
-        $uploadDir = __DIR__ . '/../storage/push_notices/';
+        $uploadDir = __DIR__ . '/../../storage/push_notices/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }

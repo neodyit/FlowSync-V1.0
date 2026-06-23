@@ -85,7 +85,7 @@ try {
 
                 // 3. Fetch all team members assigned to these tasks
                 $teamMembersStmt = $db->prepare("
-                    SELECT ta.task_id, ta.user_id, ta.status, ta.progress,
+                    SELECT ta.*,
                            u.name as faculty_name, u.profile_pic as faculty_pic, u.email as faculty_email, u.designation, u.is_public,
                            d.name as department_name
                     FROM task_assignments ta
