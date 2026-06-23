@@ -191,18 +191,18 @@ class AuthService {
         $failedAttempts->execute(['ip' => $ip, 'fp' => $fp]);
         $failedCount = (int)$failedAttempts->fetchColumn();
 
-        if ($failedCount >= 5) {
+        if ($failedCount >= 10) {
             // Trigger Ban!
             $triggerBan = $this->db->prepare("
                 INSERT INTO banned_clients (ip_address, device_fingerprint, reason) 
-                VALUES (:ip, :fp, 'Brute-force lockout triggered (5 consecutive failures)')
+                VALUES (:ip, :fp, 'Brute-force lockout triggered (10 consecutive failures)')
             ");
             $triggerBan->execute(['ip' => $ip, 'fp' => $fp]);
 
             throw new \Exception('Access blocked: This IP or device has been banned due to excessive failed attempts.');
         }
 
-        return max(0, 5 - $failedCount);
+        return max(0, 10 - $failedCount);
     }
 
     public function validateSession() {
@@ -236,7 +236,6 @@ class AuthService {
         }
 
         // Validate User Agent to prevent session hijacking / cookie copying
-        // (We do not strictly check IP address to avoid logging out users when switching networks or waking from sleep)
         $currentUserAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
         $dbUserAgent = $dbSession['user_agent'] ?? '';
 

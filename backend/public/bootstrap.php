@@ -109,6 +109,9 @@ if ($session) {
     $currentSeasonId = \FlowSync\Utils\AcademicSeasonManager::getCurrentSeasonId($session['user_id']);
 }
 
+// Read php://input early since it might not be available in shutdown function
+$GLOBALS['raw_php_input'] = file_get_contents('php://input');
+
 // Register a global fallback logger for mutating requests (POST, PUT, DELETE, PATCH)
 register_shutdown_function(function() use (&$session) {
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -131,11 +134,11 @@ register_shutdown_function(function() use (&$session) {
             $details['response_code'] = http_response_code();
             
             // Handle JSON body
-            $input = file_get_contents('php://input');
+            $input = $GLOBALS['raw_php_input'] ?? '';
             if ($input) {
                 $json = json_decode($input, true);
                 if (is_array($json)) {
-                    foreach (['password', 'old_password', 'new_password', 'token', 'jwt'] as $sensitive) {
+                    foreach (['password', 'old_password', 'new_password', 'current_password', 'token', 'jwt'] as $sensitive) {
                         if (isset($json[$sensitive])) {
                             $json[$sensitive] = '[REDACTED]';
                         }

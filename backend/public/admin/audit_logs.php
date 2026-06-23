@@ -12,7 +12,9 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 try {
     if ($method === 'GET') {
-        $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 300;
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 50;
+        $offset = ($page - 1) * $limit;
         $userId = isset($_GET['user_id']) && $_GET['user_id'] !== '' ? (int) $_GET['user_id'] : null;
         $search = isset($_GET['search']) ? trim($_GET['search']) : '';
         $action = isset($_GET['action']) && $_GET['action'] !== 'all' ? trim($_GET['action']) : '';
@@ -47,6 +49,20 @@ try {
             $whereSql = 'WHERE ' . implode(' AND ', $whereClauses);
         }
 
+        // Count filtered totals
+        $countSql = "
+            SELECT COUNT(*) 
+            FROM audit_logs a
+            LEFT JOIN users u ON a.user_id = u.id
+            $whereSql
+        ";
+        $countStmt = $db->prepare($countSql);
+        foreach ($params as $key => $val) {
+            $countStmt->bindValue(":$key", $val);
+        }
+        $countStmt->execute();
+        $filteredTotal = (int) $countStmt->fetchColumn();
+
         // Get logs with user info
         $sql = "
             SELECT a.*, u.name as user_name, u.email as user_email
@@ -54,11 +70,12 @@ try {
             LEFT JOIN users u ON a.user_id = u.id
             $whereSql
             ORDER BY a.created_at DESC
-            LIMIT :limit
+            LIMIT :limit OFFSET :offset
         ";
 
         $stmt = $db->prepare($sql);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         foreach ($params as $key => $val) {
             $stmt->bindValue(":$key", $val);
         }
@@ -74,6 +91,7 @@ try {
         echo json_encode([
             'status' => 'success',
             'data' => $logs,
+            'filtered_total' => $filteredTotal,
             'stats' => [
                 'total' => $totalCount,
                 'deletes' => $deleteCount,
